@@ -164,12 +164,12 @@ func ensureBootstrapSecurity(ctx context.Context, first *SetupAdminParams) error
 
 	login := strings.ToLower(first.Email)
 	adminUID, err := Upsert(ctx, userModel, map[string]interface{}{
-		"login":     login,
-		"name":      first.FullName,
-		"active":    true,
-		"email":     first.Email,
-		"lang":      first.Lang,
-		"password":  "",
+		"login":  login,
+		"name":   first.FullName,
+		"active": true,
+		"email":  first.Email,
+		"lang":   first.Lang,
+		//"password":  "",
 		"user_type": "internal",
 	}, "login")
 	if err != nil {
