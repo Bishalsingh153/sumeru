@@ -215,6 +215,9 @@ func buildSWCFeatureFlags(ctx context.Context) map[string]bool {
 	if orm.UserHasAnyAccessGroup(ctx, uid, "studio.group_studio_user") {
 		flags["studio"] = true
 	}
+	if orm.UserHasAnyAccessGroup(ctx, uid, "base.group_system") {
+		flags["debugMenu"] = true
+	}
 	if len(flags) == 0 {
 		return nil
 	}

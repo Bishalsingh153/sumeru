@@ -10,7 +10,8 @@ import { BusService } from "./services/bus.js";
 import { DialogService } from "./services/dialog.js";
 import { RecordService } from "./model/record.js";
 import { CommandService } from "./services/command.js";
-import { getDebugMode, mountDebugPanel, updateDebugPanel } from "./devtools/debug.js";
+import { mountDebugEnvironment, toggleDebugMode, updateDebugDrawer } from "./devtools/debug.js";
+import { initDebugManager } from "./devtools/debug-manager.js";
 import type { SwcServices } from "./runtime/env.js";
 import type { SwcBootstrap } from "./types/bootstrap.js";
 import { registerCoreServices } from "./services/service-registry.js";
@@ -75,18 +76,7 @@ function registerCoreCommands(boot: SwcBootstrap, services: SwcServices): void {
   command.register({
     id: "debug.toggle",
     label: "Toggle debug mode",
-    run: () => {
-      const next = getDebugMode() === "off" ? "1" : "off";
-      const url = new URL(window.location.href);
-      if (next === "off") {
-        sessionStorage.removeItem("sum.debug.mode");
-        url.searchParams.delete("debug");
-      } else {
-        sessionStorage.setItem("sum.debug.mode", next);
-        url.searchParams.set("debug", next);
-      }
-      window.location.assign(url.toString());
-    },
+    run: () => toggleDebugMode(),
   });
   if (boot.showCompanySwitcher) {
     command.register({
@@ -133,8 +123,9 @@ function bootstrap(): void {
   loadTranslations(boot.translations);
   initDevtoolsBridge();
   registerCoreCommands(boot, env.services);
-  mountDebugPanel();
-  void updateDebugPanel(boot);
+  initDebugManager(boot, { dialog: env.services.dialog, notification: env.services.notification });
+  mountDebugEnvironment(boot);
+  void updateDebugDrawer(boot);
   initShellChrome(boot, env.services.http);
   initAppLauncher(boot, env.services.action, env.services.command);
 
