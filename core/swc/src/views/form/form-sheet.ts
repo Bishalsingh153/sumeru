@@ -11,7 +11,12 @@ import type {
 } from "../../types/workspace.js";
 import type { SwcRecord } from "../../model/record.js";
 import { renderField as defaultRenderField } from "../../widgets/registry.js";
-import { fieldInputId, fieldPlaceholder, fieldAutocomplete } from "../../widgets/field-shell.js";
+import {
+  fieldInputId,
+  fieldPlaceholder,
+  fieldAutocomplete,
+  wrapDebugFieldRegion,
+} from "../../widgets/field-shell.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
 import { isFieldReadonly } from "../../model/modifiers.js";
 import {
@@ -113,20 +118,28 @@ function renderHeroField(
     const cls = hasValue
       ? "sum-form-hero-input sum-form-hero-input--bold"
       : "sum-form-hero-input sum-form-hero-input--bold sum-form-hero-input--placeholder";
-    return html`<h1><div class=${cls}>${text}</div></h1>`;
+    return wrapDebugFieldRegion(
+      record.model,
+      field,
+      html`<h1><div class=${cls}>${text}</div></h1>`,
+    );
   }
-  return html`<h1>
-    <input
-      id=${fieldInputId(field)}
-      class="sum-form-hero-input sum-form-hero-input--bold"
-      name=${field.name}
-      placeholder=${placeholder}
-      value=${val}
-      autocomplete=${fieldAutocomplete(field)}
-      aria-label=${placeholder}
-      @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
-    />
-  </h1>`;
+  return wrapDebugFieldRegion(
+    record.model,
+    field,
+    html`<h1>
+      <input
+        id=${fieldInputId(field)}
+        class="sum-form-hero-input sum-form-hero-input--bold"
+        name=${field.name}
+        placeholder=${placeholder}
+        value=${val}
+        autocomplete=${fieldAutocomplete(field)}
+        aria-label=${placeholder}
+        @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
+      />
+    </h1>`,
+  );
 }
 
 function renderContactItem(
@@ -141,22 +154,30 @@ function renderContactItem(
   if (isFieldReadonly(field, record, readonly)) {
     const text = val.trim() !== "" ? val : placeholder;
     const cls = val.trim() !== "" ? "sum-form-inline-input" : "sum-form-inline-input sum-form-inline-input--placeholder";
-    return html`<div class="sum-form-contact-item">
-      <label class="sum-field-label">${label}</label>
-      <div class=${cls}>${text}</div>
-    </div>`;
+    return wrapDebugFieldRegion(
+      record.model,
+      field,
+      html`<div class="sum-form-contact-item">
+        <label class="sum-field-label">${label}</label>
+        <div class=${cls}>${text}</div>
+      </div>`,
+    );
   }
-  return html`<div class="sum-form-contact-item">
-    <label class="sum-field-label">${label}</label>
-    <input
-      type=${inputType}
-      class="sum-form-inline-input"
-      name=${field.name}
-      placeholder=${placeholder}
-      value=${val}
-      @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
-    />
-  </div>`;
+  return wrapDebugFieldRegion(
+    record.model,
+    field,
+    html`<div class="sum-form-contact-item">
+      <label class="sum-field-label">${label}</label>
+      <input
+        type=${inputType}
+        class="sum-form-inline-input"
+        name=${field.name}
+        placeholder=${placeholder}
+        value=${val}
+        @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
+      />
+    </div>`,
+  );
 }
 
 function renderAvatar(record: SwcRecord, readonly: boolean): TemplateResult {

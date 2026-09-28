@@ -5,6 +5,7 @@ import {
   fieldPlaceholder,
   fieldReadonlyValue,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import { AsyncFieldController, recordDisplayName } from "./field-async.js";
 import type { FieldWidgetProps } from "./field-props.js";
@@ -82,7 +83,7 @@ export class SelectionField extends SwcComponent<FieldWidgetProps> {
     const placeholder = fieldPlaceholder(field);
 
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyValue(this.displayValue(), placeholder), { labelFor: false });
+      return renderFieldShell(field, fieldReadonlyValue(this.displayValue(), placeholder), shellOptions(record, { labelFor: false }));
     }
 
     return renderFieldShell(
@@ -109,7 +110,7 @@ export class SelectionField extends SwcComponent<FieldWidgetProps> {
         )}
       </select>
       ${!this.loaded ? html`<span class="sum-field-hint">Loading…</span>` : ""}`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }

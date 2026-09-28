@@ -1,7 +1,7 @@
 import { SwcComponent } from "../runtime/component.js";
 import { html } from "../template/html.js";
 import { DefaultField } from "./DefaultField.js";
-import { renderFieldShell, fieldReadonlyValue } from "./field-shell.js";
+import { renderFieldShell, fieldReadonlyValue, shellOptions } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { stringFromUnknown } from "./field-value.js";
 import { isFieldReadonly } from "../model/modifiers.js";
@@ -12,9 +12,11 @@ export class MonetaryField extends DefaultField {
     const symbol = field.options?.currency_symbol ?? "¤";
     const fieldValue = stringFromUnknown(record.get(field.name));
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyValue(fieldValue ? `${symbol} ${fieldValue}` : ""), {
-        labelFor: false,
-      });
+      return renderFieldShell(
+        field,
+        fieldReadonlyValue(fieldValue ? `${symbol} ${fieldValue}` : ""),
+        shellOptions(record, { labelFor: false }),
+      );
     }
     return super.template();
   }
@@ -26,7 +28,7 @@ export class HtmlField extends DefaultField {
     const raw = stringFromUnknown(record.get(field.name));
     if (isFieldReadonly(field, record, readonly)) {
       const text = raw.replace(/<[^>]+>/g, " ").trim();
-      return renderFieldShell(field, fieldReadonlyValue(text), { labelFor: false });
+      return renderFieldShell(field, fieldReadonlyValue(text), shellOptions(record, { labelFor: false }));
     }
     return super.template();
   }
@@ -39,7 +41,7 @@ export class BinaryField extends SwcComponent<FieldWidgetProps> {
     return renderFieldShell(
       field,
       html`<a class="sum-field-link" href="/web/content/${field.name}/${record.id}" download>${name}</a>`,
-      { labelFor: false },
+      shellOptions(record, { labelFor: false }),
     );
   }
 }
@@ -53,7 +55,7 @@ export class ColorField extends DefaultField {
       return renderFieldShell(
         field,
         html`<span class="sum-color-swatch" style=${`background:${swatch}`}></span>`,
-        { labelFor: false },
+        shellOptions(record, { labelFor: false }),
       );
     }
     return super.template();
@@ -68,7 +70,7 @@ export class UrlField extends DefaultField {
       return renderFieldShell(
         field,
         html`<a class="sum-field-link" href=${fieldValue} target="_blank" rel="noopener">${fieldValue}</a>`,
-        { labelFor: false },
+        shellOptions(record, { labelFor: false }),
       );
     }
     return super.template();
@@ -86,7 +88,7 @@ export class ProgressField extends DefaultField {
           <div class="sum-progress-bar" style=${`width:${fieldValue}%`}></div>
           <span>${fieldValue}%</span>
         </div>`,
-        { labelFor: false },
+        shellOptions(record, { labelFor: false }),
       );
     }
     return super.template();
@@ -95,11 +97,11 @@ export class ProgressField extends DefaultField {
 
 export class HandleField extends SwcComponent<FieldWidgetProps> {
   override template() {
-    const { field } = this.props;
+    const { field, record } = this.props;
     return renderFieldShell(
       field,
       html`<span class="sum-handle-grip" title="Reorder" aria-hidden="true">⋮⋮</span>`,
-      { labelFor: false },
+      shellOptions(record, { labelFor: false }),
     );
   }
 }

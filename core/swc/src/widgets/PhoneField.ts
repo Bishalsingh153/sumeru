@@ -6,6 +6,7 @@ import {
   fieldAutocomplete,
   fieldReadonlyValue,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { stringFromUnknown } from "./field-value.js";
@@ -20,7 +21,7 @@ export class PhoneField extends SwcComponent<FieldWidgetProps> {
     const id = fieldInputId(field);
 
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyValue(fieldValue, placeholder), { labelFor: false });
+      return renderFieldShell(field, fieldReadonlyValue(fieldValue, placeholder), shellOptions(record, { labelFor: false }));
     }
 
     return renderFieldShell(
@@ -35,7 +36,7 @@ export class PhoneField extends SwcComponent<FieldWidgetProps> {
         autocomplete=${fieldAutocomplete(field)}
         @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
       />`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }

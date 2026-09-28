@@ -6,7 +6,7 @@ import {
   setPendingChildren,
   type PendingChildRecord,
 } from "../model/pending-children.js";
-import { fieldControl, renderFieldShell } from "./field-shell.js";
+import { fieldControl, renderFieldShell, shellOptions } from "./field-shell.js";
 import { AsyncFieldController } from "./field-async.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { checkboxCheckedFromEvent, inputValueFromEvent } from "./field-events.js";
@@ -607,7 +607,7 @@ export class One2ManyField extends SwcComponent<FieldWidgetProps> {
   }
 
   override template() {
-    const { field } = this.props;
+    const { field, record } = this.props;
     const label = field.string ?? field.name;
     const cols = columnsForField(field);
     const canEdit = this.editable();
@@ -642,7 +642,7 @@ export class One2ManyField extends SwcComponent<FieldWidgetProps> {
             </button>`
           : ""}
       </div>`,
-      { layout: "stack", showLabel: false },
+      shellOptions(record, { layout: "stack", showLabel: false }),
     );
   }
 }

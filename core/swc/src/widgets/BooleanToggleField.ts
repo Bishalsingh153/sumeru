@@ -1,6 +1,6 @@
 import { SwcComponent } from "../runtime/component.js";
 import { html } from "../template/html.js";
-import { fieldInputId, renderFieldShell } from "./field-shell.js";
+import { fieldInputId, renderFieldShell, shellOptions } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { booleanFromUnknown } from "./field-value.js";
 import { checkboxCheckedFromEvent } from "./field-events.js";
@@ -28,7 +28,7 @@ export class BooleanToggleField extends SwcComponent<FieldWidgetProps> {
         />
         <span>${checked ? "On" : "Off"}</span>
       </label>`,
-      { showLabel: false },
+      shellOptions(record, { showLabel: false }),
     );
   }
 }

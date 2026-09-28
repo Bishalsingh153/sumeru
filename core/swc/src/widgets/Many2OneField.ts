@@ -5,6 +5,7 @@ import {
   fieldPlaceholder,
   fieldReadonlyValue,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import { AsyncFieldController, recordDisplayName } from "./field-async.js";
 import { fieldDomain, isFieldReadonly } from "../model/modifiers.js";
@@ -177,7 +178,7 @@ export class Many2OneField extends SwcComponent<FieldWidgetProps> {
     const createVisible = this.query.trim() !== "" && !this.hasExactNameMatch();
 
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyValue(display, placeholder), { labelFor: false });
+      return renderFieldShell(field, fieldReadonlyValue(display, placeholder), shellOptions(record, { labelFor: false }));
     }
 
     return renderFieldShell(
@@ -260,7 +261,7 @@ export class Many2OneField extends SwcComponent<FieldWidgetProps> {
             </ul>`
           : ""}
       </div>`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }

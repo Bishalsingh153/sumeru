@@ -6,6 +6,7 @@ import {
   fieldPlaceholder,
   fieldReadonlyInput,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { inputValueFromEvent } from "./field-events.js";
@@ -66,7 +67,7 @@ export class DateField extends SwcComponent<FieldWidgetProps> {
     const inputType = isDateTime(field) ? "datetime-local" : "date";
 
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyInput(field, display, "text"), { labelFor: id });
+      return renderFieldShell(field, fieldReadonlyInput(field, display, "text"), shellOptions(record, { labelFor: id }));
     }
 
     return renderFieldShell(
@@ -114,7 +115,7 @@ export class DateField extends SwcComponent<FieldWidgetProps> {
           </button>
         </div>
       </div>`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }
