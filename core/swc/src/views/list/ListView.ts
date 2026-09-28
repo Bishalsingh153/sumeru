@@ -238,9 +238,11 @@ export class ListView extends CollectionView {
             (section) => html`<tbody class="sum-list-section">
               <tr class="sum-list-section-head" @click=${() => this.toggleSection(section.value)}>
                 <td colspan=${cols.length + 1}>
-                  <span class="sum-list-section-toggle">${this.foldedSections.has(section.value) ? "▸" : "▾"}</span>
-                  ${section.label}
-                  <span class="sum-list-section-count">(${section.count})</span>
+                  <div class="sum-list-section-head-inner">
+                    <span class="sum-list-section-toggle">${this.foldedSections.has(section.value) ? "▸" : "▾"}</span>
+                    <span class="sum-list-section-label">${section.label || "(Empty)"}</span>
+                    <span class="sum-list-section-count">(${section.count})</span>
+                  </div>
                 </td>
               </tr>
               ${this.foldedSections.has(section.value)

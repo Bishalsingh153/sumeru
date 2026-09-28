@@ -20,3 +20,20 @@ func TestPartitionListSections(t *testing.T) {
 		t.Fatalf("row count mismatch")
 	}
 }
+
+func TestPartitionListSections_emptyGroupLabel(t *testing.T) {
+	rows := []map[string]interface{}{
+		{"id": 1, "mobile": nil, "name": "A"},
+		{"id": 2, "mobile": "", "name": "B"},
+	}
+	sections := web.PartitionListSectionsForTest(rows, "mobile")
+	if len(sections) != 1 {
+		t.Fatalf("expected 1 section, got %d", len(sections))
+	}
+	if sections[0].Label != "(Empty)" {
+		t.Fatalf("label = %q, want (Empty)", sections[0].Label)
+	}
+	if sections[0].Count != 2 {
+		t.Fatalf("count = %d", sections[0].Count)
+	}
+}
