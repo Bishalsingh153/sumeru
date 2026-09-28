@@ -10,9 +10,11 @@ import {
   EXPORT_PIVOT_ROUTE,
   EXPORT_GRAPH_ROUTE,
   VIEW_FORM,
+  VIEW_GRAPH,
+  VIEW_PIVOT,
 } from "../../constants/routes.js";
 import { RouterService } from "../../services/router.js";
-import { pivotFields } from "./arch-fields.js";
+import { graphAxes, pivotFields } from "./arch-fields.js";
 
 function linkButton(href: string, label: string, className = "sum-btn sum-btn--secondary"): HTMLElement {
   const a = document.createElement("a");
@@ -304,6 +306,53 @@ export function buildReportActionEntries(
   return entries;
 }
 
+/** Pivot/graph CSV exports for collection views (in addition to arch.report entries). */
+function appendReadGroupExportEntries(
+  payload: SwcWorkspacePayload,
+  viewType: string | undefined,
+  entries: ReportActionEntry[],
+): void {
+  if (viewType === VIEW_PIVOT) {
+    const { groups, measures } = pivotExportFields(payload);
+    if (groups.length > 0 && measures.length > 0) {
+      entries.push({
+        label: "Export pivot CSV",
+        node: linkButton(
+          pivotExportUrl(payload, groups, measures),
+          "Export pivot CSV",
+          "sum-popover-menu-link",
+        ),
+      });
+    }
+    return;
+  }
+  if (viewType === VIEW_GRAPH) {
+    const { groupField, measureField } = graphAxes(payload.arch);
+    if (groupField && measureField) {
+      entries.push({
+        label: "Export graph CSV",
+        node: linkButton(
+          graphExportUrl(payload, groupField, measureField),
+          "Export graph CSV",
+          "sum-popover-menu-link",
+        ),
+      });
+    }
+  }
+}
+
+/** Report menu entries for toolbar (arch.report + view-specific read_group exports). */
+export function buildAllReportEntries(
+  payload: SwcWorkspacePayload,
+  fields: string,
+  recordId = 0,
+  viewType?: string,
+): ReportActionEntry[] {
+  const entries = buildReportActionEntries(payload, fields, recordId);
+  appendReadGroupExportEntries(payload, viewType, entries);
+  return entries;
+}
+
 export function renderReportActions(
   payload: SwcWorkspacePayload,
   fields: string,
@@ -313,14 +362,45 @@ export function renderReportActions(
   if (entries.length === 0) return null;
 
   const wrap = document.createElement("div");
-  wrap.className = "sum-view-toolbar-actions";
+  wrap.className = "sum-view-toolbar-actions sum-reports-anchor sum-form-reports-anchor";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sum-header-btn sum-header-btn--secondary sum-reports-btn sum-form-reports-btn";
+  btn.setAttribute("aria-expanded", "false");
+  btn.setAttribute("aria-haspopup", "true");
+  const label = document.createElement("span");
+  label.textContent = "Reports";
+  btn.append(label, createToolbarIcon("chevron", "sum-reports-chevron sum-form-reports-chevron"));
+
+  const panel = document.createElement("div");
+  panel.className = "sum-popover sum-popover--actions sum-reports-popover sum-form-reports-popover";
+  panel.hidden = true;
+  const heading = document.createElement("h3");
+  heading.className = "sum-popover-heading";
+  heading.textContent = "Import / export";
+  const menu = document.createElement("ul");
+  menu.className = "sum-popover-menu";
   for (const entry of entries) {
-    if (entry.node.classList.contains("sum-list-upload-form")) {
-      wrap.appendChild(entry.node);
-      continue;
-    }
-    entry.node.className = "sum-btn sum-btn--secondary";
-    wrap.appendChild(entry.node);
+    const item = document.createElement("li");
+    item.className = "sum-popover-menu-item";
+    item.appendChild(entry.node);
+    menu.appendChild(item);
   }
+  panel.append(heading, menu);
+
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = panel.hidden;
+    panel.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  wrap.addEventListener("click", (event) => event.stopPropagation());
+  document.addEventListener("click", () => {
+    panel.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+  });
+
+  wrap.append(btn, panel);
   return wrap;
 }

@@ -1,7 +1,7 @@
 import { html, type TemplateResult } from "../../template/html.js";
 import type { SwcArchField, SwcSearchFilter, SwcWorkspacePayload } from "../../types/workspace.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
-import { buildReportActionEntries } from "./view-toolbar.js";
+import { buildAllReportEntries } from "./view-toolbar.js";
 import {
   filterOperatorsForField,
   presetDomainFilters,
@@ -182,7 +182,7 @@ export function renderFavoritesPopover(
           value=${saveName}
           @input=${(e: Event) => callbacks.onSaveNameInput(inputValueFromEvent(e))}
         />
-        <label class="sum-popover-check">
+        <label class="sum-popover-save-shared">
           <input
             type="checkbox"
             ?checked=${saveShared}
@@ -203,17 +203,27 @@ export function renderFavoritesPopover(
   `;
 }
 
-export function renderActionsPopover(payload: SwcWorkspacePayload, fieldsCsv: string): TemplateResult {
-  const entries = buildReportActionEntries(payload, fieldsCsv);
+export function renderReportsPopover(
+  payload: SwcWorkspacePayload,
+  fieldsCsv: string,
+  viewType?: string,
+  recordId = 0,
+): TemplateResult {
+  const entries = buildAllReportEntries(payload, fieldsCsv, recordId, viewType);
 
   return html`
-    <div class="sum-popover sum-popover--actions" @click=${(e: Event) => e.stopPropagation()}>
-      <h3 class="sum-popover-heading">Actions</h3>
+    <div class="sum-popover sum-popover--actions sum-reports-popover" @click=${(e: Event) => e.stopPropagation()}>
+      <h3 class="sum-popover-heading">Import / export</h3>
       <ul class="sum-popover-menu">
         ${entries.map((entry) => html`<li class="sum-popover-menu-item">${entry.node}</li>`)}
       </ul>
     </div>
   `;
+}
+
+/** @deprecated Use renderReportsPopover */
+export function renderActionsPopover(payload: SwcWorkspacePayload, fieldsCsv: string): TemplateResult {
+  return renderReportsPopover(payload, fieldsCsv);
 }
 
 export { presetDomainFilters, presetGroupByFilters };

@@ -6,8 +6,6 @@ import { VIEW_GRAPH, VIEW_LIST } from "../../constants/routes.js";
 import { graphAxes } from "../shared/arch-fields.js";
 import { CollectionView } from "../shared/collection-view.js";
 import { navigateCollectionQuery } from "../shared/collection-query.js";
-import { renderGraphExportLink } from "../shared/view-toolbar.js";
-
 const CHART_PALETTE = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2"];
 
 /** Graph view over read_group RPC (bar / line / pie) via Chart.js. */
@@ -166,7 +164,6 @@ export class GraphView extends CollectionView {
   }
 
   override template() {
-    const exportLink = renderGraphExportLink(this.props.payload, this.groupField, this.measureField);
     const type = this.chartType();
     return this.renderShell(html`
       <div class="sum-graph-toolbar">
@@ -191,7 +188,6 @@ export class GraphView extends CollectionView {
         >
           Pie
         </button>
-        ${exportLink ?? ""}
       </div>
       <div class="sum-graph-chart-wrap">
         <canvas data-ref="graph-canvas"></canvas>

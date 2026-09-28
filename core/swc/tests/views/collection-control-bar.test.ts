@@ -122,7 +122,7 @@ describe("CollectionBarHost", () => {
     const filtersBtn = buttons.find((b) => b.getAttribute("aria-label") === "Filters")!;
     filtersBtn.click();
     bar.patch();
-    expect(bar.rootElement!.querySelector(".sum-popover--filters")).toBeTruthy();
+    expect(bar.rootElement!.querySelector(".sum-control-bar-segment-drop .sum-popover--filters")).toBeTruthy();
     expect(bar.rootElement!.querySelectorAll(".sum-popover").length).toBe(1);
     expect(bar.rootElement!.querySelector(".sum-filter-panel")).toBeFalsy();
     bar.destroy();
@@ -196,11 +196,12 @@ describe("CollectionBarHost", () => {
     );
     bar.callSetup();
     document.body.append(bar.render());
-    const actionsBtn = bar.rootElement!.querySelector('[aria-label="Actions"]') as HTMLButtonElement;
-    expect(actionsBtn).toBeTruthy();
-    actionsBtn.click();
+    const reportsBtn = bar.rootElement!.querySelector('[aria-label="Reports"]') as HTMLButtonElement;
+    expect(reportsBtn).toBeTruthy();
+    reportsBtn.click();
     bar.patch();
     expect(bar.rootElement!.querySelector(".sum-popover--actions")).toBeTruthy();
+    expect(bar.rootElement!.textContent).toContain("Import / export");
     expect(bar.rootElement!.textContent).toContain("Export CSV");
     bar.destroy();
   });

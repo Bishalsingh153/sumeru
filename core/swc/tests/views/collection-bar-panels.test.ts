@@ -90,6 +90,29 @@ describe("collection-bar-panels", () => {
 
     const actions = renderActionsPopover(basePayload(), "name").render();
     expect(actions.querySelector(".sum-popover--actions")).toBeTruthy();
+    expect(actions.textContent).toContain("Import / export");
     expect(actions.textContent).toContain("Export CSV");
+  });
+
+  it("filter popover uses readable control classes", () => {
+    const filters = renderFiltersPopover(
+      {
+        query: { search: "", presetFilters: [], customDomain: "", groupBy: [] },
+        customField: "name",
+        customOp: "=",
+        customValue: "",
+        domainPresets: [],
+        filterFields: [{ name: "name", string: "Name", type: "char" }],
+      },
+      {
+        onTogglePreset: vi.fn(),
+        onCustomFieldChange: vi.fn(),
+        onCustomOpChange: vi.fn(),
+        onCustomValueInput: vi.fn(),
+        onApplyCustom: vi.fn(),
+      },
+    ).render();
+    expect(filters.querySelector(".sum-popover-input")).toBeTruthy();
+    expect(filters.querySelector(".sum-popover-custom .sum-btn")).toBeTruthy();
   });
 });

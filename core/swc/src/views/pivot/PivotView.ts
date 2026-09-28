@@ -1,8 +1,6 @@
 import { html } from "../../template/html.js";
 import { VIEW_PIVOT } from "../../constants/routes.js";
 import { CollectionView } from "../shared/collection-view.js";
-import { renderPivotExportLink } from "../shared/view-toolbar.js";
-
 export class PivotView extends CollectionView {
   protected readonly collectionViewType = VIEW_PIVOT;
   private collapsedRows = new Set<string>();
@@ -18,12 +16,10 @@ export class PivotView extends CollectionView {
 
   override template() {
     const pivot = this.props.payload.arch.pivot;
-    const exportLink = renderPivotExportLink(this.props.payload);
     if (!pivot) {
       return this.renderShell("No pivot data", { rootClass: "sum-pivot-view--empty" });
     }
     return this.renderShell(html`
-      ${exportLink ?? ""}
       <table class="sum-pivot-table">
         <thead>
           <tr>

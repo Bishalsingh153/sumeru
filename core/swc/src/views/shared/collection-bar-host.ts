@@ -3,7 +3,7 @@ import { html, type TemplateResult, type TemplateValue } from "../../template/ht
 import type { SwcArchField, SwcWorkspacePayload } from "../../types/workspace.js";
 import { SAVED_SEARCHES_ROUTE } from "../../constants/routes.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
-import { renderNewButton, buildReportActionEntries, exportFieldNamesCsv, createToolbarIcon } from "./view-toolbar.js";
+import { renderNewButton, buildAllReportEntries, exportFieldNamesCsv, createToolbarIcon } from "./view-toolbar.js";
 import { visibleArchFields } from "./arch-fields.js";
 import {
   activeFilterTags,
@@ -22,7 +22,7 @@ import {
   type FilterTag,
 } from "./collection-query.js";
 import {
-  renderActionsPopover,
+  renderReportsPopover,
   renderFiltersPopover,
   renderFavoritesPopover,
   renderGroupPopover,
@@ -34,9 +34,9 @@ export interface CollectionBarHostProps {
   extraPrimary?: TemplateValue;
 }
 
-type PanelKind = "filters" | "group" | "favorites" | "actions";
+type PanelKind = "filters" | "group" | "favorites" | "reports";
 
-const SEGMENT_TOOLTIPS: Record<Exclude<PanelKind, "actions">, string> = {
+const SEGMENT_TOOLTIPS: Record<Exclude<PanelKind, "reports">, string> = {
   filters: "Filter records using presets or custom field rules",
   group: "Group records by field values",
   favorites: "Save and reopen favorite searches",
@@ -299,11 +299,24 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
       );
     }
     const fields = exportFieldNamesCsv(visibleArchFields(this.props.payload.arch.fields ?? []));
-    return renderActionsPopover(this.props.payload, fields);
+    return renderReportsPopover(this.props.payload, fields, this.props.viewType);
+  }
+
+  private renderFiltersGroupDrop(): TemplateResult | string {
+    if (this.panelOpen !== "filters" && this.panelOpen !== "group") {
+      return "";
+    }
+    const dropClass =
+      this.panelOpen === "group"
+        ? "sum-control-bar-segment-drop sum-control-bar-segment-drop--group"
+        : "sum-control-bar-segment-drop sum-control-bar-segment-drop--filters";
+    return html`<div class=${dropClass} @click=${(e: Event) => e.stopPropagation()}>
+      ${this.renderOpenPanel()}
+    </div>`;
   }
 
   private renderSegmentButton(
-    kind: Exclude<PanelKind, "actions">,
+    kind: Exclude<PanelKind, "reports">,
     label: string,
     iconName: "filter" | "group" | "favorite",
     badgeCount: number,
@@ -312,12 +325,14 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
     const btnClass = open
       ? "sum-control-bar-segment-btn sum-control-bar-segment-btn--active"
       : "sum-control-bar-segment-btn";
+    const badged = badgeCount > 0 ? " sum-control-bar-segment-btn--badged" : "";
     const tooltip = SEGMENT_TOOLTIPS[kind];
+    const embedPopover = kind === "favorites";
     return html`
-      <div class="sum-control-bar-popover-anchor">
+      <div class="sum-control-bar-popover-anchor" data-sum-segment-panel=${kind}>
         <button
           type="button"
-          class=${btnClass}
+          class=${btnClass + badged}
           aria-label=${label}
           title=${tooltip}
           aria-expanded=${open ? "true" : "false"}
@@ -327,31 +342,29 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
           <span class="sum-control-bar-segment-label">${label}</span>
           ${this.renderBadge(badgeCount)}
         </button>
-        ${open ? this.renderOpenPanel() : ""}
+        ${open && embedPopover ? this.renderOpenPanel() : ""}
       </div>
     `;
   }
 
-  private renderActionsTrigger(entriesCount: number): TemplateResult | string {
+  private renderReportsTrigger(entriesCount: number): TemplateResult | string {
     if (entriesCount <= 0) return "";
-    const open = this.panelOpen === "actions";
+    const open = this.panelOpen === "reports";
     const btnClass = open
-      ? "sum-control-bar-actions-btn sum-control-bar-actions-btn--active"
-      : "sum-control-bar-actions-btn";
-    const icon = createToolbarIcon("download", "sum-control-bar-actions-icon");
+      ? "sum-control-bar-reports-btn sum-control-bar-reports-btn--active sum-control-bar-actions-btn sum-control-bar-actions-btn--active"
+      : "sum-control-bar-reports-btn sum-control-bar-actions-btn";
     const chevron = createToolbarIcon("chevron", "sum-control-bar-chip-chevron");
     return html`
-      <div class="sum-control-bar-popover-anchor">
+      <div class="sum-control-bar-popover-anchor sum-reports-anchor">
         <button
           type="button"
           class=${btnClass}
-          aria-label="Actions"
-          title="Export, import, and other record actions"
+          aria-label="Reports"
+          title="Import and export records"
           aria-expanded=${open ? "true" : "false"}
-          @click=${(e: Event) => { e.stopPropagation(); this.togglePanel("actions"); }}
+          @click=${(e: Event) => { e.stopPropagation(); this.togglePanel("reports"); }}
         >
-          ${icon}
-          <span class="sum-control-bar-actions-label">Actions</span>
+          <span class="sum-control-bar-reports-label sum-control-bar-actions-label">Reports</span>
           ${chevron}
         </button>
         ${open ? this.renderOpenPanel() : ""}
@@ -362,7 +375,7 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
   override template(): TemplateResult {
     const payload = this.props.payload;
     const fields = exportFieldNamesCsv(visibleArchFields(payload.arch.fields ?? []));
-    const actionEntries = buildReportActionEntries(payload, fields);
+    const actionEntries = buildAllReportEntries(payload, fields, 0, this.props.viewType);
     const tags = activeFilterTags(this.query, this.searchMeta());
     const fCount = filterCount(this.query);
     const gCount = groupByCount(this.query);
@@ -395,12 +408,15 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
               ${this.renderSearchBar(tags)}
             </div>
             <div class="sum-control-bar-tools">
-              <div class="sum-control-bar-segment" role="group" aria-label="Search options">
-                ${this.renderSegmentButton("filters", "Filters", "filter", fCount)}
-                ${this.renderSegmentButton("group", "Group By", "group", gCount)}
-                ${this.renderSegmentButton("favorites", "Favorites", "favorite", 0)}
+              <div class="sum-control-bar-segment-wrap">
+                <div class="sum-control-bar-segment" role="group" aria-label="Search options">
+                  ${this.renderSegmentButton("filters", "Filters", "filter", fCount)}
+                  ${this.renderSegmentButton("group", "Group By", "group", gCount)}
+                  ${this.renderSegmentButton("favorites", "Favorites", "favorite", 0)}
+                </div>
+                ${this.renderFiltersGroupDrop()}
               </div>
-              ${this.renderActionsTrigger(actionEntries.length)}
+              ${this.renderReportsTrigger(actionEntries.length)}
               ${this.props.extraPrimary ?? ""}
             </div>
           </div>

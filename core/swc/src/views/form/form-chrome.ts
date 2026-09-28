@@ -61,6 +61,7 @@ export function renderFormToolbarPrimary(options: FormToolbarOptions): HTMLEleme
 
   for (const archButton of headerButtons) {
     if (archButton.type !== "object") continue;
+    if (payload.recordId <= 0) continue;
     if (!isButtonVisible(archButton, record)) continue;
     items.push(
       headerButton(
@@ -80,8 +81,11 @@ export function renderFormToolbar(options: FormToolbarOptions): TemplateResult {
   const { payload, readonly, fields, record, renderField } = options;
   const headerFields = payload.arch.header?.fields ?? [];
   const exportFields = exportFieldNamesCsv(fields);
-  const reportActions =
-    payload.recordId > 0 ? renderReportActions(payload, exportFields, payload.recordId) : null;
+  const reportActions = renderReportActions(
+    payload,
+    exportFields,
+    payload.recordId > 0 ? payload.recordId : 0,
+  );
 
   return html`
     <div class="sum-ws-record-toolbar sum-view-toolbar sum-form-toolbar">
