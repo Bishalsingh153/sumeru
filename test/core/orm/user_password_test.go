@@ -50,3 +50,11 @@ func TestSetUserPasswordRequiresAdmin(t *testing.T) {
 		t.Fatal("expected denial without system admin (and/or DB)")
 	}
 }
+
+func TestSetOwnUserPasswordRejectsOtherUserWithoutAdmin(t *testing.T) {
+	ctx := orm.ContextWithUID(context.Background(), 2)
+	err := orm.SetOwnUserPassword(ctx, 2, 3, "ValidPass1")
+	if err == nil || !strings.Contains(err.Error(), "system administrator") {
+		t.Fatalf("expected admin requirement for other user, got %v", err)
+	}
+}

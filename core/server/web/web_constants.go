@@ -144,8 +144,9 @@ const (
 	settingsHubInnerTemplate   = "settings_hub_inner.html"
 	settingsHubPageTitle       = "Settings"
 	settingsHubStylesheetURL   = "/static/css/sumeru-settings-hub.css"
-	settingsHubBodyClass       = " sum-body--settings-hub"
-	groupUserXML               = "base.group_user"
+	settingsHubBodyClass         = " sum-body--settings-hub"
+	settingsAccountInnerTemplate = "settings_account_inner.html"
+	groupUserXML                 = "base.group_user"
 )
 
 // Apps module action form fields (POST apps_*).

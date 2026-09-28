@@ -27,6 +27,7 @@ type WorkspacePayload struct {
 	FormBaseQuery string                   `json:"formBaseQuery,omitempty"`
 	Defaults      map[string]interface{}   `json:"defaults,omitempty"`
 	IframeURL     string                   `json:"iframeUrl,omitempty"`
+	UserSecurity  *UserSecurityPayload     `json:"userSecurity,omitempty"`
 }
 
 type ViewTab struct {

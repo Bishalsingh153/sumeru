@@ -43,6 +43,14 @@ func flashFromQueryMessage(msg string) (render.FlashMessage, bool) {
 	switch msg {
 	case resetPasswordMsg:
 		return render.FlashMessage{Kind: "info", Title: "Password reset", Body: "If the account exists, reset instructions were sent."}, true
+	case "password_updated":
+		return render.FlashMessage{Kind: "success", Title: "Password updated", Body: "Your password was changed."}, true
+	case "password_mismatch":
+		return render.FlashMessage{Kind: "error", Title: "Passwords do not match", Body: "Enter the same password in both fields."}, true
+	case "password_required":
+		return render.FlashMessage{Kind: "error", Title: "Password required", Body: "Enter a new password."}, true
+	case "password_failed":
+		return render.FlashMessage{Kind: "error", Title: "Could not update password", Body: "Check policy requirements and try again."}, true
 	case "api_key_created":
 		return render.FlashMessage{Kind: "success", Title: "API key created", Body: "Copy the key from the banner above if shown."}, true
 	case moduleMsgSaved:

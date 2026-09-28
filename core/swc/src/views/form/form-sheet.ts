@@ -29,6 +29,8 @@ import {
   resolveImageDisplaySrc,
 } from "../shared/image-placeholder.js";
 import { visibleArchFields } from "../shared/arch-fields.js";
+import type { SwcUserSecurityMeta } from "../../types/workspace.js";
+import { renderUserSecuritySection } from "./user-security-section.js";
 
 export type RenderFieldFn = (
   field: SwcArchField,
@@ -336,12 +338,20 @@ function renderNotebook(
   notebookIndex: number,
   activePage: number,
   onTab: (notebookIndex: number, pageIndex: number) => void,
+  userSecurity?: SwcUserSecurityMeta,
 ): TemplateResult {
   const pages = notebook.pages ?? [];
   if (pages.length === 0) return html``;
 
   const idx = Math.min(Math.max(activePage, 0), pages.length - 1);
   const page = pages[idx];
+  const pageTitle = (page.title ?? "").trim();
+  let securityExtra: TemplateResult = html``;
+  if (userSecurity && pageTitle === "Access Rights") {
+    securityExtra = renderUserSecuritySection(userSecurity, "access", readonly);
+  } else if (userSecurity && pageTitle === "Account Security") {
+    securityExtra = renderUserSecuritySection(userSecurity, "password", readonly);
+  }
 
   return html`<div class="sum-notebook sum-notebook--sheet">
     <div class="sum-notebook-tabs" role="tablist">
@@ -356,6 +366,7 @@ function renderNotebook(
         ${(page.groups ?? []).map((g) => renderGroup(rf, g, record, readonly))}
         ${renderSeparators(page.separators)}
         ${renderLabels(page.labels)}
+        ${securityExtra}
       </div>
     </div>
   </div>`;
@@ -371,6 +382,7 @@ export interface RenderFormSheetOptions {
   onNotebookTab: (notebookIndex: number, pageIndex: number) => void;
   renderField?: RenderFieldFn;
   onStatButton?: (name: string) => void;
+  userSecurity?: SwcUserSecurityMeta;
 }
 
 export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult {
@@ -384,6 +396,7 @@ export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult
     onNotebookTab,
     renderField: renderFieldOpt,
     onStatButton,
+    userSecurity,
   } = options;
   const rf: RenderFieldFn =
     renderFieldOpt ?? ((f, r, ro) => defaultRenderField(env, f, r, ro));
@@ -410,7 +423,7 @@ export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult
 
   (sheet.notebook ?? []).forEach((nb, notebookIndex) => {
     const activePage = activeNotebookPages[notebookIndex] ?? 0;
-    parts.push(renderNotebook(rf, nb, record, readonly, notebookIndex, activePage, onNotebookTab));
+    parts.push(renderNotebook(rf, nb, record, readonly, notebookIndex, activePage, onNotebookTab, userSecurity));
   });
 
   const sheetSeparators = sheet.separators ?? [];
