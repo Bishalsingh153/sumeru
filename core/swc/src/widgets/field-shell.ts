@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from "../template/html.js";
-import { debugFieldTitle } from "../devtools/debug.js";
+import { debugFieldTitle, isDebugMode } from "../devtools/debug.js";
 import type { SwcArchField } from "../types/workspace.js";
 import type { SwcRecord } from "../model/record.js";
 
@@ -55,6 +55,15 @@ export function fieldWidgetClass(field: SwcArchField, extra: string[] = []): str
   return parts.join(" ");
 }
 
+export function renderDebugFieldInfoBtn(): TemplateResult {
+  return html`<button
+    type="button"
+    class="sum-debug-field-info-btn"
+    aria-label="Field debug info"
+    tabindex="-1"
+  ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></button>`;
+}
+
 export function fieldLabel(
   field: SwcArchField,
   forId?: string,
@@ -65,14 +74,16 @@ export function fieldLabel(
   const label = field.string ?? field.name;
   const cls = row ? "sum-field-label sum-field-label--row" : "sum-field-label";
   const title = debugFieldTitle(modelName || "?", field.name, field.type ?? field.widget);
+  const infoBtn = isDebugMode() && modelName ? renderDebugFieldInfoBtn() : "";
+  const text = html`<span class="sum-field-label__text">${label}</span>`;
   if (forId) {
     return title
-      ? html`<label class=${cls} id=${labelId} for=${forId} title=${title}>${label}</label>`
-      : html`<label class=${cls} id=${labelId} for=${forId}>${label}</label>`;
+      ? html`<label class=${cls} id=${labelId} for=${forId} title=${title}>${text}${infoBtn}</label>`
+      : html`<label class=${cls} id=${labelId} for=${forId}>${text}${infoBtn}</label>`;
   }
   return title
-    ? html`<span class=${cls} id=${labelId} title=${title}>${label}</span>`
-    : html`<span class=${cls} id=${labelId}>${label}</span>`;
+    ? html`<span class=${cls} id=${labelId} title=${title}>${text}${infoBtn}</span>`
+    : html`<span class=${cls} id=${labelId}>${text}${infoBtn}</span>`;
 }
 
 export function fieldControl(
@@ -117,20 +128,29 @@ export function fieldReadonlyInput(
   />`;
 }
 
-/** Merge debug model name from a record into field shell options. */
+/** Merge record model into field shell options (pass on every renderFieldShell call). */
 export function shellOptions(record: SwcRecord, extra: FieldShellOptions = {}): FieldShellOptions {
-  return { ...extra, modelName: extra.modelName ?? record.model };
+  return { ...extra, record, modelName: extra.modelName ?? record.model };
 }
 
 export interface FieldShellOptions {
   showLabel?: boolean;
   modifiers?: string[];
-  /** Explicit labelable control id, or false to omit the label `for` attribute. */
   labelFor?: string | false;
   layout?: "row" | "stack";
   compact?: boolean;
-  /** Res model name for debug field tooltips. */
   modelName?: string;
+  record?: SwcRecord;
+}
+
+function debugShellAttrs(modelName: string, field: SwcArchField) {
+  const debugKey = modelName ? `${modelName}.${field.name}` : undefined;
+  return {
+    debugKey,
+    type: field.type ?? "",
+    widget: field.widget ?? "",
+    label: field.string ?? field.name,
+  };
 }
 
 export function renderFieldShell(
@@ -140,23 +160,53 @@ export function renderFieldShell(
 ): TemplateResult {
   const showLabel = options.showLabel !== false;
   const labelId = fieldLabelId(field);
-  const modelName = options.modelName ?? "";
+  const modelName = options.modelName ?? options.record?.model ?? "";
   const labelFor = options.labelFor === false ? undefined : options.labelFor;
   const useRow =
     options.layout === "row" || (options.layout !== "stack" && !isFullWidthField(field) && !options.compact);
   const modifiers = [...(options.modifiers ?? [])];
   if (useRow) modifiers.push("sum-field-widget--row");
+  if (isDebugMode() && modelName) modifiers.push("sum-field-widget--debug");
   const wrappedBody = fieldControl(body, options.compact === true, labelFor ? undefined : labelId);
+  const attrs = debugShellAttrs(modelName, field);
+  const floatingDebug =
+    !showLabel && isDebugMode() && modelName
+      ? html`<div class="sum-field-widget__debug-anchor">${renderDebugFieldInfoBtn()}</div>`
+      : "";
 
-  if (useRow) {
-    return html`<div class=${fieldWidgetClass(field, modifiers)}>
-      ${showLabel ? fieldLabel(field, labelFor, true, labelId, modelName) : ""}
-      ${wrappedBody}
-    </div>`;
-  }
-
-  return html`<div class=${fieldWidgetClass(field, modifiers)}>
-    ${showLabel ? fieldLabel(field, labelFor, false, labelId, modelName) : ""}
+  const shellInner = html`
+    ${floatingDebug}
+    ${showLabel ? fieldLabel(field, labelFor, useRow, labelId, modelName) : ""}
     ${wrappedBody}
+  `;
+
+  return html`<div
+    class=${fieldWidgetClass(field, modifiers)}
+    data-sum-debug-field=${attrs.debugKey}
+    data-sum-debug-type=${attrs.type}
+    data-sum-debug-widget=${attrs.widget}
+    data-sum-debug-label=${attrs.label}
+  >
+    ${shellInner}
+  </div>`;
+}
+
+/** Debug wrapper for custom form regions (hero, contact row). */
+export function wrapDebugFieldRegion(
+  modelName: string,
+  field: SwcArchField,
+  body: TemplateResult,
+): TemplateResult {
+  if (!isDebugMode() || !modelName) return body;
+  const attrs = debugShellAttrs(modelName, field);
+  return html`<div
+    class="sum-debug-field-region"
+    data-sum-debug-field=${attrs.debugKey}
+    data-sum-debug-type=${attrs.type}
+    data-sum-debug-widget=${attrs.widget}
+    data-sum-debug-label=${attrs.label}
+  >
+    <div class="sum-debug-field-region__anchor">${renderDebugFieldInfoBtn()}</div>
+    ${body}
   </div>`;
 }

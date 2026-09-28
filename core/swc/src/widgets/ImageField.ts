@@ -1,6 +1,6 @@
 import { SwcComponent } from "../runtime/component.js";
 import { html } from "../template/html.js";
-import { fieldInputId, renderFieldShell } from "./field-shell.js";
+import { fieldInputId, renderFieldShell, shellOptions } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { stringFromUnknown } from "./field-value.js";
 import { inputValueFromEvent } from "./field-events.js";
@@ -55,7 +55,7 @@ export class ImageField extends SwcComponent<FieldWidgetProps> {
           @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
         />
       </div>`,
-      { modifiers: ["sum-field-widget--image"], labelFor: false },
+      shellOptions(record, { modifiers: ["sum-field-widget--image"], labelFor: false }),
     );
   }
 }

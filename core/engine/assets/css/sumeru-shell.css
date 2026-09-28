@@ -510,6 +510,81 @@
   margin: 0;
 }
 
+.sum-dropdown-sep {
+  height: 1px;
+  margin: 0.25rem 0.35rem;
+  background: var(--sum-line);
+}
+
+.sum-debug-menu-host {
+  display: flex;
+  align-items: center;
+  margin-right: 0.35rem;
+}
+
+.sum-dropdown--debug > summary.sum-debug-menu-btn {
+  padding: 0.35rem;
+  border-radius: var(--sum-radius-sm);
+}
+
+.sum-debug-menu-btn--active {
+  background: rgba(255, 210, 90, 0.22) !important;
+  border-color: rgba(255, 210, 90, 0.55) !important;
+  color: #ffe9a8;
+}
+
+.sum-debug-mega-menu-panel {
+  min-width: 15rem;
+  max-width: 18rem;
+  padding: 0.5rem 0 !important;
+  background: #2b2d35;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e8eaed;
+}
+
+.sum-debug-mega-menu__heading {
+  padding: 0.45rem 0.85rem 0.25rem;
+  font-size: 0.68rem;
+  font-weight: var(--sum-font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.sum-debug-mega-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.85rem 0.4rem 1.15rem;
+  border: none;
+  background: transparent;
+  color: #f3f4f6;
+  font-size: var(--sum-font-size-sm);
+  cursor: pointer;
+}
+
+.sum-debug-mega-menu__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sum-debug-mega-menu__item--danger {
+  color: #fca5a5;
+}
+
+.sum-debug-mega-menu__readout {
+  padding: 0.25rem 0.85rem 0.25rem 1.15rem;
+  font-family: var(--sum-font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.sum-debug-mega-menu-panel .sum-dropdown-sep {
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0.35rem 0.5rem;
+}
+
 .sum-sidebar {
   width: var(--sum-sidebar-width);
   flex-shrink: 0;

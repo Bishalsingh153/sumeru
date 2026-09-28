@@ -1,6 +1,6 @@
 import { SwcComponent } from "../runtime/component.js";
 import { html } from "../template/html.js";
-import { fieldLabelId, renderFieldShell } from "./field-shell.js";
+import { fieldLabelId, renderFieldShell, shellOptions } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { booleanFromUnknown } from "./field-value.js";
 import { isFieldReadonly } from "../model/modifiers.js";
@@ -38,7 +38,7 @@ export class BooleanRadioField extends SwcComponent<FieldWidgetProps> {
           No
         </label>
       </div>`,
-      { labelFor: false },
+      shellOptions(record, { labelFor: false }),
     );
   }
 }

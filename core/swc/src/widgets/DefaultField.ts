@@ -7,6 +7,7 @@ import {
   fieldAutocomplete,
   fieldReadonlyInput,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { stringFromUnknown } from "./field-value.js";
@@ -49,7 +50,7 @@ export class DefaultField extends SwcComponent<FieldWidgetProps> {
         field.type === "integer" || field.type === "float" || field.type === "numeric"
           ? fieldReadonlyInput(field, fieldValue, "text")
           : fieldReadonlyInput(field, fieldValue, inputType === "text" ? "text" : inputType),
-        { labelFor: id, modelName: record.model },
+        shellOptions(record, { labelFor: id }),
       );
     }
 
@@ -68,7 +69,7 @@ export class DefaultField extends SwcComponent<FieldWidgetProps> {
           record.set(field.name, parseNumericValue(field, inputValueFromEvent(event)))}
         @change=${() => record.notifyFieldChange(field.name)}
       />`,
-      { labelFor: id, modelName: record.model },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }

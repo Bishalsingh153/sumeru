@@ -4,6 +4,7 @@ import {
   fieldInputId,
   fieldReadonlyValue,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { booleanFromUnknown } from "./field-value.js";
@@ -17,7 +18,7 @@ export class BooleanField extends SwcComponent<FieldWidgetProps> {
     const id = fieldInputId(field);
 
     if (isFieldReadonly(field, record, readonly)) {
-      return renderFieldShell(field, fieldReadonlyValue(checked ? "Yes" : "No"), { labelFor: false });
+      return renderFieldShell(field, fieldReadonlyValue(checked ? "Yes" : "No"), shellOptions(record, { labelFor: false }));
     }
 
     return renderFieldShell(
@@ -31,7 +32,7 @@ export class BooleanField extends SwcComponent<FieldWidgetProps> {
         checked=${checked ? "checked" : ""}
         @change=${(event: Event) => record.set(field.name, checkboxCheckedFromEvent(event))}
       />`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }
