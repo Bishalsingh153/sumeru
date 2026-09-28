@@ -131,6 +131,16 @@ Kernel paths that must bypass record rules (module install, cron, outbox drain, 
 | `setup.bootstrap` | First-time setup handler |
 | `schema.sync` | Registry schema sync |
 
+## Developer mode (SWC)
+
+System administrators see a **bug icon** in the web top bar (`features.debugMenu` in SWC bootstrap). Use it to:
+
+- **Enable developer mode** (`?debug=1`) — client arch/RPC logging, debug drawer, optional field inspector.
+- **Enable developer mode (assets)** (`?debug=assets`) — same with asset cache bust on reload.
+- **Disable developer mode** — clears the query param and session flag.
+
+With developer mode on, the top-bar **bug menu** shows sectioned actions (Record, User interface, Security, Tools). Each form field label gets an **info icon**; hover it for a technical popover (field, model, domain, modifiers). **Metadata** and **Data** open modals; **Access rights** opens the secondary debug drawer (collapsed by default). The **field inspector** toggle enables click-to-select on the field widget without blocking normal input when off. **SWC Vision** and **Open metrics** remain admin-gated.
+
 ## View modifier expressions (SWC)
 
 Dynamic `invisible` / `readonly` / `required` expressions in form and list arch are evaluated client-side with a **frozen allowlist** of identifiers: record field names, `user_id`, `company_id`, and `context` (object). Expressions must be boolean JavaScript fragments (for example `state == 'done'`), not statements. Tokens such as `function`, `=>`, `[`, `` ` ``, or `;` are rejected. Static arch flags still apply when an expression is missing or invalid.
