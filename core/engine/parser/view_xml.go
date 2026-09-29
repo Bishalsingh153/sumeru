@@ -67,11 +67,13 @@ type View struct {
 }
 
 // ReportElement declares report download and bulk upload on a view.
+// invisible="1" on the active view hides Reports for that view mode only.
 type ReportElement struct {
-	Download string `xml:"download,attr"`
-	Upload   string `xml:"upload,attr"`
-	PDFSizes string `xml:"pdf_sizes,attr"`
-	Modes    string `xml:"modes,attr"`
+	Download  string `xml:"download,attr"`
+	Upload    string `xml:"upload,attr"`
+	PDFSizes  string `xml:"pdf_sizes,attr"`
+	Modes     string `xml:"modes,attr"`
+	Invisible string `xml:"invisible,attr"`
 }
 
 // KanbanGroupField returns the column grouping field (default_group_by, then group_by).

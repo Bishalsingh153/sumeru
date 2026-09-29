@@ -60,7 +60,14 @@ func buildSwcWorkspacePayload(
 			Values: viewRecord.Pivot.Values, MeasureLabel: viewRecord.Pivot.MeasureLabel,
 		}
 	}
-	payload := swcmeta.BuildWorkspacePayload(ctx, resolved.view, resolved.selectedMode, input, req.menuID)
+	payload := swcmeta.BuildWorkspacePayload(
+		ctx,
+		resolved.view,
+		resolved.selectedMode,
+		input,
+		req.menuID,
+		actionViewModesForTabs(actionData),
+	)
 	if viewRecord.ResModel == coreUserModel && resolved.selectedMode == "form" {
 		if meta, err := orm.BuildUserSecurityMeta(ctx, orm.SecurityUID(ctx), viewRecord.RecordID); err == nil {
 			us := swcmeta.UserSecurityFromORM(meta)

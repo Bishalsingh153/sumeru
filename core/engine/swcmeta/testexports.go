@@ -2,9 +2,10 @@ package swcmeta
 
 import (
 	"context"
+	"reflect"
 
 	"sumeru/core/engine/parser"
-	"reflect"
+	"sumeru/core/report"
 )
 
 func SerializeSheetForTest(ctx context.Context, model string, s *parser.Sheet) *ArchSheet {
@@ -28,3 +29,17 @@ func SerializeFieldsForTest(ctx context.Context, fields []parser.Field) []ArchFi
 func EnrichFieldForTest(model string, f ArchField) ArchField { return enrichField(model, f) }
 
 func WorkspacePayloadTypeForTest() reflect.Type { return reflect.TypeOf(WorkspacePayload{}) }
+
+func ApplyReportToArchForTest(
+	ctx context.Context,
+	arch *ViewArch,
+	model string,
+	activeView *parser.View,
+	actionViewModes []string,
+) {
+	ApplyReportToArch(ctx, arch, model, activeView, actionViewModes)
+}
+
+func UnionReportCapabilitiesForTest(a, b report.Capabilities) report.Capabilities {
+	return unionReportCapabilities(a, b)
+}

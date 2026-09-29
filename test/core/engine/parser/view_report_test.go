@@ -40,6 +40,18 @@ func TestReportViewAttributes(t *testing.T) {
 	}
 }
 
+func TestReportElementOnFormArch(t *testing.T) {
+	arch := `<form><report download="csv,pdf" upload="bulk"/><sheet><field name="name"/></sheet></form>`
+	v, err := parser.ParseViewFromArch(arch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caps := report.CapabilitiesFromView(v)
+	if !caps.HasDownload() || !caps.BulkUpload {
+		t.Fatalf("caps = %+v", caps)
+	}
+}
+
 func TestReportHeaderWidget(t *testing.T) {
 	arch := `<view type="form" model="crm.lead"><header><widget type="report_download" formats="pdf"/><widget type="bulk_upload"/></header></view>`
 	v, err := parser.ParseViewFromArch(arch)
