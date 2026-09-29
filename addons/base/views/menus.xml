@@ -19,6 +19,7 @@
         <menuitem id="menu_security_rules" name="Record Rules" parent="menu_security_section" sequence="20" action="base.access_action_sys.rule" groups="base.group_system" web_icon="settings"/>
         <menuitem id="menu_sys_field_access" name="Field Access" parent="menu_security_section" sequence="30" action="base.action_sys.field.access" groups="base.group_system" web_icon="settings"/>
         <menuitem id="menu_sys_field_access_matrix" name="Field access matrix" parent="menu_security_section" sequence="40" action="base.action_sys.field.access_matrix" groups="base.group_system" web_icon="settings"/>
+        <menuitem id="menu_sys_access_matrix" name="Model access matrix" parent="menu_security_section" sequence="45" action="base.action_sys.access_matrix" groups="base.group_system" web_icon="settings"/>
 
         <!-- Platform -->
         <menuitem id="menu_platform_section" name="Platform" parent="menu_settings_root" sequence="16" web_icon="settings" groups="base.group_system"/>
