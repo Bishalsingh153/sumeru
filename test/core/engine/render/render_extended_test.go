@@ -17,6 +17,9 @@ func TestBuildSidebarMenusExtended(t *testing.T) {
 	if len(out) != 1 || out[0].Name != "Sales" {
 		t.Fatalf("sidebar: %+v", out)
 	}
+	if len(out[0].SubMenus) != 1 || out[0].SubMenus[0].Name != "Leads" {
+		t.Fatalf("flattened leads link: %+v", out[0].SubMenus)
+	}
 }
 
 func TestResolveActiveModuleID(t *testing.T) {

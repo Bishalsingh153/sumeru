@@ -1,7 +1,7 @@
 import { html, type TemplateResult, type TemplateValue } from "../../template/html.js";
 import type { SwcArchButton, SwcArchField, SwcWorkspacePayload } from "../../types/workspace.js";
 import type { SwcRecord } from "../../model/record.js";
-import { isButtonVisible } from "../../model/modifiers.js";
+import { isButtonVisible, type ModifierViewContext } from "../../model/modifiers.js";
 import { headerButton, renderNewButton } from "../shared/view-toolbar.js";
 
 export interface FormToolbarOptions {
@@ -21,6 +21,7 @@ export interface FormToolbarOptions {
   renderField: (field: SwcArchField, record: SwcRecord, readonly: boolean) => HTMLElement;
   reportsSlot?: TemplateValue;
   onToolbarBackdropClick?: () => void;
+  viewCtx?: ModifierViewContext;
 }
 
 /** Primary Save/Cancel/Edit/New/object buttons for the form record toolbar. */
@@ -59,7 +60,7 @@ export function renderFormToolbarPrimary(options: FormToolbarOptions): HTMLEleme
   for (const archButton of headerButtons) {
     if (archButton.type !== "object") continue;
     if (payload.recordId <= 0) continue;
-    if (!isButtonVisible(archButton, record)) continue;
+    if (!isButtonVisible(archButton, record, options.viewCtx)) continue;
     items.push(
       headerButton(
         archButton.string || archButton.name,

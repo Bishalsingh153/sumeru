@@ -10,6 +10,18 @@ export interface ModifierViewContext {
   context?: Record<string, unknown>;
 }
 
+/** Session ids for modifier expressions (read bootstrap each render — company switch updates it). */
+export function modifierViewContext(boot: {
+  user?: { id: number };
+  activeCompanyId?: number;
+}): ModifierViewContext {
+  return {
+    userId: boot.user?.id,
+    companyId: boot.activeCompanyId,
+    context: {},
+  };
+}
+
 const UNSAFE_EXPR = /[`\\[\];]|=>|\bfunction\b|\bclass\b|\bimport\b|\beval\b|\bnew\b/i;
 
 /** Evaluate a dynamic modifier expression against allowlisted ctx keys only. */

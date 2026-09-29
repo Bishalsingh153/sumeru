@@ -26,6 +26,14 @@ export function forEach<T>(
 }
 
 /** First matching branch of a condition chain. */
+/** Shallow merge for sum-template t-call / t-set scope. */
+export function mergeScope(
+  base: Record<string, unknown>,
+  patch: Record<string, unknown>,
+): Record<string, unknown> {
+  return { ...base, ...patch };
+}
+
 export function when(
   condition: unknown,
   renderFn: () => TemplateResult,

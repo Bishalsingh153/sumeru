@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"sumeru/core/engine/render"
 	"sumeru/core/server/web"
 )
 
@@ -177,11 +176,8 @@ func TestWebHelperExportsCoverage(t *testing.T) {
 	if got := web.ResolveExtraScripts([]string{"/a.js"}, []string{"/b.js"}); len(got) < 1 {
 		t.Fatalf("scripts: %v", got)
 	}
-	section, ok := web.SettingsHubSectionFromSidebar(render.SidebarMenu{ID: "settings"})
-	_ = section
-	_ = ok
 	settingsPage := web.BuildSettingsHubPageData(context.Background(), "1")
-	if settingsPage.Title == "" {
+	if settingsPage.Title == "" || settingsPage.SuppressSidebar || settingsPage.SuppressActivityDock {
 		t.Fatal("settings hub page")
 	}
 	if got := web.AppLogsViewStylesheets(); len(got) == 0 {

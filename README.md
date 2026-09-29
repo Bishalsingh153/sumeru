@@ -8,9 +8,10 @@
 [![Pre-Alpha](https://img.shields.io/badge/Status-Pre--Alpha-critical)](https://github.com/ProjectMeru/sumeru)
 [![Docs](https://img.shields.io/badge/Docs-projectmeru.github.io-informational)](https://projectmeru.github.io/sumeru/docs/)
 
-![Sumeru settings and apps hub](core/engine/assets/img/hero_img.png)
+![Sumeru settings](core/engine/assets/img/screenshots/hero_img.png)
+![Sumeru apps hub](core/engine/assets/img/screenshots/apps_imgs.png)
 
-*Settings hub — configure companies, users, localization, and open installed apps.*
+_Settings hub — configure companies, users, localization, and open installed apps._
 
 > [!CAUTION]
 >
@@ -89,25 +90,25 @@ Most development happens in **`sumeru_custom_addons`**. The core repo uses the s
 
 ### Custom workspace (`sumeru_custom_addons`)
 
-| Step | Command | What it does |
-| ---- | ------- | ------------ |
-| First time | `make setup` | Config, go.mod replaces, import generation, SWC + login JS |
-| Daily dev | `make run` or `make dev` | Regenerate imports, rebuild assets if stale, start HTTP server |
-| After SWC/CSS edits | `make swc` | Force rebuild workspace bundle + login JS |
-| Pull upstream | `git pull` in `sumeru` / `sumeru_addons`, then `make run` | Rebuilds assets when sources changed |
-| Tests | `make check` | SWC typecheck + Go tests |
-| Binary | `make build` | Imports + assets + `bin/sumeru-erp` |
+| Step                | Command                                                   | What it does                                                   |
+| ------------------- | --------------------------------------------------------- | -------------------------------------------------------------- |
+| First time          | `make setup`                                              | Config, go.mod replaces, import generation, SWC + login JS     |
+| Daily dev           | `make run` or `make dev`                                  | Regenerate imports, rebuild assets if stale, start HTTP server |
+| After SWC/CSS edits | `make swc`                                                | Force rebuild workspace bundle + login JS                      |
+| Pull upstream       | `git pull` in `sumeru` / `sumeru_addons`, then `make run` | Rebuilds assets when sources changed                           |
+| Tests               | `make check`                                              | SWC typecheck + Go tests                                       |
+| Binary              | `make build`                                              | Imports + assets + `bin/sumeru-erp`                            |
 
 ### Core repo (`sumeru`)
 
-| Step | Command | What it does |
-| ---- | ------- | ------------ |
-| First time | `make setup` | `sumeru.conf`, SWC assets, `cmd/sumeru/zimports.go` |
-| Daily dev | `make run` | `generate` + `assets` + `go run` |
-| Force client rebuild | `make swc` | Always rebuild SWC + login JS |
-| Incremental assets | `make assets` | Build only when bundles missing or sources changed |
-| Tests | `make check` | `swc-check` + `go test ./...` |
-| Binary | `make build` | `generate` + `assets` + `./sumeru` binary |
+| Step                 | Command       | What it does                                        |
+| -------------------- | ------------- | --------------------------------------------------- |
+| First time           | `make setup`  | `sumeru.conf`, SWC assets, `cmd/sumeru/zimports.go` |
+| Daily dev            | `make run`    | `generate` + `assets` + `go run`                    |
+| Force client rebuild | `make swc`    | Always rebuild SWC + login JS                       |
+| Incremental assets   | `make assets` | Build only when bundles missing or sources changed  |
+| Tests                | `make check`  | `swc-check` + `go test ./...`                       |
+| Binary               | `make build`  | `generate` + `assets` + `./sumeru` binary           |
 
 ```text
 make run  →  generate (Go imports)  →  assets (SWC + login JS)  →  go run server
@@ -117,11 +118,11 @@ make run  →  generate (Go imports)  →  assets (SWC + login JS)  →  go run 
 
 The browser UI is **not stored in git**. Sources live under **`core/swc/src/`** (TypeScript); build outputs are gitignored (see `.gitignore`).
 
-| Output | Purpose |
-| ------ | ------- |
-| `core/engine/assets/swc/swc.js` | Workspace UI (`/static/swc/swc.js`) |
-| `core/engine/assets/js/sumeru-password-toggle.js` | Login / setup password visibility |
-| `core/engine/assets/js/sumeru-password-match.js` | Setup password confirmation |
+| Output                                            | Purpose                             |
+| ------------------------------------------------- | ----------------------------------- |
+| `core/engine/assets/swc/swc.js`                   | Workspace UI (`/static/swc/swc.js`) |
+| `core/engine/assets/js/sumeru-password-toggle.js` | Login / setup password visibility   |
+| `core/engine/assets/js/sumeru-password-match.js`  | Setup password confirmation         |
 
 Build with **`make swc`** (always rebuild) or let **`make assets`** / **`make run`** build when bundles are missing or SWC sources changed. A fresh clone needs **Node.js** — run **`make setup`** or **`make run`** once before opening the app.
 
@@ -140,57 +141,57 @@ sumeru_custom_addons
   loads sumeru (core) + sumeru_addons via addons_path in sumeru.conf
 ```
 
-| Repository | Role |
-| ---------- | ---- |
-| **[sumeru](https://github.com/ProjectMeru/sumeru)** | Core engine + kernel apps (`base`, `mail`, …) |
-| **[sumeru_addons](https://github.com/ProjectMeru/sumeru_addons)** | Standard business apps (CRM, Sales, Inventory, …) |
+| Repository                                                                      | Role                                                              |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **[sumeru](https://github.com/ProjectMeru/sumeru)**                             | Core engine + kernel apps (`base`, `mail`, …)                     |
+| **[sumeru_addons](https://github.com/ProjectMeru/sumeru_addons)**               | Standard business apps (CRM, Sales, Inventory, …)                 |
 | **[sumeru_custom_addons](https://github.com/ProjectMeru/sumeru_custom_addons)** | Your workspace: custom addons, INI, generated imports, `make run` |
 
 **Entry binary:** `cmd/sumeru/main.go` → `sumeru/core/server`. Library code under `core/` has no `main`.
 
 ## Tech stack
 
-| Layer | Technology |
-| ----- | ---------- |
-| Server | Go 1.26.6+, structured logging (`log/slog`) |
-| Database | PostgreSQL |
-| Modules | Go addons + XML views/menus + manifest sync |
-| Workspace UI | SWC (TypeScript) — sources in `core/swc/` |
-| Client build | Node.js + npm (esbuild); `make assets` / `make swc` |
-| Styling | Plain CSS (`core/engine/assets/css/`) |
-| API | JSON-RPC at `POST /api/rpc`, health at `GET /api/health` |
+| Layer        | Technology                                               |
+| ------------ | -------------------------------------------------------- |
+| Server       | Go 1.26.6+, structured logging (`log/slog`)              |
+| Database     | PostgreSQL                                               |
+| Modules      | Go addons + XML views/menus + manifest sync              |
+| Workspace UI | SWC (TypeScript) — sources in `core/swc/`                |
+| Client build | Node.js + npm (esbuild); `make assets` / `make swc`      |
+| Styling      | Plain CSS (`core/engine/assets/css/`)                    |
+| API          | JSON-RPC at `POST /api/rpc`, health at `GET /api/health` |
 
 CLI flags: `-c` config, `-d` database, `-p` port, `-i` install modules, `-u` update modules. See [Tooling docs](https://projectmeru.github.io/sumeru/docs/guides/build/tooling.html).
 
 ## Documentation
 
-| Resource | Contents |
-| -------- | -------- |
-| [Documentation home](https://projectmeru.github.io/sumeru/docs/) | Guides, reference, and tutorials |
-| [Installation](https://projectmeru.github.io/sumeru/docs/guides/start/installation.html) | First-time setup |
-| [Configuration](https://projectmeru.github.io/sumeru/docs/guides/start/configuration.html) | `sumeru.conf` keys and paths |
-| [JSON-RPC API](https://projectmeru.github.io/sumeru/docs/reference/json-rpc.html) | RPC methods, auth, errors |
-| [SWC architecture](https://projectmeru.github.io/sumeru/docs/guides/concepts/swc-architecture.html) | Workspace client |
-| [Creating an addon](https://projectmeru.github.io/sumeru/docs/guides/build/creating-an-addon.html) | Module authoring |
-| [Tooling](https://projectmeru.github.io/sumeru/docs/guides/build/tooling.html) | Makefile, import-gen, CLI |
-| [sumeru_addons README](https://github.com/ProjectMeru/sumeru_addons/blob/main/README.md) | Standard business apps |
-| [sumeru_custom_addons README](https://github.com/ProjectMeru/sumeru_custom_addons/blob/main/README.md) | Workspace runner |
+| Resource                                                                                               | Contents                         |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| [Documentation home](https://projectmeru.github.io/sumeru/docs/)                                       | Guides, reference, and tutorials |
+| [Installation](https://projectmeru.github.io/sumeru/docs/guides/start/installation.html)               | First-time setup                 |
+| [Configuration](https://projectmeru.github.io/sumeru/docs/guides/start/configuration.html)             | `sumeru.conf` keys and paths     |
+| [JSON-RPC API](https://projectmeru.github.io/sumeru/docs/reference/json-rpc.html)                      | RPC methods, auth, errors        |
+| [SWC architecture](https://projectmeru.github.io/sumeru/docs/guides/concepts/swc-architecture.html)    | Workspace client                 |
+| [Creating an addon](https://projectmeru.github.io/sumeru/docs/guides/build/creating-an-addon.html)     | Module authoring                 |
+| [Tooling](https://projectmeru.github.io/sumeru/docs/guides/build/tooling.html)                         | Makefile, import-gen, CLI        |
+| [sumeru_addons README](https://github.com/ProjectMeru/sumeru_addons/blob/main/README.md)               | Standard business apps           |
+| [sumeru_custom_addons README](https://github.com/ProjectMeru/sumeru_custom_addons/blob/main/README.md) | Workspace runner                 |
 
 Configuration template: **`sumeru.conf.example`** in this repo.
 
 ## Project layout
 
-| Path | Purpose |
-| ---- | ------- |
-| `core/orm/` | PostgreSQL models, CRUD, registry |
+| Path           | Purpose                                  |
+| -------------- | ---------------------------------------- |
+| `core/orm/`    | PostgreSQL models, CRUD, registry        |
 | `core/engine/` | View XML, HTML render, templates, assets |
-| `core/server/` | INI config, HTTP handlers |
-| `core/module/` | Addon discovery, install/update |
-| `core/sdk/` | Stable Go API for addons |
-| `core/swc/` | Workspace UI source (TypeScript) |
-| `cmd/sumeru/` | Server binary + generated imports |
-| `addons/` | Kernel apps shipped with core |
-| `test/` | Unit and integration tests |
+| `core/server/` | INI config, HTTP handlers                |
+| `core/module/` | Addon discovery, install/update          |
+| `core/sdk/`    | Stable Go API for addons                 |
+| `core/swc/`    | Workspace UI source (TypeScript)         |
+| `cmd/sumeru/`  | Server binary + generated imports        |
+| `addons/`      | Kernel apps shipped with core            |
+| `test/`        | Unit and integration tests               |
 
 ## Contributing
 

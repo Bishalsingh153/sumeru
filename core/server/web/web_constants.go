@@ -139,13 +139,15 @@ const (
 
 // Settings hub page identifiers.
 const (
-	settingsHubMenuXMLID       = "base.menu_settings_root"
-	settingsCompaniesMenuXMLID = "base.menu_company_companies"
+	settingsRootMenuXMLID      = "base.menu_settings_root"
+	settingsHubMenuXMLID       = render.MenuGeneralSettingsXMLID
 	settingsHubInnerTemplate   = "settings_hub_inner.html"
 	settingsHubPageTitle       = "Settings"
 	settingsHubStylesheetURL   = "/static/css/sumeru-settings-hub.css"
 	settingsHubBodyClass         = " sum-body--settings-hub"
-	settingsAccountInnerTemplate = "settings_account_inner.html"
+	settingsAccountInnerTemplate  = "settings_account_inner.html"
+	settingsFieldACLInnerTemplate = "settings_field_acl_inner.html"
+	settingsModelACLInnerTemplate = "settings_model_acl_inner.html"
 	groupUserXML                 = "base.group_user"
 )
 
@@ -229,9 +231,10 @@ const (
 
 // ORM models used by workspace handlers.
 const (
-	sysActionWindowModel = "sys.action.window"
+	sysActionWindowModel   = "sys.action.window"
 	sysActionURLModel      = "sys.action.url"
-	workspaceViewOpenOp  = "view_open"
+	resConfigSettingsModel = "res.config.settings"
+	workspaceViewOpenOp    = "view_open"
 )
 
 // Workspace error message fragments mapped to HTTP status codes.

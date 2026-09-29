@@ -11,6 +11,7 @@
                     <field name="perm_read" string="Read"/>
                     <field name="perm_write" string="Write"/>
                 </group>
+                <p class="sum-field-hint">Bulk edit at Settings → Security → Field access matrix (/web/settings/field-acl).</p>
             </sheet>
         </view>
     </data>

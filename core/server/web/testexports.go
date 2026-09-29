@@ -21,7 +21,6 @@ type (
 	WorkspaceRequest   = workspaceRequest
 	AppsModule         = appsModule
 	AppsModuleGroup    = appsModuleGroup
-	SettingsHubSection = settingsHubSection
 )
 
 // Route and query constants for external tests.
@@ -74,6 +73,7 @@ var (
 	TestWorkspaceStylesheetURL         = workspaceStylesheetURL
 	TestPagesStylesheetURL             = pagesStylesheetURL
 	TestSettingsHubStylesheetURL       = settingsHubStylesheetURL
+	TestSettingsHubScriptURL           = settingsHubScriptURL
 	TestMaxRPCBodyBytes          int64 = maxRPCBodyBytes
 	TestMaxChatterBodyRunes            = maxChatterBodyRunes
 	TestSetupRateLimitWindow           = setupRateLimitWindow
@@ -189,10 +189,6 @@ func ToSetupAdminParams(request SetupInitRequest) orm.SetupAdminParams {
 }
 
 func BuildSetupPageData() setupPageData { return buildSetupPageData() }
-
-func SettingsHubSectionFromSidebar(sidebarSection render.SidebarMenu) (SettingsHubSection, bool) {
-	return settingsHubSectionFromSidebar(sidebarSection)
-}
 
 func BuildSettingsHubPageData(ctx context.Context, menuIDStr string) render.PageData {
 	return buildSettingsHubPageData(ctx, menuIDStr)
@@ -623,4 +619,25 @@ func ParseShareTokenForTest(token string) (ShareTokenParsed, error) {
 		Model:     parsed.Model,
 		ResID:     parsed.ResID,
 	}, nil
+}
+
+func FieldACLMatrixRowNameForTest(model, field string, groupID int) string {
+	return fieldACLMatrixRowName(model, field, groupID)
+}
+
+func ModelACLMatrixRowNameForTest(model string, groupID int) string {
+	return modelACLMatrixRowName(model, groupID)
+}
+
+func MatrixGroupDisplayLenForTest(groupCount int, showAll bool) (displayLen int, truncated bool) {
+	groups := make([]aclGroupCol, groupCount)
+	for i := range groups {
+		groups[i] = aclGroupCol{ID: i + 1, Label: "g"}
+	}
+	out, truncated := matrixGroupsForDisplay(groups, showAll)
+	return len(out), truncated
+}
+
+func FilterFieldNamesForTest(fields []string, filter string) []string {
+	return filterFieldNames(fields, filter)
 }

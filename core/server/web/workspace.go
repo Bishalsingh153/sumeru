@@ -41,6 +41,11 @@ func WebHandler(w http.ResponseWriter, r *http.Request) {
 			renderURLActionWorkspace(w, r, actionID, menuQuery)
 			return
 		}
+		menuID := CanonicalMenuID(ctx, strings.TrimSpace(menuQuery), actionID)
+		if render.MenuIDIsGeneralSettings(ctx, menuID) && actionWindowTargetModel(nav.windowData) == resConfigSettingsModel {
+			http.Redirect(w, r, settingsRoute, http.StatusFound)
+			return
+		}
 		actionData = nav.windowData
 		resolved, err = resolveWorkspaceView(ctx, r, actionData)
 	} else if modelQuery != "" {
