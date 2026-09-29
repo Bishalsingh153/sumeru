@@ -115,7 +115,14 @@ Field access CSV (sys.field.access)
   Field-level ACL rows load from security/sys.field.access.csv (or sys.field.access.csv at the
   addon root) during module sync. Header:
   id,name,model,field_name,group_id:id,perm_read,perm_write
-  Export existing rows from Settings → Field Access (list view CSV export with a model filter).
+  Export from Settings → Security → Field access matrix (/web/settings/field-acl) via Export CSV,
+  or from the Field Access list view CSV export with a model filter.
+
+Model access matrix (sys.access)
+--------------------------------
+  Settings → Security → Model access matrix (/web/settings/model-acl) edits CRUD grants per group
+  for one model at a time. Matrix row names use the prefix matrix. (distinct from CSV id names).
+  Model rules still load from security/sys.access.csv on module sync (see ACL CSV above).
 
 Multiple addon roots (sumeru.conf)
 ----------------------------------

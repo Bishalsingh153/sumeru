@@ -620,3 +620,24 @@ func ParseShareTokenForTest(token string) (ShareTokenParsed, error) {
 		ResID:     parsed.ResID,
 	}, nil
 }
+
+func FieldACLMatrixRowNameForTest(model, field string, groupID int) string {
+	return fieldACLMatrixRowName(model, field, groupID)
+}
+
+func ModelACLMatrixRowNameForTest(model string, groupID int) string {
+	return modelACLMatrixRowName(model, groupID)
+}
+
+func MatrixGroupDisplayLenForTest(groupCount int, showAll bool) (displayLen int, truncated bool) {
+	groups := make([]aclGroupCol, groupCount)
+	for i := range groups {
+		groups[i] = aclGroupCol{ID: i + 1, Label: "g"}
+	}
+	out, truncated := matrixGroupsForDisplay(groups, showAll)
+	return len(out), truncated
+}
+
+func FilterFieldNamesForTest(fields []string, filter string) []string {
+	return filterFieldNames(fields, filter)
+}
