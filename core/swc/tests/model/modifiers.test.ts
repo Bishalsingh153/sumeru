@@ -76,4 +76,14 @@ describe("field modifiers", () => {
     const record = new SwcRecord("m", 1, {});
     expect(evalModifierExpr("function(){return true}", record)).toBeUndefined();
   });
+
+  it("evalModifierExpr uses user_id and company_id from view context", () => {
+    const record = new SwcRecord("m", 1, {});
+    expect(
+      evalModifierExpr("user_id == 5", record, { userId: 5, companyId: 1 }),
+    ).toBe(true);
+    expect(
+      evalModifierExpr("company_id == 3", record, { userId: 1, companyId: 3 }),
+    ).toBe(true);
+  });
 });

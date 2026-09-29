@@ -12,7 +12,7 @@ import { initFormInteractions } from "./form-interactions.js";
 import { validatePasswordMatchGroups } from "../../widgets/password-match.js";
 import { FieldHost } from "../../widgets/field-host.js";
 import { ChatterPanel } from "../chatter/ChatterPanel.js";
-import { isFieldVisible } from "../../model/modifiers.js";
+import { isFieldVisible, modifierViewContext, resolveFieldModifiers } from "../../model/modifiers.js";
 import { VIEW_FORM, VIEW_LIST } from "../../constants/routes.js";
 import { runObjectAction } from "../shared/object-action.js";
 import {
@@ -117,7 +117,7 @@ export class FormView extends SwcComponent<FormViewProps> {
     record: SwcRecord,
     readonly: boolean,
   ): HTMLElement => {
-    if (!isFieldVisible(field, record)) {
+    if (!isFieldVisible(field, record, modifierViewContext(this.env.bootstrap))) {
       const element = document.createElement("div");
       element.hidden = true;
       return element;
@@ -200,7 +200,11 @@ export class FormView extends SwcComponent<FormViewProps> {
     this.error = "";
     this.rerender();
     try {
-      const required = this.fields().filter((f) => f.required).map((f) => f.name);
+      const viewCtx = modifierViewContext(this.env.bootstrap);
+      const required = this.fields()
+        .filter((f) => isFieldVisible(f, this.record, viewCtx))
+        .filter((f) => resolveFieldModifiers(f, this.record, viewCtx).required)
+        .map((f) => f.name);
       this.env.services.record.validate(this.record, required);
       const isNew = payload.recordId <= 0;
       const id = await this.env.services.record.save(this.record);
@@ -381,6 +385,7 @@ export class FormView extends SwcComponent<FormViewProps> {
           onDuplicate: () => void this.duplicateRecord(),
           onObjectButton: (btn) => void this.runObjectButton(btn),
           renderField: this.renderFieldCached,
+          viewCtx: modifierViewContext(this.env.bootstrap),
           reportsSlot: renderReportsAnchor({
             open: this.reportsPanelOpen,
             onToggle: () => {
