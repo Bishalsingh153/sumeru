@@ -21,7 +21,6 @@ type (
 	WorkspaceRequest   = workspaceRequest
 	AppsModule         = appsModule
 	AppsModuleGroup    = appsModuleGroup
-	SettingsHubSection = settingsHubSection
 )
 
 // Route and query constants for external tests.
@@ -74,6 +73,7 @@ var (
 	TestWorkspaceStylesheetURL         = workspaceStylesheetURL
 	TestPagesStylesheetURL             = pagesStylesheetURL
 	TestSettingsHubStylesheetURL       = settingsHubStylesheetURL
+	TestSettingsHubScriptURL           = settingsHubScriptURL
 	TestMaxRPCBodyBytes          int64 = maxRPCBodyBytes
 	TestMaxChatterBodyRunes            = maxChatterBodyRunes
 	TestSetupRateLimitWindow           = setupRateLimitWindow
@@ -189,10 +189,6 @@ func ToSetupAdminParams(request SetupInitRequest) orm.SetupAdminParams {
 }
 
 func BuildSetupPageData() setupPageData { return buildSetupPageData() }
-
-func SettingsHubSectionFromSidebar(sidebarSection render.SidebarMenu) (SettingsHubSection, bool) {
-	return settingsHubSectionFromSidebar(sidebarSection)
-}
 
 func BuildSettingsHubPageData(ctx context.Context, menuIDStr string) render.PageData {
 	return buildSettingsHubPageData(ctx, menuIDStr)

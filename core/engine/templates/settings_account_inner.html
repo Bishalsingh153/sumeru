@@ -10,7 +10,6 @@
     <form class="sum-settings-account-form" method="post" action="/web/settings/account" data-password-match>
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
         <div class="sum-form-group-outer sum-field-region--sheet">
-            <div class="sum-form-group-title">New password</div>
             <div class="sum-form-group-grid">
                 <label class="sum-field-label" for="password_plain">Password</label>
                 <input id="password_plain" name="password_plain" type="password" autocomplete="new-password" required minlength="8" maxlength="72" class="sum-field-input" data-password-primary/>

@@ -349,11 +349,10 @@ func buildSettingsFieldACLPageData(ctx context.Context, menuIDStr string, page s
 	crumbs := render.BuildSettingsHubBreadcrumbs(ctx)
 	crumbs = append(crumbs, render.BreadcrumbItem{Label: "Field access matrix"})
 	pd := render.PageData{
-		Title:                "Field access matrix",
-		SettingsNavActive:    true,
-		ActiveMenuID:         menuIDStr,
-		SuppressActivityDock: true,
-		BreadcrumbItems:      crumbs,
+		Title:             "Field access matrix",
+		SettingsNavActive: true,
+		ActiveMenuID:      menuIDStr,
+		BreadcrumbItems:   crumbs,
 		ViewStylesheetURLs:   []string{settingsHubStylesheetURL},
 		ExtraBodyClasses:     settingsHubBodyClass,
 	}
