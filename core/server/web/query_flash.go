@@ -55,6 +55,10 @@ func flashFromQueryMessage(msg string) (render.FlashMessage, bool) {
 		return render.FlashMessage{Kind: "success", Title: "Field access saved", Body: "Matrix rules were updated."}, true
 	case "field_acl_failed":
 		return render.FlashMessage{Kind: "error", Title: "Field access not saved", Body: "Check the model and try again."}, true
+	case "model_acl_saved":
+		return render.FlashMessage{Kind: "success", Title: "Model access saved", Body: "Matrix rules were updated."}, true
+	case "model_acl_failed":
+		return render.FlashMessage{Kind: "error", Title: "Model access not saved", Body: "Check the model and try again."}, true
 	case "api_key_created":
 		return render.FlashMessage{Kind: "success", Title: "API key created", Body: "Copy the key from the banner above if shown."}, true
 	case moduleMsgSaved:

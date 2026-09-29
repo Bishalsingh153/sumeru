@@ -1,0 +1,71 @@
+<div class="sum-settings-hub sum-settings-field-acl">
+    <header class="sum-settings-hub-head">
+        <div class="sum-settings-hub-head-text">
+            <h1 class="sum-settings-hub-title">Model access matrix</h1>
+            <p class="sum-settings-hub-lead">Grant read, write, create, and unlink on a model per security group (<code>sys.access</code>).</p>
+        </div>
+        <a href="/web/settings" class="sum-settings-hub-cta">Back to Settings</a>
+    </header>
+
+    <form class="sum-settings-field-acl-picker" method="get" action="/web/settings/model-acl">
+        <label class="sum-field-label" for="model">Model</label>
+        <input id="model" name="model" type="text" class="sum-field-input" list="sum-model-acl-models" value="{{.Model}}" placeholder="core.user" required/>
+        <datalist id="sum-model-acl-models">
+            {{range .ModelChoices}}<option value="{{.}}"></option>{{end}}
+        </datalist>
+        <label class="sum-field-label" for="group_q">Filter groups</label>
+        <input id="group_q" name="group_q" type="search" class="sum-field-input" value="{{.GroupFilter}}" placeholder="Group name contains…"/>
+        <button type="submit" class="sum-btn sum-btn--primary">Load matrix</button>
+    </form>
+
+    {{if .Model}}
+    {{if .DebugAccessHref}}
+    <p class="sum-field-hint"><a href="{{.DebugAccessHref}}">Debug access trace</a> for this model (requires debug mode).</p>
+    {{end}}
+    {{if .GroupsTruncated}}
+    <p class="sum-field-hint">Showing first groups only. <a href="/web/settings/model-acl?model={{.Model}}&amp;group_q={{.GroupFilter}}&amp;show_all=1">Show all groups</a></p>
+    {{end}}
+    {{if .Cells}}
+    <form class="sum-settings-field-acl-matrix" method="post" action="/web/settings/model-acl">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+        <input type="hidden" name="model" value="{{.Model}}"/>
+        <input type="hidden" name="group_q" value="{{.GroupFilter}}"/>
+        {{if .ShowAllGroups}}<input type="hidden" name="show_all" value="1"/>{{end}}
+        <p class="sum-field-hint">Model: <strong>{{.Model}}</strong>. Checked permissions are granted for that group.</p>
+        <div class="sum-settings-field-acl-scroll">
+            <table class="sum-settings-field-acl-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Permission</th>
+                        {{range .Cells}}
+                        <th scope="col">{{.GroupLabel}}</th>
+                        {{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Read</th>
+                        {{range .Cells}}<td><input type="checkbox" name="pr_{{.GroupID}}" value="1" {{if .PermRead}}checked{{end}}/></td>{{end}}
+                    </tr>
+                    <tr>
+                        <th scope="row">Write</th>
+                        {{range .Cells}}<td><input type="checkbox" name="pw_{{.GroupID}}" value="1" {{if .PermWrite}}checked{{end}}/></td>{{end}}
+                    </tr>
+                    <tr>
+                        <th scope="row">Create</th>
+                        {{range .Cells}}<td><input type="checkbox" name="pc_{{.GroupID}}" value="1" {{if .PermCreate}}checked{{end}}/></td>{{end}}
+                    </tr>
+                    <tr>
+                        <th scope="row">Unlink</th>
+                        {{range .Cells}}<td><input type="checkbox" name="pu_{{.GroupID}}" value="1" {{if .PermUnlink}}checked{{end}}/></td>{{end}}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="sum-btn sum-btn--primary">Save matrix</button>
+    </form>
+    {{else}}
+    <p class="sum-field-hint">No groups to display.</p>
+    {{end}}
+    {{end}}
+</div>
