@@ -2,7 +2,9 @@
 <sumeru>
     <data>
         <view id="view_res.config.settings_form" model="res.config.settings" type="form">
-            <sheet/>
+            <form>
+                <sheet/>
+            </form>
         </view>
     </data>
 </sumeru>
