@@ -3,7 +3,6 @@ import type { SwcArchButton, SwcWorkspacePayload } from "../../types/workspace.j
 import { headerButton } from "../shared/view-toolbar.js";
 import { SwcError } from "../../runtime/error.js";
 import {
-  parseFilterCSV,
   renderControlPanel,
   renderRowCheckbox,
   renderSelectAllHeader,
@@ -16,7 +15,7 @@ import { runObjectAction } from "../shared/object-action.js";
 import { formatFieldValue } from "../shared/field-display.js";
 import { listColumns } from "../shared/arch-fields.js";
 import { isFieldVisible } from "../../model/modifiers.js";
-import { navigateCollectionQuery } from "../shared/collection-query.js";
+import { navigateCollectionQuery, parseFilterCSV } from "../shared/collection-query.js";
 import { CollectionView } from "../shared/collection-view.js";
 import { openWorkspaceRecord } from "../shared/collection-navigation.js";
 

@@ -4,7 +4,8 @@ import type { SwcArchButton, SwcWorkspacePayload } from "../../types/workspace.j
 import type { SwcRecord } from "../../model/record.js";
 import { takePendingChildren } from "../../model/pending-children.js";
 import { SwcError } from "../../runtime/error.js";
-import { headerButton } from "../shared/view-toolbar.js";
+import { exportFieldNamesCsv, headerButton } from "../shared/view-toolbar.js";
+import { renderReportsAnchor } from "../shared/collection-bar-panels.js";
 import { renderFormToolbar } from "./form-chrome.js";
 import { collectFormFields, renderFormSheet } from "./form-sheet.js";
 import { initFormInteractions } from "./form-interactions.js";
@@ -34,6 +35,7 @@ export class FormView extends SwcComponent<FormViewProps> {
   private saving = false;
   private acting = false;
   private error = "";
+  private reportsPanelOpen = false;
   private activeNotebookPages: Record<number, number> = {};
   private teardownInteractions: (() => void) | null = null;
   private fieldHost!: FieldHost;
@@ -379,6 +381,22 @@ export class FormView extends SwcComponent<FormViewProps> {
           onDuplicate: () => void this.duplicateRecord(),
           onObjectButton: (btn) => void this.runObjectButton(btn),
           renderField: this.renderFieldCached,
+          reportsSlot: renderReportsAnchor({
+            open: this.reportsPanelOpen,
+            onToggle: () => {
+              this.reportsPanelOpen = !this.reportsPanelOpen;
+              this.rerender();
+            },
+            payload,
+            fieldsCsv: exportFieldNamesCsv(this.fields()),
+            recordId: payload.recordId > 0 ? payload.recordId : 0,
+            variant: "form",
+          }),
+          onToolbarBackdropClick: () => {
+            if (!this.reportsPanelOpen) return;
+            this.reportsPanelOpen = false;
+            this.rerender();
+          },
         })}
         ${this.error ? html`<div class="sum-flash sum-flash--error">${this.error}</div>` : ""}
         <div class="sum-form-layout${showChatter ? " sum-form-layout--with-chatter" : ""}">

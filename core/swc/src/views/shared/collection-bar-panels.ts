@@ -1,13 +1,20 @@
-import { html, type TemplateResult } from "../../template/html.js";
-import type { SwcArchField, SwcSearchFilter, SwcWorkspacePayload } from "../../types/workspace.js";
+import { html, type TemplateResult, type TemplateValue } from "../../template/html.js";
+import type { SwcArchField, SwcReportMeta, SwcSearchFilter, SwcWorkspacePayload } from "../../types/workspace.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
-import { buildAllReportEntries } from "./view-toolbar.js";
+import { buildAllReportEntries, createToolbarIcon, type ReportActionEntry } from "./view-toolbar.js";
 import {
   filterOperatorsForField,
-  presetDomainFilters,
-  presetGroupByFilters,
   type CollectionQuery,
 } from "./collection-query.js";
+
+function renderPopoverShell(modifierClass: string, heading: string, body: TemplateValue): TemplateResult {
+  return html`
+    <div class=${`sum-popover ${modifierClass}`} @click=${(e: Event) => e.stopPropagation()}>
+      <h3 class="sum-popover-heading">${heading}</h3>
+      ${body}
+    </div>
+  `;
+}
 
 export function renderPopoverCheckmark(active: boolean): TemplateResult {
   return html`<span class="sum-popover-check" aria-hidden="true">${active ? "✓" : ""}</span>`;
@@ -51,9 +58,10 @@ export function renderFiltersPopover(
   const field = customField || filterFields[0]?.name || "";
   const operators = filterOperatorsForField(field, filterFields);
 
-  return html`
-    <div class="sum-popover sum-popover--filters" @click=${(e: Event) => e.stopPropagation()}>
-      <h3 class="sum-popover-heading">Filters</h3>
+  return renderPopoverShell(
+    "sum-popover--filters",
+    "Filters",
+    html`
       <ul class="sum-popover-list">
         ${domainPresets.map((f) =>
           renderPopoverItem(
@@ -90,8 +98,8 @@ export function renderFiltersPopover(
         />
         <button type="button" class="sum-btn sum-btn--secondary" @click=${() => callbacks.onApplyCustom()}>Apply</button>
       </div>
-    </div>
-  `;
+    `,
+  );
 }
 
 export interface GroupPopoverState {
@@ -107,27 +115,26 @@ export interface GroupPopoverCallbacks {
 export function renderGroupPopover(state: GroupPopoverState, callbacks: GroupPopoverCallbacks): TemplateResult {
   const { query, groupPresets, groupByFields } = state;
 
-  return html`
-    <div class="sum-popover sum-popover--group" @click=${(e: Event) => e.stopPropagation()}>
-      <h3 class="sum-popover-heading">Group By</h3>
-      <ul class="sum-popover-list">
-        ${groupPresets.map((f) =>
-          renderPopoverItem(
-            f.string || f.name,
-            query.groupBy.includes(f.groupBy!),
-            () => callbacks.onToggleGroupBy(f.groupBy!),
-          ),
-        )}
-        ${groupByFields.map((f) =>
-          renderPopoverItem(
-            f.string || f.name,
-            query.groupBy.includes(f.name),
-            () => callbacks.onToggleGroupBy(f.name),
-          ),
-        )}
-      </ul>
-    </div>
-  `;
+  return renderPopoverShell(
+    "sum-popover--group",
+    "Group By",
+    html`<ul class="sum-popover-list">
+      ${groupPresets.map((f) =>
+        renderPopoverItem(
+          f.string || f.name,
+          query.groupBy.includes(f.groupBy!),
+          () => callbacks.onToggleGroupBy(f.groupBy!),
+        ),
+      )}
+      ${groupByFields.map((f) =>
+        renderPopoverItem(
+          f.string || f.name,
+          query.groupBy.includes(f.name),
+          () => callbacks.onToggleGroupBy(f.name),
+        ),
+      )}
+    </ul>`,
+  );
 }
 
 export interface FavoriteEntry {
@@ -161,9 +168,10 @@ export function renderFavoritesPopover(
 ): TemplateResult {
   const { favorites, saveName, saveShared, savingFavorite } = state;
 
-  return html`
-    <div class="sum-popover sum-popover--favorites" @click=${(e: Event) => e.stopPropagation()}>
-      <h3 class="sum-popover-heading">Favorites</h3>
+  return renderPopoverShell(
+    "sum-popover--favorites",
+    "Favorites",
+    html`
       <ul class="sum-popover-list">
         ${favorites.map(
           (f) => html`<li class="sum-popover-fav">
@@ -199,8 +207,29 @@ export function renderFavoritesPopover(
           Save current search
         </button>
       </div>
+    `,
+  );
+}
+
+function renderReportsMenu(entries: ReportActionEntry[], popoverExtraClass = ""): TemplateResult {
+  const popoverClass = ["sum-popover", "sum-popover--actions", "sum-reports-popover", popoverExtraClass]
+    .filter(Boolean)
+    .join(" ");
+
+  return html`
+    <div class=${popoverClass} @click=${(e: Event) => e.stopPropagation()}>
+      <h3 class="sum-popover-heading">Import / export</h3>
+      ${entries.length > 0
+        ? html`<ul class="sum-popover-menu">
+            ${entries.map((entry) => html`<li class="sum-popover-menu-item">${entry.node}</li>`)}
+          </ul>`
+        : html`<p class="sum-popover-empty">No export actions available.</p>`}
     </div>
   `;
+}
+
+export function reportsToolbarVisible(report?: SwcReportMeta): boolean {
+  return !!report && (report.download || report.upload);
 }
 
 export function renderReportsPopover(
@@ -208,22 +237,72 @@ export function renderReportsPopover(
   fieldsCsv: string,
   viewType?: string,
   recordId = 0,
+  popoverExtraClass = "",
 ): TemplateResult {
+  return renderReportsMenu(
+    buildAllReportEntries(payload, fieldsCsv, recordId, viewType),
+    popoverExtraClass,
+  );
+}
+
+export interface ReportsAnchorOptions {
+  open: boolean;
+  onToggle: () => void;
+  payload: SwcWorkspacePayload;
+  fieldsCsv: string;
+  recordId?: number;
+  viewType?: string;
+  variant: "collection" | "form";
+}
+
+/** Reports trigger + popover (collection bar and form toolbar). */
+export function renderReportsAnchor(options: ReportsAnchorOptions): TemplateResult | string {
+  const { open, onToggle, payload, fieldsCsv, recordId = 0, viewType, variant } = options;
+  if (!reportsToolbarVisible(payload.arch.report)) {
+    return "";
+  }
   const entries = buildAllReportEntries(payload, fieldsCsv, recordId, viewType);
 
+  const popoverExtraClass = variant === "form" ? "sum-form-reports-popover" : "";
+  const popover = open ? renderReportsMenu(entries, popoverExtraClass) : "";
+
+  if (variant === "form") {
+    return html`
+      <div class="sum-view-toolbar-actions sum-reports-anchor sum-form-reports-anchor" @click=${(e: Event) => e.stopPropagation()}>
+        <button
+          type="button"
+          class="sum-header-btn sum-header-btn--secondary sum-reports-btn sum-form-reports-btn"
+          aria-label="Reports"
+          title="Import and export records"
+          aria-expanded=${open ? "true" : "false"}
+          @click=${(e: Event) => { e.stopPropagation(); onToggle(); }}
+        >
+          Reports
+          ${createToolbarIcon("chevron", "sum-reports-chevron sum-form-reports-chevron")}
+        </button>
+        ${popover}
+      </div>
+    `;
+  }
+
+  const btnClass = open
+    ? "sum-control-bar-reports-btn sum-control-bar-reports-btn--active sum-control-bar-actions-btn sum-control-bar-actions-btn--active"
+    : "sum-control-bar-reports-btn sum-control-bar-actions-btn";
+
   return html`
-    <div class="sum-popover sum-popover--actions sum-reports-popover" @click=${(e: Event) => e.stopPropagation()}>
-      <h3 class="sum-popover-heading">Import / export</h3>
-      <ul class="sum-popover-menu">
-        ${entries.map((entry) => html`<li class="sum-popover-menu-item">${entry.node}</li>`)}
-      </ul>
+    <div class="sum-control-bar-popover-anchor sum-reports-anchor" @click=${(e: Event) => e.stopPropagation()}>
+      <button
+        type="button"
+        class=${btnClass}
+        aria-label="Reports"
+        title="Import and export records"
+        aria-expanded=${open ? "true" : "false"}
+        @click=${(e: Event) => { e.stopPropagation(); onToggle(); }}
+      >
+        <span class="sum-control-bar-reports-label sum-control-bar-actions-label">Reports</span>
+        ${createToolbarIcon("chevron", "sum-control-bar-chip-chevron")}
+      </button>
+      ${popover}
     </div>
   `;
 }
-
-/** @deprecated Use renderReportsPopover */
-export function renderActionsPopover(payload: SwcWorkspacePayload, fieldsCsv: string): TemplateResult {
-  return renderReportsPopover(payload, fieldsCsv);
-}
-
-export { presetDomainFilters, presetGroupByFilters };

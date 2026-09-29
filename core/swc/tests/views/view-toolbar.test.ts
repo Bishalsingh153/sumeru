@@ -7,9 +7,6 @@ import {
   graphExportUrl,
   newRecordUrl,
   pivotExportUrl,
-  renderGraphExportLink,
-  renderPivotExportLink,
-  renderReportActions,
   renderSearchField,
   exportFieldNamesCsv,
   renderNewButton,
@@ -54,22 +51,6 @@ describe("view-toolbar", () => {
 
   it("exportFieldNamesCsv joins arch field names", () => {
     expect(exportFieldNamesCsv([{ name: "a" }, { name: "b" }])).toBe("a,b");
-  });
-
-  it("renderReportActions returns null when arch.report is absent", () => {
-    expect(renderReportActions(basePayload(), "name")).toBeNull();
-  });
-
-  it("renderReportActions returns Reports dropdown when download enabled", () => {
-    const result = renderReportActions(
-      basePayload({ arch: { type: "list", model: "crm.lead", fields: [], report: { download: true, upload: false, pdfSizes: "", bulkModes: "" } } }),
-      "name,email",
-    );
-    expect(result).not.toBeNull();
-    expect(result!.querySelector(".sum-reports-btn")?.textContent).toContain("Reports");
-    expect(result!.textContent).toContain("Import / export");
-    expect(result!.textContent).toContain("Export CSV");
-    expect(result!.querySelector('.sum-popover-menu a[href*="/web/export/csv"]')).not.toBeNull();
   });
 
   it("buildAllReportEntries adds pivot export for pivot view type", () => {
@@ -160,22 +141,6 @@ describe("view-toolbar", () => {
     expect(importEntry?.node.querySelector('input[type="file"]')).toBeTruthy();
   });
 
-  it("renderReportActions popover includes upload forms", () => {
-    const result = renderReportActions(
-      basePayload({
-        arch: {
-          type: "list",
-          model: "crm.lead",
-          fields: [],
-          report: { download: true, upload: true, formats: "csv,pdf", pdfSizes: "", bulkModes: "" },
-        },
-      }),
-      "name",
-    );
-    expect(result?.querySelector(".sum-popover-menu .sum-list-upload-form")).toBeTruthy();
-    expect(result?.querySelector('.sum-popover-menu a[href*="/web/export/pdf"]')).toBeTruthy();
-  });
-
   it("pivot and graph export helpers build URLs", () => {
     const payload = basePayload({
       arch: {
@@ -189,7 +154,7 @@ describe("view-toolbar", () => {
     });
     expect(pivotExportUrl(payload, ["state"], ["amount"])).toContain("/web/export/pivot");
     expect(graphExportUrl(payload, "state", "amount")).toContain("/web/export/graph");
-    expect(renderPivotExportLink(payload)?.getAttribute("href")).toContain("group_by=state");
-    expect(renderGraphExportLink(payload, "state", "amount")?.textContent).toBe("Export CSV");
+    const pivotEntries = buildAllReportEntries(payload, "", 0, "pivot");
+    expect(pivotEntries.some((e) => e.label === "Export pivot CSV")).toBe(true);
   });
 });

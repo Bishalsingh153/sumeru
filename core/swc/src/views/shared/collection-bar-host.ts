@@ -3,7 +3,7 @@ import { html, type TemplateResult, type TemplateValue } from "../../template/ht
 import type { SwcArchField, SwcWorkspacePayload } from "../../types/workspace.js";
 import { SAVED_SEARCHES_ROUTE } from "../../constants/routes.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
-import { renderNewButton, buildAllReportEntries, exportFieldNamesCsv, createToolbarIcon } from "./view-toolbar.js";
+import { exportFieldNamesCsv, renderNewButton, createToolbarIcon } from "./view-toolbar.js";
 import { visibleArchFields } from "./arch-fields.js";
 import {
   activeFilterTags,
@@ -22,7 +22,7 @@ import {
   type FilterTag,
 } from "./collection-query.js";
 import {
-  renderReportsPopover,
+  renderReportsAnchor,
   renderFiltersPopover,
   renderFavoritesPopover,
   renderGroupPopover,
@@ -298,8 +298,7 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
         },
       );
     }
-    const fields = exportFieldNamesCsv(visibleArchFields(this.props.payload.arch.fields ?? []));
-    return renderReportsPopover(this.props.payload, fields, this.props.viewType);
+    return "";
   }
 
   private renderFiltersGroupDrop(): TemplateResult | string {
@@ -347,35 +346,21 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
     `;
   }
 
-  private renderReportsTrigger(entriesCount: number): TemplateResult | string {
-    if (entriesCount <= 0) return "";
-    const open = this.panelOpen === "reports";
-    const btnClass = open
-      ? "sum-control-bar-reports-btn sum-control-bar-reports-btn--active sum-control-bar-actions-btn sum-control-bar-actions-btn--active"
-      : "sum-control-bar-reports-btn sum-control-bar-actions-btn";
-    const chevron = createToolbarIcon("chevron", "sum-control-bar-chip-chevron");
-    return html`
-      <div class="sum-control-bar-popover-anchor sum-reports-anchor">
-        <button
-          type="button"
-          class=${btnClass}
-          aria-label="Reports"
-          title="Import and export records"
-          aria-expanded=${open ? "true" : "false"}
-          @click=${(e: Event) => { e.stopPropagation(); this.togglePanel("reports"); }}
-        >
-          <span class="sum-control-bar-reports-label sum-control-bar-actions-label">Reports</span>
-          ${chevron}
-        </button>
-        ${open ? this.renderOpenPanel() : ""}
-      </div>
-    `;
+  private renderReportsControl(): TemplateResult | string {
+    const payload = this.props.payload;
+    const fieldsCsv = exportFieldNamesCsv(visibleArchFields(payload.arch.fields ?? []));
+    return renderReportsAnchor({
+      open: this.panelOpen === "reports",
+      onToggle: () => this.togglePanel("reports"),
+      payload,
+      fieldsCsv,
+      viewType: this.props.viewType,
+      variant: "collection",
+    });
   }
 
   override template(): TemplateResult {
     const payload = this.props.payload;
-    const fields = exportFieldNamesCsv(visibleArchFields(payload.arch.fields ?? []));
-    const actionEntries = buildAllReportEntries(payload, fields, 0, this.props.viewType);
     const tags = activeFilterTags(this.query, this.searchMeta());
     const fCount = filterCount(this.query);
     const gCount = groupByCount(this.query);
@@ -416,7 +401,7 @@ export class CollectionBarHost extends SwcComponent<CollectionBarHostProps> {
                 </div>
                 ${this.renderFiltersGroupDrop()}
               </div>
-              ${this.renderReportsTrigger(actionEntries.length)}
+              ${this.renderReportsControl()}
               ${this.props.extraPrimary ?? ""}
             </div>
           </div>

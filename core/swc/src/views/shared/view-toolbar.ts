@@ -77,21 +77,6 @@ function pivotExportFields(payload: SwcWorkspacePayload): { groups: string[]; me
   return { groups: [...rowFields, ...colFields], measures: measureFields };
 }
 
-function renderReadGroupExportLink(url: string, label = "Export CSV"): HTMLElement {
-  return linkButton(url, label);
-}
-
-export function renderPivotExportLink(payload: SwcWorkspacePayload): HTMLElement | null {
-  const { groups, measures } = pivotExportFields(payload);
-  if (!groups.length || !measures.length) return null;
-  return renderReadGroupExportLink(pivotExportUrl(payload, groups, measures));
-}
-
-export function renderGraphExportLink(payload: SwcWorkspacePayload, groupField: string, measureField: string): HTMLElement | null {
-  if (!groupField || !measureField) return null;
-  return renderReadGroupExportLink(graphExportUrl(payload, groupField, measureField));
-}
-
 export type ToolbarIconName = "search" | "filter" | "group" | "favorite" | "download" | "chevron" | "close";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -351,56 +336,4 @@ export function buildAllReportEntries(
   const entries = buildReportActionEntries(payload, fields, recordId);
   appendReadGroupExportEntries(payload, viewType, entries);
   return entries;
-}
-
-export function renderReportActions(
-  payload: SwcWorkspacePayload,
-  fields: string,
-  recordId = 0,
-): HTMLElement | null {
-  const entries = buildReportActionEntries(payload, fields, recordId);
-  if (entries.length === 0) return null;
-
-  const wrap = document.createElement("div");
-  wrap.className = "sum-view-toolbar-actions sum-reports-anchor sum-form-reports-anchor";
-
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "sum-header-btn sum-header-btn--secondary sum-reports-btn sum-form-reports-btn";
-  btn.setAttribute("aria-expanded", "false");
-  btn.setAttribute("aria-haspopup", "true");
-  const label = document.createElement("span");
-  label.textContent = "Reports";
-  btn.append(label, createToolbarIcon("chevron", "sum-reports-chevron sum-form-reports-chevron"));
-
-  const panel = document.createElement("div");
-  panel.className = "sum-popover sum-popover--actions sum-reports-popover sum-form-reports-popover";
-  panel.hidden = true;
-  const heading = document.createElement("h3");
-  heading.className = "sum-popover-heading";
-  heading.textContent = "Import / export";
-  const menu = document.createElement("ul");
-  menu.className = "sum-popover-menu";
-  for (const entry of entries) {
-    const item = document.createElement("li");
-    item.className = "sum-popover-menu-item";
-    item.appendChild(entry.node);
-    menu.appendChild(item);
-  }
-  panel.append(heading, menu);
-
-  btn.addEventListener("click", (event) => {
-    event.stopPropagation();
-    const open = panel.hidden;
-    panel.hidden = !open;
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-  });
-  wrap.addEventListener("click", (event) => event.stopPropagation());
-  document.addEventListener("click", () => {
-    panel.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
-  });
-
-  wrap.append(btn, panel);
-  return wrap;
 }
