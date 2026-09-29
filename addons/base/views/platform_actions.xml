@@ -5,5 +5,8 @@
         <action id="action_sys.attachment" type="window" model="sys.attachment" name="Attachments" view_mode="list,form"/>
         <action id="action_sys.sequence" type="window" model="sys.sequence" name="Sequences" view_mode="list,form"/>
         <action id="action_sys.config.parameter" type="window" model="sys.config.parameter" name="System Parameters" view_mode="list,form"/>
+        <action id="action_app_logs" type="url" name="Event Log" url="/web/settings/app-logs"/>
+        <action id="action_settings.hub" type="url" name="General Settings" url="/web/settings"/>
+        <action id="action_settings.account" type="url" name="Account security" url="/web/settings/account"/>
     </data>
 </sumeru>

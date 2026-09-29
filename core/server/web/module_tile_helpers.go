@@ -8,7 +8,6 @@ import (
 
 	"sumeru/core/engine/render"
 	"sumeru/core/module"
-	"sumeru/core/orm"
 )
 
 // loadInstalledAppTiles returns installed, active application modules sorted by display name.
@@ -61,13 +60,4 @@ func loadInstalledAppTiles(ctx context.Context, forHome bool) ([]render.AppTile,
 // menuHrefFromMenuID builds a workspace URL for a numeric menu id.
 func menuHrefFromMenuID(menuID int) string {
 	return fmt.Sprintf("/web?menu_id=%d", menuID)
-}
-
-// menuHrefFromXMLID resolves a menu XML id to a workspace URL, or "" when not found.
-func menuHrefFromXMLID(ctx context.Context, menuXMLID string) string {
-	menuID, _, err := orm.ResolveXmlId(ctx, menuXMLID)
-	if err != nil || menuID <= 0 {
-		return ""
-	}
-	return menuHrefFromMenuID(menuID)
 }

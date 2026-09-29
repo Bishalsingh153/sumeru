@@ -181,12 +181,15 @@ func (addon *Addon) SyncToDB(ctx context.Context) error {
 	} else {
 		orm.InvalidateRuleCache()
 	}
+	if err := addon.syncCSVFieldAccess(ctx); err != nil {
+		errs = append(errs, FatalSync(moduleName, "CSV field access load", err))
+	}
 	var inheritQueue []parser.Record
 	var deferredMenus []parser.MenuItem
 
 	for _, xmlFile := range addon.Manifest.Data {
 		if strings.HasSuffix(strings.ToLower(strings.TrimSpace(xmlFile)), ".csv") {
-			continue // ACL CSV is loaded by syncCSVModelAccess above
+			continue // ACL CSV files load via syncCSVModelAccess / syncCSVFieldAccess
 		}
 		xmlPath := filepath.Join(addon.Path, xmlFile)
 		if _, err := os.Stat(xmlPath); err != nil {
@@ -223,5 +226,6 @@ func (addon *Addon) SyncToDB(ctx context.Context) error {
 		}
 	}
 
+	ValidateFieldAccessOrphans(ctx)
 	return aggregateErrors(moduleName, errs)
 }

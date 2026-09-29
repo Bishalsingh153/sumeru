@@ -86,13 +86,12 @@ func buildSettingsAccountPageData(ctx context.Context, menuIDStr string, flash r
 	crumbs := render.BuildSettingsHubBreadcrumbs(ctx)
 	crumbs = append(crumbs, render.BreadcrumbItem{Label: "Account security"})
 	pd := render.PageData{
-		Title:                "Account security",
-		SettingsNavActive:    true,
-		ActiveMenuID:         menuIDStr,
-		SuppressActivityDock: true,
-		BreadcrumbItems:      crumbs,
-		ViewStylesheetURLs:   []string{settingsHubStylesheetURL},
-		ExtraBodyClasses:     settingsHubBodyClass,
+		Title:              "Account security",
+		SettingsNavActive:  true,
+		ActiveMenuID:       menuIDStr,
+		BreadcrumbItems:    crumbs,
+		ViewStylesheetURLs: []string{settingsHubStylesheetURL},
+		ExtraBodyClasses:   settingsHubBodyClass,
 	}
 	if flash.Body != "" || flash.Title != "" {
 		pd.FlashMessages = []render.FlashMessage{flash}

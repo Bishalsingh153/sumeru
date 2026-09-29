@@ -143,7 +143,7 @@ With developer mode on, the top-bar **bug menu** shows sectioned actions (Record
 
 ## View modifier expressions (SWC)
 
-Dynamic `invisible` / `readonly` / `required` expressions in form and list arch are evaluated client-side with a **frozen allowlist** of identifiers: record field names, `user_id`, `company_id`, and `context` (object). Expressions must be boolean JavaScript fragments (for example `state == 'done'`), not statements. Tokens such as `function`, `=>`, `[`, `` ` ``, or `;` are rejected. Static arch flags still apply when an expression is missing or invalid.
+Dynamic `invisible` / `readonly` / `required` expressions in form and list arch are evaluated client-side with a **frozen allowlist** of identifiers: record field names, `user_id`, `company_id`, and `context` (object). Expressions must be boolean JavaScript fragments (for example `state == 'done'`), not statements. Tokens such as `function`, `=>`, `[`, `` ` ``, or `;` are rejected. Static arch flags still apply when an expression is missing or invalid. List column expressions that reference record fields are evaluated without a row context (static arch flags apply). Action `context` on the workspace payload is not wired yet — `context` is an empty object until then.
 
 ## Pull requests
 

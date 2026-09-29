@@ -84,6 +84,8 @@ func fetchShellMenus(ctx context.Context) []parser.MenuItem {
 		}
 	}
 
+	urlActionHrefs := loadURLActionHrefs(ctx)
+
 	var allMenus []parser.MenuItem
 	for rows.Next() {
 		var id int
@@ -107,7 +109,11 @@ func fetchShellMenus(ctx context.Context) []parser.MenuItem {
 			m.ParentID = fmt.Sprintf("%d", parentID.Int64)
 		}
 		if actionID.Valid && actionID.Int64 != 0 {
-			m.Action = fmt.Sprintf("/web?action=%d&menu_id=%d", actionID.Int64, id)
+			if href := urlActionHrefs[int(actionID.Int64)]; href != "" {
+				m.Action = href
+			} else {
+				m.Action = fmt.Sprintf("/web?action=%d&menu_id=%d", actionID.Int64, id)
+			}
 		} else if !parentID.Valid && strings.EqualFold(strings.TrimSpace(name), "Home") {
 			m.Action = "/web/home"
 		}
@@ -116,7 +122,29 @@ func fetchShellMenus(ctx context.Context) []parser.MenuItem {
 	if err := rows.Err(); err != nil {
 		applog.WarnMsg(ctx, "render", "menus", "Menu rows error", err, nil)
 	}
+	applySettingsNavHrefOverrides(ctx, allMenus)
 	return allMenus
+}
+
+func loadURLActionHrefs(ctx context.Context) map[int]string {
+	out := make(map[int]string)
+	rows, err := orm.Search(ctx, "sys.action.url", nil)
+	if err != nil {
+		applog.WarnMsg(ctx, "render", "menus", "Error loading URL actions", err, nil)
+		return out
+	}
+	for _, row := range rows {
+		id, ok := orm.CoerceInt64(row["id"])
+		if !ok || id <= 0 {
+			continue
+		}
+		url := strings.TrimSpace(orm.AsString(row["url"]))
+		if url == "" || !strings.HasPrefix(url, "/") {
+			continue
+		}
+		out[int(id)] = url
+	}
+	return out
 }
 
 func buildTopBarMenus(allMenus []parser.MenuItem, appMods map[string]struct{}, menuAllowed func(parser.MenuItem) bool) []parser.MenuItem {
@@ -188,6 +216,80 @@ func shellTitleForModule(allMenus []parser.MenuItem, activeModuleID, fallback st
 	return fallback
 }
 
+func menuItemHasWindowOrURLAction(mi parser.MenuItem) bool {
+	action := strings.TrimSpace(mi.Action)
+	if strings.Contains(action, "action=") {
+		return true
+	}
+	return strings.HasPrefix(action, "/web/") && !strings.HasPrefix(action, "/web?")
+}
+
+func filterSidebarLinks(links []parser.MenuItem) []parser.MenuItem {
+	if len(links) == 0 {
+		return links
+	}
+	out := links[:0]
+	for _, mi := range links {
+		if settingsNavExcludedSection(mi.Name) || settingsNavExcludedLink(mi.Name, mi.Action) {
+			continue
+		}
+		out = append(out, mi)
+	}
+	return out
+}
+
+func menuItemHasAllowedChild(parentID string, allMenus []parser.MenuItem, menuAllowed func(parser.MenuItem) bool) bool {
+	for _, sub := range allMenus {
+		if sub.ParentID == parentID && menuAllowed(sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// collectSidebarLinks returns depth-first navigable descendants of parentID (not parent itself).
+func collectSidebarLinks(parentID string, allMenus []parser.MenuItem, menuAllowed func(parser.MenuItem) bool) []parser.MenuItem {
+	var children []parser.MenuItem
+	for _, sub := range allMenus {
+		if sub.ParentID == parentID && menuAllowed(sub) {
+			children = append(children, sub)
+		}
+	}
+	sort.Slice(children, func(i, j int) bool {
+		if children[i].Sequence != children[j].Sequence {
+			return children[i].Sequence < children[j].Sequence
+		}
+		return children[i].Name < children[j].Name
+	})
+
+	var out []parser.MenuItem
+	for _, child := range children {
+		if settingsNavExcludedSection(child.Name) || settingsNavExcludedLink(child.Name, child.Action) {
+			continue
+		}
+		hasChildren := menuItemHasAllowedChild(child.ID, allMenus, menuAllowed)
+		switch {
+		case menuItemHasWindowOrURLAction(child):
+			out = append(out, child)
+		case !hasChildren:
+			out = append(out, child)
+		}
+		if hasChildren {
+			out = append(out, collectSidebarLinks(child.ID, allMenus, menuAllowed)...)
+		}
+	}
+	return out
+}
+
+func sortMenuItemsBySequenceName(items []parser.MenuItem) {
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Sequence != items[j].Sequence {
+			return items[i].Sequence < items[j].Sequence
+		}
+		return items[i].Name < items[j].Name
+	})
+}
+
 func buildSidebarMenus(allMenus []parser.MenuItem, activeModuleID string, menuAllowed func(parser.MenuItem) bool) []SidebarMenu {
 	if activeModuleID == "" {
 		return nil
@@ -195,22 +297,16 @@ func buildSidebarMenus(allMenus []parser.MenuItem, activeModuleID string, menuAl
 	var sidebarMenus []SidebarMenu
 	var sections []SidebarMenu
 	for _, m := range allMenus {
-		if m.ParentID != activeModuleID || !menuAllowed(m) {
+		if m.ParentID != activeModuleID || !menuAllowed(m) || settingsNavExcludedSection(m.Name) {
 			continue
 		}
 		section := SidebarMenu{ID: m.ID, Name: m.Name, Sequence: m.Sequence}
-		for _, sub := range allMenus {
-			if sub.ParentID != m.ID || !menuAllowed(sub) {
-				continue
-			}
-			section.SubMenus = append(section.SubMenus, sub)
+		links := collectSidebarLinks(m.ID, allMenus, menuAllowed)
+		if menuItemHasWindowOrURLAction(m) && !settingsNavExcludedLink(m.Name, m.Action) {
+			links = append([]parser.MenuItem{m}, links...)
 		}
-		sort.Slice(section.SubMenus, func(i, j int) bool {
-			if section.SubMenus[i].Sequence != section.SubMenus[j].Sequence {
-				return section.SubMenus[i].Sequence < section.SubMenus[j].Sequence
-			}
-			return section.SubMenus[i].Name < section.SubMenus[j].Name
-		})
+		sortMenuItemsBySequenceName(links)
+		section.SubMenus = filterSidebarLinks(links)
 		if len(section.SubMenus) == 0 {
 			continue
 		}

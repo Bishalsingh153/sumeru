@@ -25,3 +25,13 @@ func NewDataFileOptsForTest(noUpdate bool) DataFileOptsForTest {
 func (o DataFileOptsForTest) SkipExistingOnUpdateForTest(ctx context.Context, moduleName, xmlID string) bool {
 	return dataFileOpts(o).skipExistingOnUpdate(ctx, moduleName, xmlID)
 }
+
+// RegistryHasFieldForTest reports whether a model field exists in the ORM registry.
+func RegistryHasFieldForTest(modelName, fieldName string) bool {
+	return registryHasField(modelName, fieldName)
+}
+
+// FieldAccessDefaultNameForTest builds the default sys.field.access name for CSV rows.
+func FieldAccessDefaultNameForTest(model, field, groupXML string) string {
+	return fieldAccessDefaultName(model, field, groupXML)
+}

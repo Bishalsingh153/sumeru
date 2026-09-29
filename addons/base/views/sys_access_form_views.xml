@@ -20,6 +20,7 @@
                         <field name="perm_unlink" string="Delete"/>
                     </group>
                 </group>
+                <p class="sum-field-hint">Bulk edit model permissions at Settings → Security → Model access matrix (/web/settings/model-acl).</p>
             </sheet>
         </view>
     </data>
