@@ -252,3 +252,34 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.sum-settings-field-acl-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sum-settings-field-acl-scroll {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.sum-settings-field-acl-table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 0.875rem;
+}
+
+.sum-settings-field-acl-table th,
+.sum-settings-field-acl-table td {
+  border: 1px solid var(--sum-border, #ddd);
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+}
+
+.sum-settings-field-acl-table th[scope="row"] {
+  text-align: left;
+  white-space: nowrap;
+}

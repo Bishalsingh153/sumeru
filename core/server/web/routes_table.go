@@ -96,6 +96,7 @@ func registerActionRoutes() {
 func registerSettingsRoutes() {
 	registerSession(http.MethodGet, settingsRoute, SettingsHubHandler)
 	registerSettingsAccountRoutes()
+	registerSettingsFieldACLRoutes()
 	registerSession(http.MethodGet, appLogsRoute, AppLogsHandler)
 	registerSession(http.MethodGet, metricsRoute, MetricsHandler)
 }

@@ -1,0 +1,58 @@
+<div class="sum-settings-hub sum-settings-field-acl">
+    <header class="sum-settings-hub-head">
+        <div class="sum-settings-hub-head-text">
+            <h1 class="sum-settings-hub-title">Field access matrix</h1>
+            <p class="sum-settings-hub-lead">Deny read or write per field and security group. Empty cells mean no extra <code>sys.field.access</code> rule.</p>
+        </div>
+        <a href="/web/settings" class="sum-settings-hub-cta">Back to Settings</a>
+    </header>
+
+    <form class="sum-settings-field-acl-picker" method="get" action="/web/settings/field-acl">
+        <label class="sum-field-label" for="model">Model</label>
+        <input id="model" name="model" type="text" class="sum-field-input" value="{{.Model}}" placeholder="core.user" required/>
+        <button type="submit" class="sum-btn sum-btn--primary">Load matrix</button>
+    </form>
+
+    {{if .Model}}
+    {{if .Rows}}
+    <form class="sum-settings-field-acl-matrix" method="post" action="/web/settings/field-acl">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+        <input type="hidden" name="model" value="{{.Model}}"/>
+        <p class="sum-field-hint">Model: <strong>{{.Model}}</strong>. Export rows from Field Access list (CSV) to copy rules across environments.</p>
+        <div class="sum-settings-field-acl-scroll">
+            <table class="sum-settings-field-acl-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Field</th>
+                        {{range (index .Rows 0).Cells}}
+                        <th scope="col" colspan="2">{{.GroupLabel}}</th>
+                        {{end}}
+                    </tr>
+                    <tr>
+                        <th></th>
+                        {{range (index .Rows 0).Cells}}
+                        <th scope="col">Deny read</th>
+                        <th scope="col">Deny write</th>
+                        {{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Rows}}
+                    <tr>
+                        <th scope="row">{{.FieldName}}{{if .HasGroups}} <span class="sum-field-hint">(groups attr)</span>{{end}}</th>
+                        {{range .Cells}}
+                        <td><input type="checkbox" name="dr_{{.GroupID}}_{{.FieldName}}" value="1" {{if .DenyRead}}checked{{end}}/></td>
+                        <td><input type="checkbox" name="dw_{{.GroupID}}_{{.FieldName}}" value="1" {{if .DenyWrite}}checked{{end}}/></td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="sum-btn sum-btn--primary">Save matrix</button>
+    </form>
+    {{else}}
+    <p class="sum-field-hint">No fields found for this model.</p>
+    {{end}}
+    {{end}}
+</div>

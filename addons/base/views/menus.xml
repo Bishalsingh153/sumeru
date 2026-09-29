@@ -28,6 +28,7 @@
         <menuitem id="menu_security_access" name="Access Rights" parent="menu_company_configuration" sequence="16" action="base.access_action_sys.access" groups="base.group_system" web_icon="settings"/>
         <menuitem id="menu_security_rules" name="Record Rules" parent="menu_company_configuration" sequence="17" action="base.access_action_sys.rule" groups="base.group_system" web_icon="settings"/>
         <menuitem id="menu_sys_field_access" name="Field Access" parent="menu_company_configuration" sequence="18" action="base.action_sys.field.access" groups="base.group_system" web_icon="settings"/>
+        <menuitem id="menu_sys_field_access_matrix" name="Field access matrix" parent="menu_company_configuration" sequence="19" action="base.action_sys.field.access_matrix" groups="base.group_system" web_icon="settings"/>
 
         <!-- Localization -->
         <menuitem id="menu_geo_section" name="Localization" parent="menu_settings_root" sequence="60" web_icon="settings" groups="base.group_system"/>

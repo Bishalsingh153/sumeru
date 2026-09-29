@@ -146,6 +146,7 @@ const (
 	settingsHubStylesheetURL   = "/static/css/sumeru-settings-hub.css"
 	settingsHubBodyClass         = " sum-body--settings-hub"
 	settingsAccountInnerTemplate = "settings_account_inner.html"
+	settingsFieldACLInnerTemplate = "settings_field_acl_inner.html"
 	groupUserXML                 = "base.group_user"
 )
 
