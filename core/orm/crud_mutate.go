@@ -59,6 +59,9 @@ func executeCreateMutation(ctx context.Context, model Model, values map[string]i
 }
 
 func mutationAccessCheck(ctx context.Context, modelName, op string) (uid int, model Model, err error) {
+	if err := RejectSmuggledUserBypass(ctx); err != nil {
+		return 0, nil, err
+	}
 	uid = SecurityUID(ctx)
 	if err := CheckModelAccess(ctx, uid, modelName, op); err != nil {
 		return 0, nil, err
@@ -75,6 +78,11 @@ func executeUpdateMutation(ctx context.Context, modelName string, domain [][]int
 	uid, inst, err := mutationAccessCheck(ctx, modelName, "write")
 	if err != nil {
 		return result, err
+	}
+	if modelName == "core.user" {
+		if err := RejectCoreUserSecurityWrites(ctx, uid, values); err != nil {
+			return result, err
+		}
 	}
 	prepared, err := PrepareValues(inst, values, WriteOpWrite, PrepareOptions{
 		StrictUnknown:     false,
@@ -153,10 +161,7 @@ func executeUpdateMutation(ctx context.Context, modelName string, domain [][]int
 			setArgs = append(setArgs, v)
 			placeholderIndex++
 		}
-		shiftedWhere, err := shiftPlaceholders(securedSQL, len(setArgs)+1)
-		if err != nil {
-			return err
-		}
+		shiftedWhere := shiftPlaceholders(securedSQL, len(setArgs)+1)
 		allArgs := append(setArgs, args...)
 		updQ := fmt.Sprintf(`UPDATE %s SET %s WHERE %s`, table, strings.Join(setClauses, ", "), shiftedWhere)
 		res, err := tx.ExecContext(ctx, updQ, allArgs...)

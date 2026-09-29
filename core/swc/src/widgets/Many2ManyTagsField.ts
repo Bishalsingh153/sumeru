@@ -1,6 +1,6 @@
 import { SwcComponent } from "../runtime/component.js";
 import { html } from "../template/html.js";
-import { fieldInputId, fieldPlaceholder, renderFieldShell } from "./field-shell.js";
+import { fieldInputId, fieldPlaceholder, renderFieldShell, shellOptions } from "./field-shell.js";
 import { AsyncFieldController } from "./field-async.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import type { SwcRecord } from "../model/record.js";
@@ -200,7 +200,7 @@ export class Many2ManyTagsField extends SwcComponent<FieldWidgetProps> {
               >`,
           )}
         </div>`,
-        { labelFor: false },
+        shellOptions(record, { labelFor: false }),
       );
     }
 
@@ -282,7 +282,7 @@ export class Many2ManyTagsField extends SwcComponent<FieldWidgetProps> {
             </ul>`
           : ""}
       </div>`,
-      { labelFor: id },
+      shellOptions(record, { labelFor: id }),
     );
   }
 }

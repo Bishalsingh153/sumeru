@@ -11,7 +11,12 @@ import type {
 } from "../../types/workspace.js";
 import type { SwcRecord } from "../../model/record.js";
 import { renderField as defaultRenderField } from "../../widgets/registry.js";
-import { fieldInputId, fieldPlaceholder, fieldAutocomplete } from "../../widgets/field-shell.js";
+import {
+  fieldInputId,
+  fieldPlaceholder,
+  fieldAutocomplete,
+  wrapDebugFieldRegion,
+} from "../../widgets/field-shell.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
 import { isFieldReadonly } from "../../model/modifiers.js";
 import {
@@ -24,6 +29,8 @@ import {
   resolveImageDisplaySrc,
 } from "../shared/image-placeholder.js";
 import { visibleArchFields } from "../shared/arch-fields.js";
+import type { SwcUserSecurityMeta } from "../../types/workspace.js";
+import { renderUserSecuritySection } from "./user-security-section.js";
 
 export type RenderFieldFn = (
   field: SwcArchField,
@@ -113,20 +120,28 @@ function renderHeroField(
     const cls = hasValue
       ? "sum-form-hero-input sum-form-hero-input--bold"
       : "sum-form-hero-input sum-form-hero-input--bold sum-form-hero-input--placeholder";
-    return html`<h1><div class=${cls}>${text}</div></h1>`;
+    return wrapDebugFieldRegion(
+      record.model,
+      field,
+      html`<h1><div class=${cls}>${text}</div></h1>`,
+    );
   }
-  return html`<h1>
-    <input
-      id=${fieldInputId(field)}
-      class="sum-form-hero-input sum-form-hero-input--bold"
-      name=${field.name}
-      placeholder=${placeholder}
-      value=${val}
-      autocomplete=${fieldAutocomplete(field)}
-      aria-label=${placeholder}
-      @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
-    />
-  </h1>`;
+  return wrapDebugFieldRegion(
+    record.model,
+    field,
+    html`<h1>
+      <input
+        id=${fieldInputId(field)}
+        class="sum-form-hero-input sum-form-hero-input--bold"
+        name=${field.name}
+        placeholder=${placeholder}
+        value=${val}
+        autocomplete=${fieldAutocomplete(field)}
+        aria-label=${placeholder}
+        @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
+      />
+    </h1>`,
+  );
 }
 
 function renderContactItem(
@@ -141,22 +156,30 @@ function renderContactItem(
   if (isFieldReadonly(field, record, readonly)) {
     const text = val.trim() !== "" ? val : placeholder;
     const cls = val.trim() !== "" ? "sum-form-inline-input" : "sum-form-inline-input sum-form-inline-input--placeholder";
-    return html`<div class="sum-form-contact-item">
-      <label class="sum-field-label">${label}</label>
-      <div class=${cls}>${text}</div>
-    </div>`;
+    return wrapDebugFieldRegion(
+      record.model,
+      field,
+      html`<div class="sum-form-contact-item">
+        <label class="sum-field-label">${label}</label>
+        <div class=${cls}>${text}</div>
+      </div>`,
+    );
   }
-  return html`<div class="sum-form-contact-item">
-    <label class="sum-field-label">${label}</label>
-    <input
-      type=${inputType}
-      class="sum-form-inline-input"
-      name=${field.name}
-      placeholder=${placeholder}
-      value=${val}
-      @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
-    />
-  </div>`;
+  return wrapDebugFieldRegion(
+    record.model,
+    field,
+    html`<div class="sum-form-contact-item">
+      <label class="sum-field-label">${label}</label>
+      <input
+        type=${inputType}
+        class="sum-form-inline-input"
+        name=${field.name}
+        placeholder=${placeholder}
+        value=${val}
+        @input=${(event: Event) => record.set(field.name, inputValueFromEvent(event))}
+      />
+    </div>`,
+  );
 }
 
 function renderAvatar(record: SwcRecord, readonly: boolean): TemplateResult {
@@ -315,12 +338,20 @@ function renderNotebook(
   notebookIndex: number,
   activePage: number,
   onTab: (notebookIndex: number, pageIndex: number) => void,
+  userSecurity?: SwcUserSecurityMeta,
 ): TemplateResult {
   const pages = notebook.pages ?? [];
   if (pages.length === 0) return html``;
 
   const idx = Math.min(Math.max(activePage, 0), pages.length - 1);
   const page = pages[idx];
+  const pageTitle = (page.title ?? "").trim();
+  let securityExtra: TemplateResult = html``;
+  if (userSecurity && pageTitle === "Access Rights") {
+    securityExtra = renderUserSecuritySection(userSecurity, "access", readonly);
+  } else if (userSecurity && pageTitle === "Account Security") {
+    securityExtra = renderUserSecuritySection(userSecurity, "password", readonly);
+  }
 
   return html`<div class="sum-notebook sum-notebook--sheet">
     <div class="sum-notebook-tabs" role="tablist">
@@ -335,6 +366,7 @@ function renderNotebook(
         ${(page.groups ?? []).map((g) => renderGroup(rf, g, record, readonly))}
         ${renderSeparators(page.separators)}
         ${renderLabels(page.labels)}
+        ${securityExtra}
       </div>
     </div>
   </div>`;
@@ -350,6 +382,7 @@ export interface RenderFormSheetOptions {
   onNotebookTab: (notebookIndex: number, pageIndex: number) => void;
   renderField?: RenderFieldFn;
   onStatButton?: (name: string) => void;
+  userSecurity?: SwcUserSecurityMeta;
 }
 
 export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult {
@@ -363,6 +396,7 @@ export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult
     onNotebookTab,
     renderField: renderFieldOpt,
     onStatButton,
+    userSecurity,
   } = options;
   const rf: RenderFieldFn =
     renderFieldOpt ?? ((f, r, ro) => defaultRenderField(env, f, r, ro));
@@ -389,7 +423,7 @@ export function renderFormSheet(options: RenderFormSheetOptions): TemplateResult
 
   (sheet.notebook ?? []).forEach((nb, notebookIndex) => {
     const activePage = activeNotebookPages[notebookIndex] ?? 0;
-    parts.push(renderNotebook(rf, nb, record, readonly, notebookIndex, activePage, onNotebookTab));
+    parts.push(renderNotebook(rf, nb, record, readonly, notebookIndex, activePage, onNotebookTab, userSecurity));
   });
 
   const sheetSeparators = sheet.separators ?? [];

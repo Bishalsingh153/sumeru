@@ -7,7 +7,11 @@ const (
 	rootRoute          = "/"
 	loginRoute         = "/web/login"
 	logoutRoute        = "/web/logout"
-	homeRoute          = "/web/home"
+	homeRoute             = "/web/home"
+	portalRoutePrefix     = "/portal"
+	portalHomeRoute       = "/portal/home"
+	portalRecordRoute     = "/portal/record"
+	portalShareRoutePrefix = "/portal/share/"
 	companySwitchRoute = "/web/company/switch"
 	kanbanMoveRoute    = "/web/kanban/move"
 	moduleActionRoute  = "/web/module/action"
@@ -140,8 +144,9 @@ const (
 	settingsHubInnerTemplate   = "settings_hub_inner.html"
 	settingsHubPageTitle       = "Settings"
 	settingsHubStylesheetURL   = "/static/css/sumeru-settings-hub.css"
-	settingsHubBodyClass       = " sum-body--settings-hub"
-	groupUserXML               = "base.group_user"
+	settingsHubBodyClass         = " sum-body--settings-hub"
+	settingsAccountInnerTemplate = "settings_account_inner.html"
+	groupUserXML                 = "base.group_user"
 )
 
 // Apps module action form fields (POST apps_*).

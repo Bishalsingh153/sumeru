@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"sync"
 	"time"
@@ -18,18 +19,57 @@ var (
 )
 
 // DrainOutboxOnce publishes pending outbox rows (up to 100) and marks them published.
+// It probes on ctx before WithElevated so idle ticks skip elevation; drain runs under bypass.
 func DrainOutboxOnce(ctx context.Context) int {
-	if DB == nil {
+	if !outboxHasPending(ctx) {
 		return 0
+	}
+	var published int
+	_ = WithElevated(ctx, "outbox.drain", func(bypass context.Context) error {
+		published = drainOutboxOnce(bypass)
+		return nil
+	})
+	return published
+}
+
+func outboxTable() (tbl string, ok bool) {
+	if DB == nil {
+		return "", false
 	}
 	if _, ok := Registry["sys.outbox.event"]; !ok {
+		return "", false
+	}
+	return MustQuotedTableName("sys.outbox.event"), true
+}
+
+func queryUnpublishedOutbox(ctx context.Context, limit int) (*sql.Rows, string, error) {
+	tbl, ok := outboxTable()
+	if !ok {
+		return nil, "", nil
+	}
+	rows, err := DB.QueryContext(ctx,
+		`SELECT id, name, COALESCE(payload_json,''), COALESCE(actor,0) FROM `+tbl+
+			` WHERE published_at IS NULL ORDER BY id LIMIT $1`, limit)
+	if err != nil {
+		return nil, tbl, err
+	}
+	return rows, tbl, nil
+}
+
+func outboxHasPending(ctx context.Context) bool {
+	rows, _, err := queryUnpublishedOutbox(ctx, 1)
+	if err != nil || rows == nil {
+		return false
+	}
+	defer rows.Close()
+	return rows.Next()
+}
+
+func drainOutboxOnce(bypass context.Context) int {
+	rows, tbl, err := queryUnpublishedOutbox(bypass, 100)
+	if rows == nil {
 		return 0
 	}
-	bypass := ContextWithBypass(ctx, true)
-	tbl := MustQuotedTableName("sys.outbox.event")
-	rows, err := DB.QueryContext(bypass,
-		`SELECT id, name, COALESCE(payload_json,''), COALESCE(actor,0) FROM `+tbl+
-			` WHERE published_at IS NULL ORDER BY id LIMIT 100`)
 	if err != nil {
 		warnOutbox(bypass, "outbox drain query failed", err, nil)
 		return 0
@@ -65,6 +105,10 @@ func DrainOutboxOnce(ctx context.Context) int {
 			continue
 		}
 		published++
+	}
+	if published > 0 {
+		applog.DebugMsg(bypass, "orm", "outbox_drain", "outbox events published",
+			map[string]interface{}{"count": published})
 	}
 	return published
 }

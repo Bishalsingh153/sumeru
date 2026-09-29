@@ -27,6 +27,7 @@
     {{end}}
     
     <form method="post" action="/web/login">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
         <input type="hidden" name="next" value="{{.Next}}"/>
         
         <div class="field">
@@ -42,6 +43,11 @@
         <button type="submit" class="sum-login-btn">Sign in</button>
     </form>
 </div>
+<script>
+(function () {
+  localStorage.removeItem("sumeru_open_tabs");
+})();
+</script>
 <script src="/static/js/sumeru-password-toggle.js"></script>
 </body>
 </html>

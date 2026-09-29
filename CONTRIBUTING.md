@@ -111,6 +111,40 @@ make test-integration
 
 See the [Actions tab](https://github.com/ProjectMeru/sumeru/actions/workflows/ci.yml) for workflow runs. Dependabot opens weekly Go/npm and monthly GitHub Actions update PRs.
 
+## Security elevation
+
+Kernel paths that must bypass record rules (module install, cron, outbox drain, setup bootstrap) must use **`orm.WithElevated(ctx, reason, fn)`** with a **stable reason string** — never user input, tokens, or dynamic SQL.
+
+- **`WithElevated`** time-boxes work (15 minutes), sets bypass on the callback context, and writes `security_elevate` / `security_elevate_done` / `security_elevate_fail` rows to `sys.audit` (best-effort). User/RPC contexts must not carry bypass unless inside that boundary (`RejectSmuggledUserBypass`).
+- **RPC and ORM CRUD** (`search`, `read`, `write`, `create`, `unlink`, `read_group`, `onchange`, `call`) enforce model ACL and record rules on the session/API-key context from `rpcSecurityContext` — never `ContextWithBypass` on the request.
+- **`AuditedBypass`** is for ORM internals and code already running inside an elevated boundary (sequences, side effects, i18n). Do not call it on `r.Context()` in web handlers or at addon hook entry.
+- **`BackgroundBypass`** in tests/config is not audited; do not use it in handlers or addons.
+- CI enforces raw `ContextWithBypass` and addon `AuditedBypass` via [`scripts/check_security_bypass.sh`](scripts/check_security_bypass.sh).
+
+| Reason | Use |
+|--------|-----|
+| `module.install` | Install / uninstall / activate modules |
+| `cron.run` | Scheduler tick |
+| `outbox.drain` | Outbox publisher |
+| `automation.server_action` | Server action event hooks |
+| `digest.hook` | Digest cron hook |
+| `setup.bootstrap` | First-time setup handler |
+| `schema.sync` | Registry schema sync |
+
+## Developer mode (SWC)
+
+System administrators see a **bug icon** in the web top bar (`features.debugMenu` in SWC bootstrap). Use it to:
+
+- **Enable developer mode** (`?debug=1`) — client arch/RPC logging, debug drawer, optional field inspector.
+- **Enable developer mode (assets)** (`?debug=assets`) — same with asset cache bust on reload.
+- **Disable developer mode** — clears the query param and session flag.
+
+With developer mode on, the top-bar **bug menu** shows sectioned actions (Record, User interface, Security, Tools). Each form field label gets an **info icon**; hover it for a technical popover (field, model, domain, modifiers). **Metadata** and **Data** open modals; **Access rights** opens the secondary debug drawer (collapsed by default). The **field inspector** toggle enables click-to-select on the field widget without blocking normal input when off. **SWC Vision** and **Open metrics** remain admin-gated.
+
+## View modifier expressions (SWC)
+
+Dynamic `invisible` / `readonly` / `required` expressions in form and list arch are evaluated client-side with a **frozen allowlist** of identifiers: record field names, `user_id`, `company_id`, and `context` (object). Expressions must be boolean JavaScript fragments (for example `state == 'done'`), not statements. Tokens such as `function`, `=>`, `[`, `` ` ``, or `;` are rejected. Static arch flags still apply when an expression is missing or invalid.
+
 ## Pull requests
 
 - Keep diffs focused; one concern per PR when practical.

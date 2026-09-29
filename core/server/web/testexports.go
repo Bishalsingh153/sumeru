@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -33,6 +34,7 @@ const (
 	TestRootRoute              = rootRoute
 	TestSetupRoute             = setupRoute
 	TestLoginRoute             = loginRoute
+	TestLogoutRoute            = logoutRoute
 	TestPinnedAppsRoute        = pinnedAppsRoute
 	TestChatterPostRoute       = chatterPostRoute
 	TestCompanySwitchRoute     = companySwitchRoute
@@ -69,13 +71,13 @@ const (
 
 // Numeric and URL constants for external tests.
 var (
-	TestWorkspaceStylesheetURL   = workspaceStylesheetURL
-	TestPagesStylesheetURL       = pagesStylesheetURL
-	TestSettingsHubStylesheetURL = settingsHubStylesheetURL
+	TestWorkspaceStylesheetURL         = workspaceStylesheetURL
+	TestPagesStylesheetURL             = pagesStylesheetURL
+	TestSettingsHubStylesheetURL       = settingsHubStylesheetURL
 	TestMaxRPCBodyBytes          int64 = maxRPCBodyBytes
-	TestMaxChatterBodyRunes      = maxChatterBodyRunes
-	TestSetupRateLimitWindow     = setupRateLimitWindow
-	TestSetupRateLimitMax        = setupRateLimitMax
+	TestMaxChatterBodyRunes            = maxChatterBodyRunes
+	TestSetupRateLimitWindow           = setupRateLimitWindow
+	TestSetupRateLimitMax              = setupRateLimitMax
 )
 
 func HTTPStatusFromWorkspaceError(err error) int { return httpStatusFromWorkspaceError(err) }
@@ -155,7 +157,7 @@ func SetupTokenFromRequest(r *http.Request, bodyToken string) string {
 }
 
 func PruneSetupAttempts(attempts []time.Time, now time.Time) []time.Time {
-	return pruneSetupAttempts(attempts, now)
+	return pruneAttemptsWithin(attempts, now, setupRateLimitWindow)
 }
 
 func AllowSetupRateLimit(w http.ResponseWriter, requestIP string) bool {
@@ -164,6 +166,14 @@ func AllowSetupRateLimit(w http.ResponseWriter, requestIP string) bool {
 
 func ValidateSetupToken(w http.ResponseWriter, r *http.Request, tokenFromBody string) bool {
 	return validateSetupToken(w, r, tokenFromBody)
+}
+
+func RequireSetupEnvironmentForTest(w http.ResponseWriter, r *http.Request) bool {
+	return requireSetupEnvironment(w, r)
+}
+
+func SetupClientIPForTest(r *http.Request) string {
+	return setupClientIP(r)
 }
 
 func CheckSwcBusOrigin(r *http.Request) bool { return checkSwcBusOrigin(r) }
@@ -274,7 +284,18 @@ func ImportCSVFlashMessage(createdCount int) string { return importCSVFlashMessa
 
 func ParseCompanySwitchForm(r *http.Request) companySwitchForm { return parseCompanySwitchForm(r) }
 
-func LoginURLWithReturn(returnTo string) string { return loginURLWithReturn(returnTo) }
+// LoginURLWithReturn returns the login path (return target is stored in a cookie by redirectToLogin).
+func LoginURLWithReturn(_ string) string { return loginRoute }
+
+// SetLoginNextCookieForTest sets the pre-login return-path cookie for tests.
+func SetLoginNextCookieForTest(w http.ResponseWriter, returnTo string) {
+	setLoginNextCookie(w, returnTo)
+}
+
+// RedirectToLoginForTest mirrors requireLogin redirect without session check.
+func RedirectToLoginForTest(w http.ResponseWriter, r *http.Request, returnTo string) {
+	redirectToLogin(w, r, returnTo)
+}
 
 func BearerToken(header string) string { return bearerToken(header) }
 
@@ -343,7 +364,7 @@ func AppsLinkFromBrowse(browse AppsBrowseState) string {
 }
 
 func AppsDetailURL(browse AppsBrowseState, editing bool) string {
-	return appsDetailURL(browse, editing)
+	return appsDetailPageURL(browse, editing)
 }
 
 func FindAppsModule(modules []AppsModule, moduleName string) (AppsModule, bool) {
@@ -379,6 +400,119 @@ func SetTestSessionUserIDForTest(userID int) { testSessionUserIDOverride = userI
 // ResetTestSessionUserIDForTest clears the session override.
 func ResetTestSessionUserIDForTest() { testSessionUserIDOverride = 0 }
 
+// SessionUserIDForTest exposes SessionUserID for external tests.
+func SessionUserIDForTest(r *http.Request) int { return SessionUserID(r) }
+
+// AuthViaSessionForTest exposes AuthViaSession for external tests.
+func AuthViaSessionForTest(r *http.Request) bool { return AuthViaSession(r) }
+
+// RPCJSONHandlerForTest exposes the JSON RPC handler for external tests.
+func RPCJSONHandlerForTest(w http.ResponseWriter, r *http.Request) { RPCJSONHandler(w, r) }
+
+// BuildSessionCookieForTest exposes session cookie construction for tests.
+func BuildSessionCookieForTest(value string, deleteCookie bool) *http.Cookie {
+	return buildSessionCookie(value, deleteCookie)
+}
+
+// SessionCookieFromRequestForTest exposes session cookie lookup for tests.
+func SessionCookieFromRequestForTest(r *http.Request) (sid, cookieName string) {
+	return sessionCookieFromRequest(r)
+}
+
+// LoginGetForTest exposes the login page GET handler for tests.
+func LoginGetForTest(w http.ResponseWriter, r *http.Request) { LoginGet(w, r) }
+
+// LogoutGetForTest exposes the logout GET handler for tests.
+func LogoutGetForTest(w http.ResponseWriter, r *http.Request) { LogoutGet(w, r) }
+
+// LogoutPostForTest exposes the logout POST handler for tests.
+func LogoutPostForTest(w http.ResponseWriter, r *http.Request) { LogoutPost(w, r) }
+
+// CSRFTokenForRequestForTest exposes the session-bound CSRF token for tests.
+func CSRFTokenForRequestForTest(r *http.Request) string { return CSRFTokenForRequest(r) }
+
+// ValidateProductionCSRFSecretForTest exposes production CSRF secret validation.
+func ValidateProductionCSRFSecretForTest() error { return ValidateProductionCSRFSecret() }
+
+// LoginPostForTest exposes the login POST handler for tests.
+func LoginPostForTest(w http.ResponseWriter, r *http.Request) { LoginPost(w, r) }
+
+// LoginLockedForTest exposes login brute-force lockout state.
+func LoginLockedForTest(login string) bool { return loginLocked(login) }
+
+// RecordLoginFailureForTest records a failed login attempt for lockout tests.
+func RecordLoginFailureForTest(login string) { recordLoginFailure(login) }
+
+// ClearLoginFailuresForTest clears lockout state for a login key.
+func ClearLoginFailuresForTest(login string) { clearLoginFailures(login) }
+
+// ResetLoginLockoutForTest clears all in-memory login lockout state.
+func ResetLoginLockoutForTest() { resetLoginLockoutState() }
+
+// ComparePasswordConstantTimeForTest exposes constant-time password compare for tests.
+func ComparePasswordConstantTimeForTest(storedHash, plain string) bool {
+	return comparePasswordConstantTime(storedHash, plain)
+}
+
+// RequireSystemAdminForTest exposes requireSystemAdmin for handler tests.
+func RequireSystemAdminForTest(w http.ResponseWriter, r *http.Request, redirectOnDeny bool) bool {
+	return requireSystemAdmin(w, r, redirectOnDeny)
+}
+
+// RequireModelAccessForTest exposes requireModelAccess for handler tests.
+func RequireModelAccessForTest(w http.ResponseWriter, r *http.Request, model, perm string) bool {
+	return requireModelAccess(w, r, model, perm)
+}
+
+// ValidateLoginCSRFForTest exposes pre-session login CSRF validation for tests.
+func ValidateLoginCSRFForTest(r *http.Request) bool { return validateLoginCSRF(r) }
+
+// TestLoginCSRFCookie is the HttpOnly login CSRF cookie name.
+const TestLoginCSRFCookie = loginCSRFCookie
+
+// ResolveSessionFromCookieForTest exposes session resolution for integration tests.
+func ResolveSessionFromCookieForTest(r *http.Request) (userID int, clearCookie bool) {
+	state := resolveSession(r)
+	return state.userID, state.clearCookie
+}
+
+// TestSessionCookieName is the HttpOnly session cookie name.
+const TestSessionCookieName = sessionCookieName
+
+// InsertTestSessionForTest inserts a sys.session row for integration tests.
+func InsertTestSessionForTest(sid string, userID int, expiresAt time.Time) error {
+	if orm.DB == nil {
+		return fmt.Errorf("no database")
+	}
+	sessionTable := orm.MustQuotedTableName("sys.session")
+	_, err := orm.DB.Exec(
+		`INSERT INTO `+sessionTable+` (sid, user_id, expires_at) VALUES ($1, $2, $3)`,
+		sid, userID, expiresAt,
+	)
+	return err
+}
+
+// CountTestSessionsForUserForTest returns session row count for a user.
+func CountTestSessionsForUserForTest(userID int) (int, error) {
+	if orm.DB == nil {
+		return 0, fmt.Errorf("no database")
+	}
+	sessionTable := orm.MustQuotedTableName("sys.session")
+	var count int
+	err := orm.DB.QueryRow(`SELECT COUNT(*) FROM `+sessionTable+` WHERE user_id = $1`, userID).Scan(&count)
+	return count, err
+}
+
+// DeleteTestSessionForTest removes a session row by sid.
+func DeleteTestSessionForTest(sid string) error {
+	if orm.DB == nil {
+		return fmt.Errorf("no database")
+	}
+	sessionTable := orm.MustQuotedTableName("sys.session")
+	_, err := orm.DB.Exec(`DELETE FROM `+sessionTable+` WHERE sid = $1`, sid)
+	return err
+}
+
 func ResolveExtraScripts(pageScripts, optScripts []string) []string {
 	return resolveExtraScripts(pageScripts, optScripts)
 }
@@ -394,7 +528,9 @@ const (
 
 func HomeRouteWithMenuForTest(menuID string) string { return homeRouteWithMenu(menuID) }
 
-func PrependViewModeForTest(mode string, modes []string) []string { return prependViewMode(mode, modes) }
+func PrependViewModeForTest(mode string, modes []string) []string {
+	return prependViewMode(mode, modes)
+}
 
 func IsNumericRecordIDForTest(recordID string) bool { return isNumericRecordID(recordID) }
 
@@ -457,4 +593,34 @@ func ResolveNavigationActionForTest(ctx context.Context, actionID int, actionQue
 	default:
 		return 0, "", err
 	}
+}
+
+// ShareTokenParsed is the decoded portal share token payload.
+type ShareTokenParsed struct {
+	IssuerUID int
+	Model     string
+	ResID     int64
+}
+
+// MintShareTokenForTest signs a share link for tests.
+func MintShareTokenForTest(issuerUID int, model string, resID int64) (string, error) {
+	return MintShareToken(issuerUID, model, resID)
+}
+
+// MintShareTokenForTestWithExpiry signs a share link with a fixed expiry unix time.
+func MintShareTokenForTestWithExpiry(issuerUID int, model string, resID int64, expUnix int64) (string, error) {
+	return mintShareTokenAt(issuerUID, model, resID, expUnix)
+}
+
+// ParseShareTokenForTest validates and decodes a share token.
+func ParseShareTokenForTest(token string) (ShareTokenParsed, error) {
+	parsed, err := parseShareToken(token)
+	if err != nil {
+		return ShareTokenParsed{}, err
+	}
+	return ShareTokenParsed{
+		IssuerUID: parsed.IssuerUID,
+		Model:     parsed.Model,
+		ResID:     parsed.ResID,
+	}, nil
 }

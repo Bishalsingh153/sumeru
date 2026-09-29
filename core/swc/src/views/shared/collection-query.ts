@@ -1,6 +1,17 @@
 import type { SwcEnv } from "../../runtime/env.js";
 import type { SwcArchField, SwcSearchFilter, SwcSearchMeta, SwcWorkspacePayload } from "../../types/workspace.js";
-import { parseFilterCSV, toggleFilterName } from "../list/control-panel.js";
+
+export function parseFilterCSV(raw?: string): string[] {
+  return (raw ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function toggleFilterName(active: string[], name: string): string[] {
+  if (active.includes(name)) return active.filter((n) => n !== name);
+  return [...active, name];
+}
 
 export interface CollectionQuery {
   search: string;

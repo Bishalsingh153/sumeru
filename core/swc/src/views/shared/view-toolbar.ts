@@ -10,9 +10,11 @@ import {
   EXPORT_PIVOT_ROUTE,
   EXPORT_GRAPH_ROUTE,
   VIEW_FORM,
+  VIEW_GRAPH,
+  VIEW_PIVOT,
 } from "../../constants/routes.js";
 import { RouterService } from "../../services/router.js";
-import { pivotFields } from "./arch-fields.js";
+import { graphAxes, pivotFields } from "./arch-fields.js";
 
 function linkButton(href: string, label: string, className = "sum-btn sum-btn--secondary"): HTMLElement {
   const a = document.createElement("a");
@@ -73,21 +75,6 @@ export function graphExportUrl(payload: SwcWorkspacePayload, groupField: string,
 function pivotExportFields(payload: SwcWorkspacePayload): { groups: string[]; measures: string[] } {
   const { rowFields, colFields, measureFields } = pivotFields(payload.arch);
   return { groups: [...rowFields, ...colFields], measures: measureFields };
-}
-
-function renderReadGroupExportLink(url: string, label = "Export CSV"): HTMLElement {
-  return linkButton(url, label);
-}
-
-export function renderPivotExportLink(payload: SwcWorkspacePayload): HTMLElement | null {
-  const { groups, measures } = pivotExportFields(payload);
-  if (!groups.length || !measures.length) return null;
-  return renderReadGroupExportLink(pivotExportUrl(payload, groups, measures));
-}
-
-export function renderGraphExportLink(payload: SwcWorkspacePayload, groupField: string, measureField: string): HTMLElement | null {
-  if (!groupField || !measureField) return null;
-  return renderReadGroupExportLink(graphExportUrl(payload, groupField, measureField));
 }
 
 export type ToolbarIconName = "search" | "filter" | "group" | "favorite" | "download" | "chevron" | "close";
@@ -304,23 +291,49 @@ export function buildReportActionEntries(
   return entries;
 }
 
-export function renderReportActions(
+/** Pivot/graph CSV exports for collection views (in addition to arch.report entries). */
+function appendReadGroupExportEntries(
+  payload: SwcWorkspacePayload,
+  viewType: string | undefined,
+  entries: ReportActionEntry[],
+): void {
+  if (viewType === VIEW_PIVOT) {
+    const { groups, measures } = pivotExportFields(payload);
+    if (groups.length > 0 && measures.length > 0) {
+      entries.push({
+        label: "Export pivot CSV",
+        node: linkButton(
+          pivotExportUrl(payload, groups, measures),
+          "Export pivot CSV",
+          "sum-popover-menu-link",
+        ),
+      });
+    }
+    return;
+  }
+  if (viewType === VIEW_GRAPH) {
+    const { groupField, measureField } = graphAxes(payload.arch);
+    if (groupField && measureField) {
+      entries.push({
+        label: "Export graph CSV",
+        node: linkButton(
+          graphExportUrl(payload, groupField, measureField),
+          "Export graph CSV",
+          "sum-popover-menu-link",
+        ),
+      });
+    }
+  }
+}
+
+/** Report menu entries for toolbar (arch.report + view-specific read_group exports). */
+export function buildAllReportEntries(
   payload: SwcWorkspacePayload,
   fields: string,
   recordId = 0,
-): HTMLElement | null {
+  viewType?: string,
+): ReportActionEntry[] {
   const entries = buildReportActionEntries(payload, fields, recordId);
-  if (entries.length === 0) return null;
-
-  const wrap = document.createElement("div");
-  wrap.className = "sum-view-toolbar-actions";
-  for (const entry of entries) {
-    if (entry.node.classList.contains("sum-list-upload-form")) {
-      wrap.appendChild(entry.node);
-      continue;
-    }
-    entry.node.className = "sum-btn sum-btn--secondary";
-    wrap.appendChild(entry.node);
-  }
-  return wrap;
+  appendReadGroupExportEntries(payload, viewType, entries);
+  return entries;
 }

@@ -6,6 +6,9 @@ import (
 )
 
 func prepareCreateWrite(ctx context.Context, model Model, values map[string]interface{}, opts PrepareOptions) (prepared map[string]interface{}, uid int, err error) {
+	if err := RejectSmuggledUserBypass(ctx); err != nil {
+		return nil, 0, err
+	}
 	uid = SecurityUID(ctx)
 	if err := CheckModelAccess(ctx, uid, model.ModelName(), "create"); err != nil {
 		return nil, 0, err
@@ -13,13 +16,18 @@ func prepareCreateWrite(ctx context.Context, model Model, values map[string]inte
 	if err := RejectVirtualWrites(model, values); err != nil {
 		return nil, 0, err
 	}
+	if model.ModelName() == "core.user" {
+		if err := RejectCoreUserSecurityWrites(ctx, uid, values); err != nil {
+			return nil, 0, err
+		}
+	}
 	opts.AllowPasswordHash = opts.AllowPasswordHash || passwordHashWriteAllowed(ctx)
 	prepared, err = PrepareValues(model, values, WriteOpCreate, opts)
 	if err != nil {
 		return nil, 0, err
 	}
 	fieldDefs := fieldDefinitionsByName(model)
-	if err := applySpecialDefaults(ctx, model, fieldDefs, prepared); err != nil {
+	if err := applySpecialDefaults(ctx, fieldDefs, prepared); err != nil {
 		return nil, 0, err
 	}
 	working := mergeRecordMap(map[string]interface{}{}, prepared)

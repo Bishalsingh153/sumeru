@@ -7,6 +7,7 @@ import {
   fieldLabelId,
   fieldReadonlyValue,
   renderFieldShell,
+  shellOptions,
 } from "./field-shell.js";
 import type { FieldWidgetProps } from "./field-props.js";
 import { inputValueFromEvent } from "./field-events.js";
@@ -56,9 +57,9 @@ export class PriorityField extends SwcComponent<FieldWidgetProps> {
     if (isFieldReadonly(field, record, readonly)) {
       const label = options.find((option) => option.value === value)?.label ?? value;
       if (mode === "select") {
-        return renderFieldShell(field, fieldReadonlyValue(label), { labelFor: false });
+        return renderFieldShell(field, fieldReadonlyValue(label), shellOptions(record, { labelFor: false }));
       }
-      return renderFieldShell(field, this.renderStars(numericLevel(value), true), { labelFor: false });
+      return renderFieldShell(field, this.renderStars(numericLevel(value), true), shellOptions(record, { labelFor: false }));
     }
 
     if (mode === "select") {
@@ -78,7 +79,7 @@ export class PriorityField extends SwcComponent<FieldWidgetProps> {
               </option>`,
           )}
         </select>`,
-        { labelFor: id },
+        shellOptions(record, { labelFor: id }),
       );
     }
 
@@ -87,7 +88,7 @@ export class PriorityField extends SwcComponent<FieldWidgetProps> {
       this.renderStars(numericLevel(value), false, (level) => {
         record.set(field.name, String(level));
       }),
-      { labelFor: false },
+      shellOptions(record, { labelFor: false }),
     );
   }
 

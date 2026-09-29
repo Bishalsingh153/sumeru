@@ -6,8 +6,10 @@ import {
   fieldLabelId,
   fieldReadonlyInput,
   renderFieldShell,
+  shellOptions,
 } from "../../src/widgets/field-shell.js";
 import type { SwcArchField } from "../../src/types/workspace.js";
+import { SwcRecord } from "../../src/model/record.js";
 
 const field: SwcArchField = { name: "date_start", type: "date", string: "Start Date" };
 
@@ -39,6 +41,35 @@ describe("field-shell label association", () => {
     const input = root.querySelector("input");
     expect(input?.id).toBe(fieldInputId(field));
     expect(input?.getAttribute("autocomplete")).toBe("off");
+  });
+});
+
+describe("field-shell debug info", () => {
+  const record = new SwcRecord("test.model", 1, {});
+
+  it("renders info button when debug mode and modelName via shellOptions", () => {
+    history.replaceState({}, "", "/web?debug=1");
+    sessionStorage.setItem("sum.debug.mode", "1");
+    const id = fieldInputId(field);
+    const root = renderFieldShell(
+      field,
+      html`<input id=${id} type="date" />`,
+      shellOptions(record, { labelFor: id }),
+    ).render();
+    expect(root.querySelector(".sum-debug-field-info-btn")).not.toBeNull();
+    expect(root.getAttribute("data-sum-debug-field")).toBe("test.model.date_start");
+    history.replaceState({}, "", "/web");
+    sessionStorage.removeItem("sum.debug.mode");
+  });
+
+  it("floating debug anchor when showLabel is false", () => {
+    history.replaceState({}, "", "/web?debug=1");
+    sessionStorage.setItem("sum.debug.mode", "1");
+    const root = renderFieldShell(field, html`<div>toggle</div>`, shellOptions(record, { showLabel: false }))
+      .render();
+    expect(root.querySelector(".sum-field-widget__debug-anchor .sum-debug-field-info-btn")).not.toBeNull();
+    history.replaceState({}, "", "/web");
+    sessionStorage.removeItem("sum.debug.mode");
   });
 });
 

@@ -8,6 +8,12 @@ import { ActionService } from "./services/action.js";
 import { RouterService } from "./services/router.js";
 import { BusService } from "./services/bus.js";
 import { DialogService } from "./services/dialog.js";
+import { RecordService } from "./model/record.js";
+import { CommandService } from "./services/command.js";
+import { mountDebugEnvironment, toggleDebugMode, updateDebugDrawer } from "./devtools/debug.js";
+import { initDebugManager } from "./devtools/debug-manager.js";
+import type { SwcServices } from "./runtime/env.js";
+import type { SwcBootstrap } from "./types/bootstrap.js";
 import { registerCoreServices } from "./services/service-registry.js";
 import { ShellLayout } from "./shell/ShellLayout.js";
 import { initShellChrome } from "./shell/shell-chrome.js";
@@ -28,7 +34,6 @@ import { HierarchyView } from "./views/hierarchy/HierarchyView.js";
 import { ActivityView } from "./views/activity/ActivityView.js";
 import { IframeView } from "./views/iframe/IframeView.js";
 import { loadTranslations } from "./i18n/translate.js";
-import { mountDebugPanel } from "./devtools/debug.js";
 import { initDevtoolsBridge } from "./devtools/bridge.js";
 
 const VIEW_CONSTRUCTORS = {
@@ -56,16 +61,47 @@ function registerCore(): void {
   main.add("shell", ShellLayout as MainComponentConstructor);
 }
 
+function registerCoreCommands(boot: SwcBootstrap, services: SwcServices): void {
+  const { command, action } = services;
+  command.register({
+    id: "nav.home",
+    label: "Go to home",
+    run: () => action.navigate("/web"),
+  });
+  command.register({
+    id: "nav.apps",
+    label: "Open app launcher",
+    run: () => document.getElementById("sum-topbar-search-open")?.click(),
+  });
+  command.register({
+    id: "debug.toggle",
+    label: "Toggle debug mode",
+    run: () => toggleDebugMode(),
+  });
+  if (boot.showCompanySwitcher) {
+    command.register({
+      id: "company.focus",
+      label: "Focus company switcher",
+      run: () => document.querySelector<HTMLSelectElement>(".sum-company-switcher-select")?.focus(),
+    });
+  }
+}
+
 function buildEnv(boot: ReturnType<typeof readBootstrap>): SwcEnv {
   const router = new RouterService();
+  const bus = new BusService();
+  const command = new CommandService();
+  const rpc = new RpcService(boot.rpcUrl, boot.csrfToken);
   const services = {
-    rpc: new RpcService(boot.rpcUrl, boot.csrfToken),
+    rpc,
     http: new HttpService(boot.csrfToken),
     notification: new NotificationService(),
     action: new ActionService(router),
     router,
-    bus: new BusService(),
+    bus,
     dialog: new DialogService(),
+    record: new RecordService(rpc, bus),
+    command,
   };
   registerCoreServices(services);
   return new SwcEnv(boot, services);
@@ -86,9 +122,12 @@ function bootstrap(): void {
   env.services.action.setEnv(env);
   loadTranslations(boot.translations);
   initDevtoolsBridge();
-  mountDebugPanel();
+  registerCoreCommands(boot, env.services);
+  initDebugManager(boot, { dialog: env.services.dialog, notification: env.services.notification });
+  mountDebugEnvironment(boot);
+  void updateDebugDrawer(boot);
   initShellChrome(boot, env.services.http);
-  initAppLauncher(boot, env.services.action);
+  initAppLauncher(boot, env.services.action, env.services.command);
 
   const mountEl = document.getElementById("swc-workspace");
   if (mountEl) {

@@ -57,7 +57,7 @@ func RPCJSONHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Cookie sessions require CSRF; API keys are not browser cookie auth.
-	if SessionUserID(r) > 0 && !ValidateCSRF(r) {
+	if AuthViaSession(r) && !ValidateCSRF(r) {
 		metrics.Inc("sumeru_csrf_rejected_total")
 		api.WriteResponse(w, http.StatusForbidden, api.Fail(api.CodeAccessDenied, "Invalid CSRF token", nil))
 		return
@@ -86,7 +86,7 @@ func RPCJSONHandler(w http.ResponseWriter, r *http.Request) {
 
 func acceptsJSONContentType(contentType string) bool {
 	normalized := strings.TrimSpace(strings.ToLower(contentType))
-	return normalized == "" || strings.HasPrefix(normalized, jsonContentTypePrefix)
+	return strings.HasPrefix(normalized, jsonContentTypePrefix)
 }
 
 func readBoundedRequestBody(r *http.Request, maxBytes int64) ([]byte, bool) {

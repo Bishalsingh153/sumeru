@@ -37,8 +37,8 @@ func TestApplyInheritArch_table(t *testing.T) {
 		{
 			name:   "data wrapper stripped",
 			parent: `<form><field name="x"/></form>`,
-			frag:   `<data><xpath expr="//field[@name='x']" position="attributes"><attribute name="readonly">1</attribute></xpath></data>`,
-			want:   []string{`readonly="1"`},
+			frag:   `<data><xpath expr="//field[@name='x']" position="attributes"><attribute name="readonly">true</attribute></xpath></data>`,
+			want:   []string{`readonly="true"`},
 		},
 		{
 			name:   "invalid xpath",
@@ -65,6 +65,29 @@ func TestApplyInheritArch_table(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestApplyInheritArch_multiInheritChain(t *testing.T) {
+	base := `<view type="form"><sheet><group string="Main"><field name="name"/></group></sheet></view>`
+	mailFrag := `<xpath expr="//sheet" position="inside"><group string="Discuss"><field name="message_ids"/></group></xpath>`
+	customFrag := `<xpath expr="//field[@name='name']" position="after"><field name="ref" string="Reference"/></xpath>`
+
+	out, err := viewinherit.ApplyInheritArch(base, mailFrag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err = viewinherit.ApplyInheritArch(out, customFrag)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, part := range []string{`string="Discuss"`, `name="message_ids"`, `name="name"`, `name="ref"`, `string="Reference"`} {
+		if !strings.Contains(out, part) {
+			t.Fatalf("missing %q in:\n%s", part, out)
+		}
+	}
+	if !containsInOrder(out, `name="name"`, `name="ref"`, `string="Discuss"`) {
+		t.Fatalf("inherit order: %s", out)
 	}
 }
 

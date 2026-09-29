@@ -28,6 +28,13 @@ func processXMLRecords(ctx context.Context, moduleName string, records []parser.
 			} else {
 				upsertSysViewFromRecord(ctx, moduleName, xmlRecord)
 			}
+			continue
+		}
+		if xmlRecord.Model == "sys.report.action" {
+			if strings.TrimSpace(parser.RecordFieldMap(xmlRecord)["inherit_id"]) != "" {
+				*inheritQueue = append(*inheritQueue, xmlRecord)
+				continue
+			}
 		}
 		syncGenericRegistryRecord(ctx, moduleName, xmlRecord)
 	}
@@ -66,7 +73,6 @@ func manifestFromViewList(xmlPath string) (parsedManifestFile, error) {
 		views:     parsedViewData.Views,
 		menuItems: parsedViewData.MenuItems,
 	}
-	out.records = append(out.records, RecordsFromActions(parsedViewData.Actions)...)
 	return out, nil
 }
 
@@ -80,7 +86,6 @@ func manifestFromMenuList(xmlPath string) (parsedManifestFile, error) {
 		records:   append([]parser.Record(nil), menuList.Records...),
 		menuItems: menuList.MenuItems,
 	}
-	out.records = append(out.records, RecordsFromActions(menuList.Actions)...)
 	return out, nil
 }
 
@@ -198,9 +203,23 @@ func (addon *Addon) SyncToDB(ctx context.Context) error {
 		syncMenusFromItems(ctx, moduleName, deferredMenus)
 	}
 
+	sortInheritQueue(inheritQueue)
 	for _, xmlRecord := range inheritQueue {
-		if err := applySysUIViewInherit(ctx, moduleName, xmlRecord); err != nil {
-			errs = append(errs, RecoverableSync(moduleName, "view inherit "+xmlRecord.ID, err))
+		var err error
+		switch xmlRecord.Model {
+		case "sys.view":
+			err = applySysUIViewInherit(ctx, moduleName, xmlRecord)
+		case "sys.report.action":
+			err = applySysReportActionInherit(ctx, moduleName, xmlRecord)
+		default:
+			continue
+		}
+		if err != nil {
+			kind := "view inherit"
+			if xmlRecord.Model == "sys.report.action" {
+				kind = "report inherit"
+			}
+			errs = append(errs, RecoverableSync(moduleName, kind+" "+xmlRecord.ID, err))
 		}
 	}
 

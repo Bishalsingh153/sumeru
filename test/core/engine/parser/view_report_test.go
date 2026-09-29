@@ -26,7 +26,7 @@ func TestReportElementOnListArch(t *testing.T) {
 }
 
 func TestReportViewAttributes(t *testing.T) {
-	arch := `<view type="list" model="product.product" report_download="csv" bulk_upload="1"><field name="name"/></view>`
+	arch := `<view type="list" model="product.product" report_download="csv" bulk_upload="true"><field name="name"/></view>`
 	v, err := parser.ParseViewFromArch(arch)
 	if err != nil {
 		t.Fatal(err)
@@ -37,6 +37,18 @@ func TestReportViewAttributes(t *testing.T) {
 	}
 	if !caps.BulkUpload {
 		t.Fatal("expected bulk upload from attr")
+	}
+}
+
+func TestReportElementOnFormArch(t *testing.T) {
+	arch := `<form><report download="csv,pdf" upload="bulk"/><sheet><field name="name"/></sheet></form>`
+	v, err := parser.ParseViewFromArch(arch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	caps := report.CapabilitiesFromView(v)
+	if !caps.HasDownload() || !caps.BulkUpload {
+		t.Fatalf("caps = %+v", caps)
 	}
 }
 

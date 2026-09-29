@@ -135,16 +135,13 @@ func BuildSWCBootstrapJSON(ctx context.Context, page PageData, ws *SWCBootstrapW
 			}
 		}
 	}
-	uid := orm.UIDFromContext(ctx)
-	if uid > 0 {
-		if u, err := orm.SearchOne(ctx, "core.user", map[string]interface{}{"id": uid}); err == nil {
-			b.User = swcBootstrapUser{
-				ID:       uid,
-				Name:     strings.TrimSpace(orm.AsString(u["name"])),
-				Login:    strings.TrimSpace(orm.AsString(u["login"])),
-				Image:    strings.TrimSpace(orm.AsString(u["image"])),
-				Initials: UserInitialsFromName(strings.TrimSpace(orm.AsString(u["name"]))),
-			}
+	if uid := orm.UIDFromContext(ctx); uid > 0 {
+		b.User = swcBootstrapUser{
+			ID:       uid,
+			Name:     strings.TrimSpace(page.ShellUser),
+			Login:    strings.TrimSpace(page.ShellUserLogin),
+			Image:    strings.TrimSpace(string(page.ShellUserImage)),
+			Initials: strings.TrimSpace(page.ShellUserInitials),
 		}
 	}
 	b.Apps = parseSWCLauncherApps(page.AppLauncherJSON)
@@ -217,6 +214,9 @@ func buildSWCFeatureFlags(ctx context.Context) map[string]bool {
 	flags := map[string]bool{}
 	if orm.UserHasAnyAccessGroup(ctx, uid, "studio.group_studio_user") {
 		flags["studio"] = true
+	}
+	if orm.UserHasAnyAccessGroup(ctx, uid, "base.group_system") {
+		flags["debugMenu"] = true
 	}
 	if len(flags) == 0 {
 		return nil

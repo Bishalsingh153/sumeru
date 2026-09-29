@@ -3,7 +3,6 @@ import type { SwcArchButton, SwcWorkspacePayload } from "../../types/workspace.j
 import { headerButton } from "../shared/view-toolbar.js";
 import { SwcError } from "../../runtime/error.js";
 import {
-  parseFilterCSV,
   renderControlPanel,
   renderRowCheckbox,
   renderSelectAllHeader,
@@ -15,7 +14,8 @@ import { VIEW_LIST } from "../../constants/routes.js";
 import { runObjectAction } from "../shared/object-action.js";
 import { formatFieldValue } from "../shared/field-display.js";
 import { listColumns } from "../shared/arch-fields.js";
-import { navigateCollectionQuery } from "../shared/collection-query.js";
+import { isFieldVisible } from "../../model/modifiers.js";
+import { navigateCollectionQuery, parseFilterCSV } from "../shared/collection-query.js";
 import { CollectionView } from "../shared/collection-view.js";
 import { openWorkspaceRecord } from "../shared/collection-navigation.js";
 
@@ -86,7 +86,7 @@ export class ListView extends CollectionView {
   }
 
   private columns() {
-    return listColumns(this.props.payload.arch);
+    return listColumns(this.props.payload.arch).filter((col) => isFieldVisible(col));
   }
 
   private pageRows() {
@@ -237,9 +237,11 @@ export class ListView extends CollectionView {
             (section) => html`<tbody class="sum-list-section">
               <tr class="sum-list-section-head" @click=${() => this.toggleSection(section.value)}>
                 <td colspan=${cols.length + 1}>
-                  <span class="sum-list-section-toggle">${this.foldedSections.has(section.value) ? "▸" : "▾"}</span>
-                  ${section.label}
-                  <span class="sum-list-section-count">(${section.count})</span>
+                  <div class="sum-list-section-head-inner">
+                    <span class="sum-list-section-toggle">${this.foldedSections.has(section.value) ? "▸" : "▾"}</span>
+                    <span class="sum-list-section-label">${section.label || "(Empty)"}</span>
+                    <span class="sum-list-section-count">(${section.count})</span>
+                  </div>
                 </td>
               </tr>
               ${this.foldedSections.has(section.value)

@@ -11,6 +11,9 @@ func CapabilitiesFromView(v *parser.View) Capabilities {
 	if v == nil {
 		return Capabilities{}
 	}
+	if v.Report != nil && ReportElementInvisible(v.Report.Invisible) {
+		return Capabilities{}
+	}
 	var caps Capabilities
 	if v.Report != nil {
 		mergeCaps(&caps, v.Report.Download, v.Report.Upload, v.Report.PDFSizes, v.Report.Modes)
@@ -18,7 +21,7 @@ func CapabilitiesFromView(v *parser.View) Capabilities {
 	if v.ReportDownload != "" {
 		mergeCaps(&caps, v.ReportDownload, "", v.ReportPDFSizes, v.ReportBulkModes)
 	}
-	if parser.IsTruthyAttr(v.BulkUpload) {
+	if v.BulkUploadEnabled() {
 		caps.BulkUpload = true
 	}
 	if v.Header != nil {
@@ -44,8 +47,14 @@ func mergeCaps(caps *Capabilities, download, upload, pdfSizes, modes string) {
 			caps.DownloadFormats = appendUnique(caps.DownloadFormats, f)
 		}
 	}
-	if strings.EqualFold(strings.TrimSpace(upload), "bulk") || parser.IsTruthyAttr(upload) {
+	switch strings.ToLower(strings.TrimSpace(upload)) {
+	case "bulk":
 		caps.BulkUpload = true
+	case "":
+	default:
+		if b, err := parser.ParseXMLBoolAttr("upload", upload); err == nil && b {
+			caps.BulkUpload = true
+		}
 	}
 	if pdfSizes != "" {
 		caps.PDFSizes = splitCSVList(pdfSizes)
@@ -78,6 +87,23 @@ func splitCSVList(raw string) []string {
 		}
 	}
 	return out
+}
+
+// ReportElementInvisible is true when a view report block is hidden for that view mode.
+func ReportElementInvisible(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false
+	}
+	if b, err := parser.ParseXMLBoolAttr("invisible", raw); err == nil && b {
+		return true
+	}
+	switch strings.ToLower(raw) {
+	case "1", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func appendUnique(list []string, items ...string) []string {

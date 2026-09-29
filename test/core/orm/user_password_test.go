@@ -25,7 +25,7 @@ func TestPrepareValuesRejectsDirectPassword(t *testing.T) {
 		"login":    "a@b.c",
 		"password": "plaintext",
 	}, orm.WriteOpWrite, orm.PrepareOptions{})
-	if err == nil || !strings.Contains(err.Error(), "password cannot be set directly") {
+	if err == nil || !strings.Contains(err.Error(), "cannot be set directly") || !strings.Contains(err.Error(), "password") {
 		t.Fatalf("want direct password rejection, got %v", err)
 	}
 }
@@ -48,5 +48,13 @@ func TestSetUserPasswordRequiresAdmin(t *testing.T) {
 	err := orm.SetUserPassword(ctx, 2, 2, "ValidPass1")
 	if err == nil {
 		t.Fatal("expected denial without system admin (and/or DB)")
+	}
+}
+
+func TestSetOwnUserPasswordRejectsOtherUserWithoutAdmin(t *testing.T) {
+	ctx := orm.ContextWithUID(context.Background(), 2)
+	err := orm.SetOwnUserPassword(ctx, 2, 3, "ValidPass1")
+	if err == nil || !strings.Contains(err.Error(), "system administrator") {
+		t.Fatalf("expected admin requirement for other user, got %v", err)
 	}
 }

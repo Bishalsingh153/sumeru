@@ -34,15 +34,30 @@ func RegisterAppRoutes(mux *http.ServeMux) {
 	registerActionRoutes()
 	registerSettingsRoutes()
 	registerAPIRoutes()
+	registerPortalRoutes()
 
 	router.Apply(serveMux)
 	registerAppAliases(serveMux)
+	registerContentPrefixRoute(serveMux)
+	registerPortalSharePrefixRoute(serveMux)
+}
+
+func registerContentPrefixRoute(mux *http.ServeMux) {
+	mux.HandleFunc(contentRoutePrefix, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		ContentHandler(w, r)
+	})
 }
 
 func registerAuthRoutes() {
 	registerPublic(http.MethodGet, loginRoute, LoginGet)
 	registerPublic(http.MethodPost, loginRoute, LoginPost)
 	registerPublic(http.MethodGet, logoutRoute, LogoutGet)
+	registerSession(http.MethodPost, logoutRoute, LogoutPost)
+	registerAPIKeyRevealRoute()
 }
 
 func registerWorkspaceRoutes() {
@@ -61,6 +76,8 @@ func registerAppsRoutes() {
 
 func registerRecordRoutes() {
 	registerReportRoutes()
+	registerDebugRoutes()
+	registerUserSecurityRoutes()
 	registerSession(http.MethodGet, exportCSVRoute, ExportCSVHandler)
 	registerSession(http.MethodGet, exportPDFRoute, ExportPDFHandler)
 	registerSession(http.MethodGet, exportXLSXRoute, ExportXLSXHandler)
@@ -78,6 +95,7 @@ func registerActionRoutes() {
 
 func registerSettingsRoutes() {
 	registerSession(http.MethodGet, settingsRoute, SettingsHubHandler)
+	registerSettingsAccountRoutes()
 	registerSession(http.MethodGet, appLogsRoute, AppLogsHandler)
 	registerSession(http.MethodGet, metricsRoute, MetricsHandler)
 }
@@ -86,6 +104,21 @@ func registerAPIRoutes() {
 	registerPublic(http.MethodGet, apiHealthRoute, APIHealthHandler)
 	registerPublic(http.MethodGet, apiReadyRoute, APIReadyHandler)
 	registerPublic(http.MethodPost, apiRPCRoute, RPCJSONHandler)
+}
+
+func registerPortalRoutes() {
+	registerSession(http.MethodGet, portalHomeRoute, PortalHomeHandler)
+	registerSession(http.MethodGet, portalRecordRoute, PortalRecordHandler)
+}
+
+func registerPortalSharePrefixRoute(mux *http.ServeMux) {
+	mux.HandleFunc(portalShareRoutePrefix, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		PortalShareHandler(w, r)
+	})
 }
 
 func registerPublic(method, path string, handler http.HandlerFunc) {
