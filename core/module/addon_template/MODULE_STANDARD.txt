@@ -110,6 +110,13 @@ ACL CSV (sys.access)
   automatically during module sync. Listing the CSV in manifest data is optional and is not
   parsed as XML (manifests may still include it for documentation only).
 
+Field access CSV (sys.field.access)
+-----------------------------------
+  Field-level ACL rows load from security/sys.field.access.csv (or sys.field.access.csv at the
+  addon root) during module sync. Header:
+  id,name,model,field_name,group_id:id,perm_read,perm_write
+  Export existing rows from Settings → Field Access (list view CSV export with a model filter).
+
 Multiple addon roots (sumeru.conf)
 ----------------------------------
   addons_path = addons,/opt/sumeru/extra-addons
