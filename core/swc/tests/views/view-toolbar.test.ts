@@ -1,14 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  buildAllReportEntries,
   buildReportActionEntries,
   createToolbarIcon,
   exportQuery,
   graphExportUrl,
   newRecordUrl,
   pivotExportUrl,
-  renderGraphExportLink,
-  renderPivotExportLink,
-  renderReportActions,
   renderSearchField,
   exportFieldNamesCsv,
   renderNewButton,
@@ -55,19 +53,20 @@ describe("view-toolbar", () => {
     expect(exportFieldNamesCsv([{ name: "a" }, { name: "b" }])).toBe("a,b");
   });
 
-  it("renderReportActions returns null when arch.report is absent", () => {
-    expect(renderReportActions(basePayload(), "name")).toBeNull();
-  });
-
-  it("renderReportActions returns fragment when download enabled", () => {
-    const result = renderReportActions(
-      basePayload({ arch: { type: "list", model: "crm.lead", fields: [], report: { download: true, upload: false, pdfSizes: "", bulkModes: "" } } }),
-      "name,email",
-    );
-    expect(result).not.toBeNull();
-    expect(result!.textContent).toContain("Export CSV");
-    expect(result!.textContent).toContain("Export PDF");
-    expect(result!.querySelector('a[href*="/web/export/csv"]')).not.toBeNull();
+  it("buildAllReportEntries adds pivot export for pivot view type", () => {
+    const payload = basePayload({
+      viewType: "pivot",
+      arch: {
+        type: "pivot",
+        model: "crm.lead",
+        fields: [
+          { name: "state", pivotType: "row" },
+          { name: "amount", pivotType: "measure" },
+        ],
+      },
+    });
+    const entries = buildAllReportEntries(payload, "", 0, "pivot");
+    expect(entries.some((e) => e.label === "Export pivot CSV")).toBe(true);
   });
 
   it("buildReportActionEntries lists export formats for actions menu", () => {
@@ -142,22 +141,6 @@ describe("view-toolbar", () => {
     expect(importEntry?.node.querySelector('input[type="file"]')).toBeTruthy();
   });
 
-  it("renderReportActions wraps upload forms without restyling", () => {
-    const result = renderReportActions(
-      basePayload({
-        arch: {
-          type: "list",
-          model: "crm.lead",
-          fields: [],
-          report: { download: true, upload: true, formats: "csv,pdf", pdfSizes: "", bulkModes: "" },
-        },
-      }),
-      "name",
-    );
-    expect(result?.querySelector(".sum-list-upload-form")).toBeTruthy();
-    expect(result?.querySelector('a[href*="/web/export/pdf"]')).toBeTruthy();
-  });
-
   it("pivot and graph export helpers build URLs", () => {
     const payload = basePayload({
       arch: {
@@ -171,7 +154,7 @@ describe("view-toolbar", () => {
     });
     expect(pivotExportUrl(payload, ["state"], ["amount"])).toContain("/web/export/pivot");
     expect(graphExportUrl(payload, "state", "amount")).toContain("/web/export/graph");
-    expect(renderPivotExportLink(payload)?.getAttribute("href")).toContain("group_by=state");
-    expect(renderGraphExportLink(payload, "state", "amount")?.textContent).toBe("Export CSV");
+    const pivotEntries = buildAllReportEntries(payload, "", 0, "pivot");
+    expect(pivotEntries.some((e) => e.label === "Export pivot CSV")).toBe(true);
   });
 });

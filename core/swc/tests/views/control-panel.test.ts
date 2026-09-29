@@ -1,12 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { parseFilterCSV, toggleFilterName } from "../../src/views/shared/collection-query.js";
 import {
-  parseFilterCSV,
   renderControlPanel,
   renderRowCheckbox,
-  renderSearchFilters,
   renderSelectAllHeader,
   renderSortHeader,
-  toggleFilterName,
 } from "../../src/views/list/control-panel.js";
 import type { SwcWorkspacePayload } from "../../src/types/workspace.js";
 
@@ -58,22 +56,6 @@ describe("control-panel helpers", () => {
         onPage: vi.fn(),
       }).render();
     expect(el.textContent).toBe("");
-  });
-
-  it("renderSearchFilters renders domain and group chips", () => {
-    const onToggle = vi.fn();
-    const el = renderSearchFilters({
-        filters: [
-          { name: "draft", string: "Draft", domain: "[]" },
-          { name: "by_state", string: "State", groupBy: "state" },
-        ],
-        active: ["draft"],
-        onToggle,
-      }).render();
-    expect(el.textContent).toContain("Draft");
-    expect(el.textContent).toContain("Group");
-    el.querySelector(".sum-search-chip--active")?.dispatchEvent(new MouseEvent("click"));
-    expect(onToggle).toHaveBeenCalledWith("draft");
   });
 
   it("renderSortHeader toggles sort marker", () => {

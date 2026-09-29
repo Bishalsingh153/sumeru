@@ -84,6 +84,7 @@ describe("ListView", () => {
     view.callSetup();
     const el = view.render();
     expect(el.textContent).toContain("Open");
+    expect(el.querySelector(".sum-list-section-head-inner")).toBeTruthy();
     const head = el.querySelector(".sum-list-section-head") as HTMLElement;
     head.click();
     expect(view.render().querySelector(".sum-list-section-toggle")?.textContent).toBe("▸");

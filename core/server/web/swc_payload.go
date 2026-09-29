@@ -5,6 +5,7 @@ import (
 
 	"sumeru/core/engine/render"
 	"sumeru/core/engine/swcmeta"
+	"sumeru/core/orm"
 )
 
 func buildSwcWorkspacePayload(
@@ -59,7 +60,21 @@ func buildSwcWorkspacePayload(
 			Values: viewRecord.Pivot.Values, MeasureLabel: viewRecord.Pivot.MeasureLabel,
 		}
 	}
-	return swcmeta.BuildWorkspacePayload(ctx, resolved.view, resolved.selectedMode, input, req.menuID)
+	payload := swcmeta.BuildWorkspacePayload(
+		ctx,
+		resolved.view,
+		resolved.selectedMode,
+		input,
+		req.menuID,
+		actionViewModesForTabs(actionData),
+	)
+	if viewRecord.ResModel == coreUserModel && resolved.selectedMode == "form" {
+		if meta, err := orm.BuildUserSecurityMeta(ctx, orm.SecurityUID(ctx), viewRecord.RecordID); err == nil {
+			us := swcmeta.UserSecurityFromORM(meta)
+			payload.UserSecurity = &us
+		}
+	}
+	return payload
 }
 
 func serializeSwcViewTabs(tabs []render.ViewSwitchTab) []swcmeta.ViewTab {

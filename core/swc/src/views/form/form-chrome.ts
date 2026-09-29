@@ -1,13 +1,8 @@
-import { html, type TemplateResult } from "../../template/html.js";
+import { html, type TemplateResult, type TemplateValue } from "../../template/html.js";
 import type { SwcArchButton, SwcArchField, SwcWorkspacePayload } from "../../types/workspace.js";
 import type { SwcRecord } from "../../model/record.js";
 import { isButtonVisible } from "../../model/modifiers.js";
-import {
-  exportFieldNamesCsv,
-  headerButton,
-  renderNewButton,
-  renderReportActions,
-} from "../shared/view-toolbar.js";
+import { headerButton, renderNewButton } from "../shared/view-toolbar.js";
 
 export interface FormToolbarOptions {
   payload: SwcWorkspacePayload;
@@ -24,6 +19,8 @@ export interface FormToolbarOptions {
   onDuplicate: () => void;
   onObjectButton: (archButton: SwcArchButton) => void;
   renderField: (field: SwcArchField, record: SwcRecord, readonly: boolean) => HTMLElement;
+  reportsSlot?: TemplateValue;
+  onToolbarBackdropClick?: () => void;
 }
 
 /** Primary Save/Cancel/Edit/New/object buttons for the form record toolbar. */
@@ -61,6 +58,7 @@ export function renderFormToolbarPrimary(options: FormToolbarOptions): HTMLEleme
 
   for (const archButton of headerButtons) {
     if (archButton.type !== "object") continue;
+    if (payload.recordId <= 0) continue;
     if (!isButtonVisible(archButton, record)) continue;
     items.push(
       headerButton(
@@ -75,16 +73,16 @@ export function renderFormToolbarPrimary(options: FormToolbarOptions): HTMLEleme
   return items;
 }
 
-/** Full form workspace toolbar: primary buttons, header status fields, report actions. */
+/** Full form workspace toolbar: primary buttons, header status fields, optional reports slot. */
 export function renderFormToolbar(options: FormToolbarOptions): TemplateResult {
-  const { payload, readonly, fields, record, renderField } = options;
-  const headerFields = payload.arch.header?.fields ?? [];
-  const exportFields = exportFieldNamesCsv(fields);
-  const reportActions =
-    payload.recordId > 0 ? renderReportActions(payload, exportFields, payload.recordId) : null;
+  const { readonly, record, renderField, reportsSlot, onToolbarBackdropClick } = options;
+  const headerFields = options.payload.arch.header?.fields ?? [];
 
   return html`
-    <div class="sum-ws-record-toolbar sum-view-toolbar sum-form-toolbar">
+    <div
+      class="sum-ws-record-toolbar sum-view-toolbar sum-form-toolbar"
+      @click=${() => onToolbarBackdropClick?.()}
+    >
       <div class="sum-statusbar-buttons sum-view-toolbar-primary">
         ${renderFormToolbarPrimary(options)}
       </div>
@@ -93,7 +91,7 @@ export function renderFormToolbar(options: FormToolbarOptions): TemplateResult {
             ${headerFields.map((f) => renderField(f, record, readonly))}
           </div>`
         : ""}
-      ${reportActions ?? ""}
+      ${reportsSlot ?? ""}
     </div>
   `;
 }

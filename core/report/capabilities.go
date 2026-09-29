@@ -11,6 +11,9 @@ func CapabilitiesFromView(v *parser.View) Capabilities {
 	if v == nil {
 		return Capabilities{}
 	}
+	if v.Report != nil && ReportElementInvisible(v.Report.Invisible) {
+		return Capabilities{}
+	}
 	var caps Capabilities
 	if v.Report != nil {
 		mergeCaps(&caps, v.Report.Download, v.Report.Upload, v.Report.PDFSizes, v.Report.Modes)
@@ -84,6 +87,23 @@ func splitCSVList(raw string) []string {
 		}
 	}
 	return out
+}
+
+// ReportElementInvisible is true when a view report block is hidden for that view mode.
+func ReportElementInvisible(raw string) bool {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return false
+	}
+	if b, err := parser.ParseXMLBoolAttr("invisible", raw); err == nil && b {
+		return true
+	}
+	switch strings.ToLower(raw) {
+	case "1", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
 
 func appendUnique(list []string, items ...string) []string {

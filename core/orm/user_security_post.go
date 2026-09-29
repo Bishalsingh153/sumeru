@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -12,11 +13,16 @@ import (
 // ApplyUserSecurityPost applies core.user security side effects from a form POST
 // (companies, groups, password) after the main record save.
 func ApplyUserSecurityPost(ctx context.Context, actor, userID int, form url.Values) {
+	_ = ApplyUserSecurityPostErr(ctx, actor, userID, form)
+}
+
+// ApplyUserSecurityPostErr is like ApplyUserSecurityPost but returns the first hard error.
+func ApplyUserSecurityPostErr(ctx context.Context, actor, userID int, form url.Values) error {
 	if userID <= 0 {
-		return
+		return fmt.Errorf("invalid user id")
 	}
 	if err := CheckModelAccess(ctx, actor, "core.user", "write"); err != nil {
-		return
+		return err
 	}
 	if _, ok := form["company_ids"]; ok {
 		if !UserHasGroupXML(ctx, actor, "base.group_system") {
@@ -31,16 +37,13 @@ func ApplyUserSecurityPost(ctx context.Context, actor, userID int, form url.Valu
 				}
 			}
 			if err := SetUserCompanyLinks(ctx, userID, cids); err != nil {
-				applog.WarnMsg(ctx, "orm", "user_security", "set user companies failed", err,
-					map[string]interface{}{"user_id": userID})
+				return fmt.Errorf("set user companies: %w", err)
 			}
 		}
 	}
 	if form.Get("security_groups_touched") == "1" {
 		if !UserHasGroupXML(ctx, actor, "base.group_system") {
-			applog.WarnMsg(ctx, "orm", "user_security", "deny set groups: actor not system admin", nil,
-				map[string]interface{}{"user_id": userID, "actor": actor})
-			return
+			return fmt.Errorf("access denied")
 		}
 		var gids []int
 		if ut := strings.TrimSpace(form.Get("security_user_type")); ut != "" {
@@ -55,22 +58,19 @@ func ApplyUserSecurityPost(ctx context.Context, actor, userID int, form url.Valu
 			}
 		}
 		if err := SetUserGroupLinks(ctx, userID, gids); err != nil {
-			applog.WarnMsg(ctx, "orm", "user_security", "set user groups failed", err,
-				map[string]interface{}{"user_id": userID})
+			return fmt.Errorf("set user groups: %w", err)
 		}
 	}
 	if _, ok := form["password_plain"]; ok {
 		if pw := strings.TrimSpace(form.Get("password_plain")); pw != "" {
 			confirm := strings.TrimSpace(form.Get("password_plain_confirm"))
 			if pw != confirm {
-				applog.WarnMsg(ctx, "orm", "user_security", "password confirm mismatch", nil,
-					map[string]interface{}{"user_id": userID})
-				return
+				return fmt.Errorf("password confirmation does not match")
 			}
 			if err := SetUserPassword(ctx, actor, userID, pw); err != nil {
-				applog.WarnMsg(ctx, "orm", "user_security", "password update failed", err,
-					map[string]interface{}{"user_id": userID})
+				return err
 			}
 		}
 	}
+	return nil
 }

@@ -27,6 +27,27 @@ export interface SwcFormMeta {
   hasImageField?: boolean;
 }
 
+export interface SwcUserSecurityGroupRow {
+  id: number;
+  name: string;
+  selected: boolean;
+  isUserType: boolean;
+}
+
+export interface SwcUserSecurityCompanyRow {
+  id: number;
+  name: string;
+  selected: boolean;
+}
+
+export interface SwcUserSecurityMeta {
+  canEdit: boolean;
+  isNew: boolean;
+  groups: SwcUserSecurityGroupRow[];
+  companies: SwcUserSecurityCompanyRow[];
+  passwordLabel: string;
+}
+
 export interface SwcArchFooter {
   buttons: SwcArchButton[];
 }
@@ -258,4 +279,5 @@ export interface SwcWorkspacePayload {
   formBaseQuery?: string;
   defaults?: Record<string, unknown>;
   iframeUrl?: string;
+  userSecurity?: SwcUserSecurityMeta;
 }

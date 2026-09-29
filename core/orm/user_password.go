@@ -23,6 +23,31 @@ func passwordHashWriteAllowed(ctx context.Context) bool {
 	return v
 }
 
+// SetOwnUserPassword lets a user change their own password (no current-password check yet).
+func SetOwnUserPassword(ctx context.Context, actor, userID int, plain string) error {
+	if userID <= 0 || actor <= 0 {
+		return fmt.Errorf("unauthenticated")
+	}
+	if actor != userID && !UserHasGroupXML(ctx, actor, "base.group_system") {
+		return fmt.Errorf("password change requires system administrator")
+	}
+	if actor != userID {
+		return SetUserPassword(ctx, actor, userID, plain)
+	}
+	plain = strings.TrimSpace(plain)
+	if plain == "" {
+		return fmt.Errorf("password required")
+	}
+	if err := ValidatePasswordPolicy(plain); err != nil {
+		return err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+	return SetUserPasswordHash(ctx, userID, string(hash))
+}
+
 // SetUserPassword hashes plain under policy and stores it. Requires system admin.
 func SetUserPassword(ctx context.Context, actor, userID int, plain string) error {
 	if userID <= 0 {

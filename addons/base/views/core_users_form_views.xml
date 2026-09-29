@@ -6,7 +6,7 @@
             <report download="csv,pdf" upload="bulk"/>
             <header>
                 <button name="action_archive" string="Archive" type="object" class=""/>
-                <button name="action_reset_password" string="Send reset instructions" type="object" class="sum_highlight"/>
+                <button name="action_reset_password" string="Email login link" type="object" class="sum_highlight" invisible_expr="id &lt;= 0"/>
             </header>
             <sheet>
                 <div class="sum_button_box" name="button_box">
@@ -25,7 +25,7 @@
                 <group>
                     <group string="Access">
                         <field name="login" string="Login"/>
-                        <field name="active" string="Active" widget="selection"/>
+                        <field name="active" string="Active" widget="boolean_toggle"/>
                         <field name="user_type" string="User Type" widget="selection"/>
                         <field name="gender" string="Gender" widget="selection"/>
                         <field name="color" string="Color" widget="color"/>
@@ -49,9 +49,7 @@
                         </group>
                     </page>
                     <page string="Access Rights">
-                        <!-- Groups checkboxes and password change are injected here by the renderer
-                             via writeResUsersSecuritySection (user_security_render.go). This page acts as
-                             the visual tab anchor. -->
+                        <!-- Groups and allowed companies render from SWC userSecurity payload. -->
                     </page>
                     <page string="Account Security">
                         <group>
@@ -63,9 +61,6 @@
                     </page>
                 </notebook>
             </sheet>
-            <chatter>
-                <field name="signature" string="Log" widget="mail_thread"/>
-            </chatter>
         </view>
     </data>
 </sumeru>

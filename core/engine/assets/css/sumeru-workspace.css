@@ -34,6 +34,9 @@
   position: relative;
   flex-shrink: 0;
   z-index: 20;
+  overflow: visible;
+  container-type: inline-size;
+  container-name: sum-control-bar;
 }
 
 .sum-control-bar-row {
@@ -42,6 +45,7 @@
   gap: 0.65rem;
   width: 100%;
   min-width: 0;
+  overflow: visible;
 }
 
 .sum-control-bar-leading {
@@ -63,6 +67,15 @@
   align-items: center;
   gap: 0.45rem;
   margin-left: auto;
+  overflow: visible;
+}
+
+.sum-control-bar-segment-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .sum-control-bar-segment {
@@ -75,8 +88,27 @@
   overflow: visible;
 }
 
+.sum-control-bar-segment-drop {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  left: auto;
+  z-index: 55;
+  padding-top: 0.35rem;
+  width: max-content;
+}
+
+.sum-control-bar-segment-drop .sum-popover {
+  position: relative;
+  top: auto;
+  right: auto;
+  left: auto;
+  margin-top: 0;
+}
+
 .sum-control-bar-segment .sum-control-bar-popover-anchor {
   display: flex;
+  align-items: stretch;
 }
 
 .sum-control-bar-segment-btn {
@@ -146,6 +178,10 @@
   height: 0.95rem;
   padding: 0 0.2rem;
   font-size: 0.58rem;
+}
+
+.sum-control-bar-segment-btn--badged {
+  padding-right: 1.45rem;
 }
 
 .sum-control-bar-actions-btn {
@@ -395,6 +431,11 @@
   flex-shrink: 0;
 }
 
+.sum-control-bar-popover-anchor > .sum-popover {
+  top: calc(100% + 0.65rem);
+  z-index: 50;
+}
+
 .sum-control-bar-chip-btn {
   display: inline-flex;
   align-items: center;
@@ -542,25 +583,29 @@
 
 .sum-popover {
   position: absolute;
-  top: calc(100% + 0.35rem);
+  top: calc(100% + 0.5rem);
   left: 0;
   z-index: 30;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   background: var(--sum-surface);
   border: 1px solid var(--sum-line);
   border-radius: var(--sum-radius-sm);
-  box-shadow: var(--sum-shadow-md);
+  box-shadow:
+    var(--sum-shadow-md),
+    0 0 0 1px color-mix(in srgb, var(--sum-line) 40%, transparent);
   max-height: min(420px, 60vh);
-  overflow: hidden;
+  overflow: auto;
+  margin-top: 0.15rem;
 }
 
 .sum-popover--filters {
-  width: 320px;
+  width: min(340px, 100cqw);
 }
 
 .sum-popover--group {
-  width: 280px;
+  width: min(280px, 100cqw);
 }
 
 .sum-popover--favorites {
@@ -623,7 +668,7 @@
 
 .sum-popover-heading {
   margin: 0;
-  padding: 0.65rem 0.85rem 0.45rem;
+  padding: 0.75rem 0.85rem 0.5rem;
   font-size: var(--sum-font-size-sm);
   font-weight: var(--sum-font-weight-bold);
   color: var(--sum-muted);
@@ -694,12 +739,41 @@
 
 .sum-popover-select,
 .sum-popover-input {
+  box-sizing: border-box;
   width: 100%;
-  padding: 0.35rem 0.45rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid var(--sum-line);
   border-radius: var(--sum-radius-sm);
   background: var(--sum-surface);
+  font-size: var(--sum-font-size-root);
+  color: var(--sum-text);
+}
+
+.sum-popover-custom .sum-btn {
+  box-sizing: border-box;
+  width: 100%;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+}
+
+.sum-popover-save-shared {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-size: var(--sum-font-size-sm);
+  color: var(--sum-text);
+  cursor: pointer;
+}
+
+.sum-reports-anchor {
+  position: relative;
+}
+
+.sum-control-bar-reports-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .sum-popover-fav {
@@ -1130,6 +1204,38 @@
   border-bottom: 1px solid var(--sum-line);
   vertical-align: middle;
   color: var(--sum-text);
+}
+
+.sum-list-section-head td {
+  background: var(--sum-surface-alt);
+  font-weight: var(--sum-font-weight-bold);
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sum-line);
+}
+
+.sum-list-section-head-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.sum-list-section-toggle {
+  flex-shrink: 0;
+  width: 1rem;
+  text-align: center;
+}
+
+.sum-list-section-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.sum-list-section-count {
+  flex-shrink: 0;
+  color: var(--sum-muted);
+  font-weight: var(--sum-font-weight-medium);
 }
 
 .sum-list-row:nth-child(even) .sum-list-td,

@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from "../../template/html.js";
-import type { SwcArchField, SwcSearchFilter, SwcWorkspacePayload } from "../../types/workspace.js";
+import type { SwcArchField, SwcWorkspacePayload } from "../../types/workspace.js";
 import { checkboxCheckedFromEvent } from "../../widgets/field-events.js";
 
 export interface ControlPanelState {
@@ -9,18 +9,6 @@ export interface ControlPanelState {
   limit: number;
   selectedIds: Set<number>;
   filters: string[];
-}
-
-export function parseFilterCSV(raw?: string): string[] {
-  return (raw ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
-export function toggleFilterName(active: string[], name: string): string[] {
-  if (active.includes(name)) return active.filter((n) => n !== name);
-  return [...active, name];
 }
 
 export interface ControlPanelOptions {
@@ -61,42 +49,6 @@ export function renderControlPanel(options: ControlPanelOptions): TemplateResult
           Next
         </button>
       </div>
-    </div>
-  `;
-}
-
-export function renderSearchFilters(options: {
-  filters: SwcSearchFilter[];
-  active: string[];
-  onToggle: (name: string) => void;
-}): TemplateResult {
-  const domainFilters = options.filters.filter((f) => f.domain || !f.groupBy);
-  const groupFilters = options.filters.filter((f) => f.groupBy);
-  if (domainFilters.length === 0 && groupFilters.length === 0) return html``;
-  return html`
-    <div class="sum-search-filters">
-      ${domainFilters.map((f) => {
-        const on = options.active.includes(f.name);
-        return html`<button
-          type="button"
-          class=${on ? "sum-search-chip sum-search-chip--active" : "sum-search-chip"}
-          @click=${() => options.onToggle(f.name)}
-        >
-          ${f.string || f.name}
-        </button>`;
-      })}
-      ${groupFilters.length
-        ? html`<span class="sum-search-filters-label">Group</span>${groupFilters.map((f) => {
-            const on = options.active.includes(f.name);
-            return html`<button
-              type="button"
-              class=${on ? "sum-search-chip sum-search-chip--active" : "sum-search-chip"}
-              @click=${() => options.onToggle(f.name)}
-            >
-              ${f.string || f.name}
-            </button>`;
-          })}`
-        : ""}
     </div>
   `;
 }

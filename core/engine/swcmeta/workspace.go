@@ -53,9 +53,11 @@ func BuildWorkspacePayload(
 	selectedMode string,
 	rec ViewRecordInput,
 	reqMenuID string,
+	actionViewModes []string,
 ) WorkspacePayload {
 	arch := SerializeViewForUser(ctx, view)
 	arch.Type = selectedMode
+	ApplyReportToArch(ctx, &arch, rec.ResModel, view, actionViewModes)
 
 	if len(rec.KanbanColumns) > 0 || rec.KanbanGroupField != "" {
 		quick := false

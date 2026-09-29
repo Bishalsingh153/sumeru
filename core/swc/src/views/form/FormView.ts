@@ -4,7 +4,8 @@ import type { SwcArchButton, SwcWorkspacePayload } from "../../types/workspace.j
 import type { SwcRecord } from "../../model/record.js";
 import { takePendingChildren } from "../../model/pending-children.js";
 import { SwcError } from "../../runtime/error.js";
-import { headerButton } from "../shared/view-toolbar.js";
+import { exportFieldNamesCsv, headerButton } from "../shared/view-toolbar.js";
+import { renderReportsAnchor } from "../shared/collection-bar-panels.js";
 import { renderFormToolbar } from "./form-chrome.js";
 import { collectFormFields, renderFormSheet } from "./form-sheet.js";
 import { initFormInteractions } from "./form-interactions.js";
@@ -14,6 +15,13 @@ import { ChatterPanel } from "../chatter/ChatterPanel.js";
 import { isFieldVisible } from "../../model/modifiers.js";
 import { VIEW_FORM, VIEW_LIST } from "../../constants/routes.js";
 import { runObjectAction } from "../shared/object-action.js";
+import {
+  gatherUserSecurityFields,
+  type UserSecurityFormFields,
+  validateNewUserSecurityFields,
+} from "./user-security-section.js";
+
+const USER_SECURITY_POST_ROUTE = "/web/user/security-post";
 
 interface FormViewProps {
   payload: SwcWorkspacePayload;
@@ -27,6 +35,7 @@ export class FormView extends SwcComponent<FormViewProps> {
   private saving = false;
   private acting = false;
   private error = "";
+  private reportsPanelOpen = false;
   private activeNotebookPages: Record<number, number> = {};
   private teardownInteractions: (() => void) | null = null;
   private fieldHost!: FieldHost;
@@ -168,6 +177,20 @@ export class FormView extends SwcComponent<FormViewProps> {
   }
 
   private async save(): Promise<void> {
+    const payload = this.props.payload;
+    const sec = payload.userSecurity;
+    const isCoreUser = payload.model === "core.user";
+    const securitySnapshot: UserSecurityFormFields | null =
+      isCoreUser && sec?.canEdit ? gatherUserSecurityFields(this.rootElement) : null;
+
+    if (sec?.canEdit && sec.isNew && isCoreUser) {
+      const msg = validateNewUserSecurityFields(securitySnapshot);
+      if (msg) {
+        this.error = msg;
+        this.rerender();
+        return;
+      }
+    }
     if (this.rootElement && !validatePasswordMatchGroups(this.rootElement)) {
       this.error = "Passwords do not match.";
       this.rerender();
@@ -179,11 +202,20 @@ export class FormView extends SwcComponent<FormViewProps> {
     try {
       const required = this.fields().filter((f) => f.required).map((f) => f.name);
       this.env.services.record.validate(this.record, required);
-      const payload = this.props.payload;
       const isNew = payload.recordId <= 0;
       const id = await this.env.services.record.save(this.record);
       if (isNew && id > 0) {
         await this.savePendingChildren(id);
+      }
+      const savedID = isNew && id > 0 ? id : payload.recordId;
+      if (isCoreUser && savedID > 0 && sec?.canEdit) {
+        if (sec.isNew && !String(securitySnapshot?.password_plain ?? "").trim()) {
+          throw new SwcError(
+            "User was saved but initial password was not captured; open Account Security and save again.",
+            "validation",
+          );
+        }
+        await this.applyUserSecurityPost(savedID, securitySnapshot);
       }
       this.env.services.notification.success("Saved", "Record saved successfully.");
       if (isNew && id > 0) {
@@ -274,6 +306,22 @@ export class FormView extends SwcComponent<FormViewProps> {
     }
   }
 
+  private async applyUserSecurityPost(
+    userID: number,
+    fields: UserSecurityFormFields | null,
+  ): Promise<void> {
+    const snapshot = fields ?? {};
+    if (Object.keys(snapshot).length === 0) {
+      return;
+    }
+    const body: Record<string, string | string[]> = { user_id: String(userID), ...snapshot };
+    const res = await this.env.services.http.postFormFields(USER_SECURITY_POST_ROUTE, body);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new SwcError(text || "User security update failed", "validation");
+    }
+  }
+
   private async runObjectButton(archButton: SwcArchButton): Promise<void> {
     const payload = this.props.payload;
     if (archButton.type !== "object" || payload.recordId <= 0) return;
@@ -310,6 +358,7 @@ export class FormView extends SwcComponent<FormViewProps> {
       },
       renderField: this.renderFieldCached,
       onStatButton: (name) => void this.runObjectButton({ name, string: name, type: "object" }),
+      userSecurity: payload.userSecurity,
     });
 
     const footerButtons = payload.arch.footer?.buttons ?? [];
@@ -332,6 +381,22 @@ export class FormView extends SwcComponent<FormViewProps> {
           onDuplicate: () => void this.duplicateRecord(),
           onObjectButton: (btn) => void this.runObjectButton(btn),
           renderField: this.renderFieldCached,
+          reportsSlot: renderReportsAnchor({
+            open: this.reportsPanelOpen,
+            onToggle: () => {
+              this.reportsPanelOpen = !this.reportsPanelOpen;
+              this.rerender();
+            },
+            payload,
+            fieldsCsv: exportFieldNamesCsv(this.fields()),
+            recordId: payload.recordId > 0 ? payload.recordId : 0,
+            variant: "form",
+          }),
+          onToolbarBackdropClick: () => {
+            if (!this.reportsPanelOpen) return;
+            this.reportsPanelOpen = false;
+            this.rerender();
+          },
         })}
         ${this.error ? html`<div class="sum-flash sum-flash--error">${this.error}</div>` : ""}
         <div class="sum-form-layout${showChatter ? " sum-form-layout--with-chatter" : ""}">

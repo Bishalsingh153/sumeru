@@ -32,6 +32,26 @@ export class HttpService {
     });
   }
 
+  async postFormFields(url: string, data: Record<string, string | string[]>): Promise<Response> {
+    const body = new URLSearchParams();
+    body.set("csrf_token", this.csrfToken);
+    for (const [key, value] of Object.entries(data)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          body.append(key, item);
+        }
+      } else {
+        body.set(key, value);
+      }
+    }
+    return fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+  }
+
   async postJSON<T>(url: string, body: Record<string, unknown>): Promise<T> {
     const payload = { ...body, csrf_token: this.csrfToken };
     const res = await fetch(url, {

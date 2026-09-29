@@ -8,14 +8,19 @@ import (
 
 // archFormRoot matches sys.view arch rooted at <form>.
 type archFormRoot struct {
-	XMLName xml.Name `xml:"form"`
-	String  string   `xml:"string,attr"`
-	Header  *Header  `xml:"header"`
-	Sheet   *Sheet   `xml:"sheet"`
-	Footer  *Footer  `xml:"footer"`
-	Chatter *Chatter `xml:"chatter"`
-	Field   []Field  `xml:"field"`
-	Group   []Group  `xml:"group"`
+	XMLName         xml.Name       `xml:"form"`
+	String          string         `xml:"string,attr"`
+	Report          *ReportElement `xml:"report"`
+	ReportDownload  string         `xml:"report_download,attr"`
+	BulkUpload      string         `xml:"bulk_upload,attr"`
+	ReportPDFSizes  string         `xml:"pdf_sizes,attr"`
+	ReportBulkModes string         `xml:"bulk_modes,attr"`
+	Header          *Header        `xml:"header"`
+	Sheet           *Sheet         `xml:"sheet"`
+	Footer          *Footer        `xml:"footer"`
+	Chatter         *Chatter       `xml:"chatter"`
+	Field           []Field        `xml:"field"`
+	Group           []Group        `xml:"group"`
 }
 
 type archListRoot struct {
@@ -161,13 +166,18 @@ func parseViewFromArchInternal(arch string) (*View, error) {
 	var f archFormRoot
 	if err := xml.Unmarshal([]byte(arch), &f); err == nil && formArchHasContent(&f) {
 		return finishParseView(&View{
-			Type:    "form",
-			Header:  f.Header,
-			Sheet:   f.Sheet,
-			Footer:  f.Footer,
-			Chatter: f.Chatter,
-			Field:   f.Field,
-			Group:   f.Group,
+			Type:            "form",
+			Header:          f.Header,
+			Sheet:           f.Sheet,
+			Footer:          f.Footer,
+			Chatter:         f.Chatter,
+			Field:           f.Field,
+			Group:           f.Group,
+			Report:          f.Report,
+			ReportDownload:  f.ReportDownload,
+			BulkUpload:      f.BulkUpload,
+			ReportPDFSizes:  f.ReportPDFSizes,
+			ReportBulkModes: f.ReportBulkModes,
 		})
 	}
 
@@ -298,6 +308,6 @@ func viewLooksPopulated(v *View) bool {
 }
 
 func formArchHasContent(f *archFormRoot) bool {
-	return f != nil && (f.Header != nil || f.Sheet != nil || f.Footer != nil || f.Chatter != nil ||
-		len(f.Field) > 0 || len(f.Group) > 0)
+	return f != nil && (f.Report != nil || f.Header != nil || f.Sheet != nil || f.Footer != nil || f.Chatter != nil ||
+		len(f.Field) > 0 || len(f.Group) > 0 || f.ReportDownload != "" || f.BulkUpload != "")
 }

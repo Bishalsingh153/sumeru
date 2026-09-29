@@ -12,7 +12,7 @@ func TestWorkspacePayloadJSONFieldsContract(t *testing.T) {
 		"actionId", "menuId", "viewType", "model", "recordId", "formEdit", "csrfToken",
 		"arch", "record", "records", "viewTabs", "breadcrumbs", "listSearch", "listSearchUrl",
 		"listTotal", "listSort", "listOffset", "listFilter", "listDomain", "listGroupBy",
-		"listSections", "favorites", "formBaseQuery", "defaults", "iframeUrl",
+		"listSections", "favorites", "formBaseQuery", "defaults", "iframeUrl", "userSecurity",
 	}
 	typ := swcmeta.WorkspacePayloadTypeForTest()
 	got := make([]string, 0, typ.NumField())

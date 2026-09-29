@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  renderActionsPopover,
   renderFavoritesPopover,
   renderFiltersPopover,
   renderGroupPopover,
   renderPopoverItem,
+  renderReportsAnchor,
+  renderReportsPopover,
+  reportsToolbarVisible,
 } from "../../src/views/shared/collection-bar-panels.js";
 import type { SwcWorkspacePayload } from "../../src/types/workspace.js";
 
@@ -88,8 +90,91 @@ describe("collection-bar-panels", () => {
     expect(favorites.querySelector(".sum-popover--favorites")).toBeTruthy();
     expect(favorites.textContent).toContain("Mine");
 
-    const actions = renderActionsPopover(basePayload(), "name").render();
+    const actions = renderReportsPopover(basePayload(), "name").render();
     expect(actions.querySelector(".sum-popover--actions")).toBeTruthy();
+    expect(actions.textContent).toContain("Import / export");
     expect(actions.textContent).toContain("Export CSV");
+  });
+
+  it("reportsToolbarVisible follows arch.report flags", () => {
+    expect(reportsToolbarVisible(undefined)).toBe(false);
+    expect(reportsToolbarVisible({ download: true, upload: false, pdfSizes: "", bulkModes: "" })).toBe(true);
+    expect(reportsToolbarVisible({ download: false, upload: true, pdfSizes: "", bulkModes: "" })).toBe(true);
+    expect(reportsToolbarVisible({ download: false, upload: false, pdfSizes: "", bulkModes: "" })).toBe(false);
+  });
+
+  it("renderReportsAnchor shows toolbar when report enabled but menu entries empty", () => {
+    const payload = {
+      ...basePayload(),
+      arch: {
+        ...basePayload().arch,
+        report: { download: false, upload: true, formats: "", pdfSizes: "", bulkModes: "" },
+      },
+    };
+    const el = renderReportsAnchor({
+      open: true,
+      onToggle: vi.fn(),
+      payload,
+      fieldsCsv: "",
+      variant: "collection",
+    }).render();
+    expect(el.querySelector(".sum-control-bar-reports-btn")).toBeTruthy();
+    expect(el.textContent).toContain("No export actions available");
+  });
+
+  it("renderReportsAnchor toggles collection reports popover", () => {
+    const closed = renderReportsAnchor({
+      open: false,
+      onToggle: vi.fn(),
+      payload: basePayload(),
+      fieldsCsv: "name",
+      variant: "collection",
+    }).render();
+    expect(closed.querySelector(".sum-popover")).toBeFalsy();
+    expect(closed.querySelector(".sum-control-bar-reports-btn")).toBeTruthy();
+
+    const open = renderReportsAnchor({
+      open: true,
+      onToggle: vi.fn(),
+      payload: basePayload(),
+      fieldsCsv: "name",
+      variant: "collection",
+    }).render();
+    expect(open.querySelector(".sum-popover--actions")).toBeTruthy();
+    expect(open.querySelector(".sum-control-bar-reports-btn--active")).toBeTruthy();
+  });
+
+  it("renderReportsAnchor renders form variant with extra popover class", () => {
+    const el = renderReportsAnchor({
+      open: true,
+      onToggle: vi.fn(),
+      payload: basePayload(),
+      fieldsCsv: "name",
+      variant: "form",
+    }).render();
+    expect(el.querySelector(".sum-form-reports-anchor")).toBeTruthy();
+    expect(el.querySelector(".sum-form-reports-popover")).toBeTruthy();
+  });
+
+  it("filter popover uses readable control classes", () => {
+    const filters = renderFiltersPopover(
+      {
+        query: { search: "", presetFilters: [], customDomain: "", groupBy: [] },
+        customField: "name",
+        customOp: "=",
+        customValue: "",
+        domainPresets: [],
+        filterFields: [{ name: "name", string: "Name", type: "char" }],
+      },
+      {
+        onTogglePreset: vi.fn(),
+        onCustomFieldChange: vi.fn(),
+        onCustomOpChange: vi.fn(),
+        onCustomValueInput: vi.fn(),
+        onApplyCustom: vi.fn(),
+      },
+    ).render();
+    expect(filters.querySelector(".sum-popover-input")).toBeTruthy();
+    expect(filters.querySelector(".sum-popover-custom .sum-btn")).toBeTruthy();
   });
 });

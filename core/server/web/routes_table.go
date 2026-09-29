@@ -77,6 +77,7 @@ func registerAppsRoutes() {
 func registerRecordRoutes() {
 	registerReportRoutes()
 	registerDebugRoutes()
+	registerUserSecurityRoutes()
 	registerSession(http.MethodGet, exportCSVRoute, ExportCSVHandler)
 	registerSession(http.MethodGet, exportPDFRoute, ExportPDFHandler)
 	registerSession(http.MethodGet, exportXLSXRoute, ExportXLSXHandler)
@@ -94,6 +95,7 @@ func registerActionRoutes() {
 
 func registerSettingsRoutes() {
 	registerSession(http.MethodGet, settingsRoute, SettingsHubHandler)
+	registerSettingsAccountRoutes()
 	registerSession(http.MethodGet, appLogsRoute, AppLogsHandler)
 	registerSession(http.MethodGet, metricsRoute, MetricsHandler)
 }

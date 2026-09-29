@@ -87,7 +87,12 @@ func loadSettingsHubSections(ctx context.Context, menuIDStr string) []settingsHu
 			sections = append(sections, hubSection)
 		}
 	}
-	return sections
+	account := settingsHubSection{
+		Title:      "Account",
+		FilterText: "account security password profile",
+		Links:      []settingsHubLink{{Name: "Account security", Href: settingsAccountRoute}},
+	}
+	return append([]settingsHubSection{account}, sections...)
 }
 
 func settingsHubSectionFromSidebar(sidebarSection render.SidebarMenu) (settingsHubSection, bool) {

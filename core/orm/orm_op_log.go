@@ -40,6 +40,10 @@ func logORMOperation(ctx context.Context, start time.Time, operation, modelName 
 		applog.Debug(ctx, ev)
 		return
 	}
+	if operation == "create" && skipAuditModel(modelName) {
+		applog.Debug(ctx, ev)
+		return
+	}
 	applog.Info(ctx, ev)
 }
 
