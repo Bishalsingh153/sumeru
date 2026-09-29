@@ -21,9 +21,14 @@ export interface SumInterpolation {
 
 export type SumNode = SumElement | SumText | SumInterpolation;
 
+export interface SumDocument {
+  templates: Map<string, SumElement>;
+  main: SumElement;
+}
+
 const VOID = new Set(["br", "hr", "img", "input", "meta", "link"]);
 
-export function parseSumXml(source: string): SumElement {
+function parseSumRoot(source: string): SumElement {
   const root: SumElement = { type: "element", tag: "t", attrs: {}, children: [] };
   const stack: SumElement[] = [root];
   let i = 0;
@@ -81,7 +86,8 @@ export function parseSumXml(source: string): SumElement {
       const el: SumElement = { type: "element", tag, attrs: parseAttrs(attrRaw), children: [] };
       stack[stack.length - 1].children.push(el);
 
-      if (!inner.endsWith("/") && !VOID.has(tag.toLowerCase())) {
+      const isSelfClosing = selfClose !== -1 && selfClose < close;
+      if (!isSelfClosing && !VOID.has(tag.toLowerCase())) {
         stack.push(el);
       }
       continue;
@@ -103,7 +109,37 @@ export function parseSumXml(source: string): SumElement {
     }
   }
 
-  const template = root.children.find((c) => c.type === "element") as SumElement | undefined;
-  if (!template) throw new Error("sum-template: missing root element");
-  return template;
+  return root;
+}
+
+export function parseSumDocument(source: string): SumDocument {
+  const root = parseSumRoot(source);
+  const templates = new Map<string, SumElement>();
+  let main: SumElement | undefined;
+
+  for (const child of root.children) {
+    if (child.type !== "element") continue;
+    const tName = child.attrs["t-name"]?.trim();
+    if (tName) {
+      if (templates.has(tName)) {
+        throw new Error(`sum-template: duplicate t-name ${tName}`);
+      }
+      templates.set(tName, child);
+      continue;
+    }
+    if (main) {
+      throw new Error("sum-template: multiple root templates (use t-name for extras)");
+    }
+    main = child;
+  }
+
+  if (!main) {
+    throw new Error("sum-template: missing root element");
+  }
+  return { templates, main };
+}
+
+/** @deprecated Use parseSumDocument; returns main template only. */
+export function parseSumXml(source: string): SumElement {
+  return parseSumDocument(source).main;
 }

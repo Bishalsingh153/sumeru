@@ -1,0 +1,5 @@
+<t t-name="chip"><span class="chip" t-att-class="kind">{{ label }}</span></t>
+<div>
+  <t t-set="label" t-value="props.title"/>
+  <t t-call="chip" t-context="{ kind: 'primary', label: label }"/>
+</div>
