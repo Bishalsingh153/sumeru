@@ -2,17 +2,19 @@ package web
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"sumeru/core/engine/render"
 	"sumeru/core/orm"
+	"sumeru/core/security"
 )
 
 const settingsFieldACLRoute = "/web/settings/field-acl"
+const settingsFieldACLExportRoute = settingsFieldACLRoute + "/export"
 
 type fieldACLMatrixCell struct {
 	FieldName  string
@@ -20,31 +22,33 @@ type fieldACLMatrixCell struct {
 	GroupLabel string
 	DenyRead   bool
 	DenyWrite  bool
-	HasGroups  bool
 }
 
 type fieldACLMatrixRow struct {
-	FieldName string
-	HasGroups bool
-	Cells     []fieldACLMatrixCell
+	FieldName   string
+	SchemaGroups bool
+	KernelTags  []string
+	Cells       []fieldACLMatrixCell
 }
 
 type settingsFieldACLData struct {
-	CSRFToken string
-	Model     string
-	Groups    []fieldACLGroupCol
-	Rows      []fieldACLMatrixRow
-	Flash     render.FlashMessage
-}
-
-type fieldACLGroupCol struct {
-	ID    int
-	Label string
+	CSRFToken       string
+	Model           string
+	ModelChoices    []string
+	GroupFilter     string
+	FieldFilter     string
+	ShowAllGroups   bool
+	GroupsTruncated bool
+	Groups          []aclGroupCol
+	Rows            []fieldACLMatrixRow
+	DebugAccessHref string
+	Flash           render.FlashMessage
 }
 
 func registerSettingsFieldACLRoutes() {
 	registerSession(http.MethodGet, settingsFieldACLRoute, SettingsFieldACLGetHandler)
 	registerSession(http.MethodPost, settingsFieldACLRoute, SettingsFieldACLPostHandler)
+	registerSession(http.MethodGet, settingsFieldACLExportRoute, SettingsFieldACLExportHandler)
 }
 
 func SettingsFieldACLGetHandler(w http.ResponseWriter, r *http.Request) {
@@ -55,20 +59,44 @@ func SettingsFieldACLGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	menuIDStr, ok := resolveSettingsRootMenuID(w, r, ctx)
+	rootMenuID, ok := resolveSettingsRootMenuID(w, r, ctx)
 	if !ok {
 		return
 	}
-	model := strings.TrimSpace(r.URL.Query().Get("model"))
-	flash, _ := flashFromQueryMessage(r.URL.Query().Get("msg"))
-	page, err := buildFieldACLMatrixPage(ctx, model)
+	menuID := resolveSettingsMenuXMLID(ctx, render.MenuFieldAccessMatrixXMLID, rootMenuID)
+	q := r.URL.Query()
+	model := strings.TrimSpace(q.Get("model"))
+	flash, _ := flashFromQueryMessage(q.Get("msg"))
+	page, err := buildFieldACLMatrixPage(ctx, model, q.Get("group_q"), q.Get("field_q"), q.Get("show_all") == "1")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	page.CSRFToken = CSRFTokenForRequest(r)
 	page.Flash = flash
-	renderSettingsFieldACLPage(w, r, page, menuIDStr)
+	page.ModelChoices = listRegistryModelNames()
+	renderSettingsFieldACLPage(w, r, page, menuID)
+}
+
+func SettingsFieldACLExportHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireLogin(w, r) {
+		return
+	}
+	if !requireSystemAdmin(w, r, true) {
+		return
+	}
+	model := strings.TrimSpace(r.URL.Query().Get("model"))
+	if model == "" || orm.RegistryModel(model) == nil {
+		http.Error(w, "model required", http.StatusBadRequest)
+		return
+	}
+	ctx := r.Context()
+	body, err := exportFieldACLCSV(ctx, model)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeCSVAttachment(w, "field_access_"+model+".csv", body)
 }
 
 func SettingsFieldACLPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -93,22 +121,44 @@ func SettingsFieldACLPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	err := orm.WithElevated(ctx, "settings.field_acl_matrix", func(elevated context.Context) error {
-		return applyFieldACLMatrixPost(elevated, model, r.PostForm)
+		groups, err := loadACLGroups(elevated, r.PostForm.Get("group_q"))
+		if err != nil {
+			return err
+		}
+		display, _ := matrixGroupsForDisplay(groups, r.PostForm.Get("show_all") == "1")
+		return applyFieldACLMatrixPost(elevated, model, r.PostForm, display)
 	})
 	if err != nil {
-		redirectWithWebMessage(w, r, settingsFieldACLRoute+"?model="+model, "field_acl_failed")
+		redirectWithWebMessage(w, r, fieldACLRedirectURL(model, r.PostForm), "field_acl_failed")
 		return
 	}
-	redirectWithWebMessage(w, r, settingsFieldACLRoute+"?model="+model, "field_acl_saved")
+	redirectWithWebMessage(w, r, fieldACLRedirectURL(model, r.PostForm), "field_acl_saved")
 }
 
-func applyFieldACLMatrixPost(ctx context.Context, model string, form map[string][]string) error {
-	groups, err := loadFieldACLGroups(ctx)
-	if err != nil {
-		return err
+func fieldACLRedirectURL(model string, form map[string][]string) string {
+	u := settingsFieldACLRoute + "?model=" + model
+	if gq := strings.TrimSpace(firstFormVal(form, "group_q")); gq != "" {
+		u += "&group_q=" + gq
 	}
-	groupIDs := []int{0}
-	for _, g := range groups {
+	if fq := strings.TrimSpace(firstFormVal(form, "field_q")); fq != "" {
+		u += "&field_q=" + fq
+	}
+	if formHas(form, "show_all") {
+		u += "&show_all=1"
+	}
+	return u
+}
+
+func firstFormVal(form map[string][]string, key string) string {
+	if vals, ok := form[key]; ok && len(vals) > 0 {
+		return strings.TrimSpace(vals[0])
+	}
+	return ""
+}
+
+func applyFieldACLMatrixPost(ctx context.Context, model string, form map[string][]string, displayGroups []aclGroupCol) error {
+	groupIDs := make([]int, 0, len(displayGroups))
+	for _, g := range displayGroups {
 		groupIDs = append(groupIDs, g.ID)
 	}
 	fields := listFieldACLFields(model)
@@ -148,15 +198,6 @@ func applyFieldACLMatrixPost(ctx context.Context, model string, form map[string]
 	return nil
 }
 
-func formHas(form map[string][]string, key string) bool {
-	vals, ok := form[key]
-	return ok && len(vals) > 0 && strings.TrimSpace(vals[0]) != ""
-}
-
-func matrixCellKey(groupID int, field string) string {
-	return fmt.Sprintf("%d_%s", groupID, field)
-}
-
 func fieldACLMatrixRowName(model, field string, groupID int) string {
 	if groupID <= 0 {
 		return "matrix." + model + "." + field + ".global"
@@ -164,26 +205,39 @@ func fieldACLMatrixRowName(model, field string, groupID int) string {
 	return fmt.Sprintf("matrix.%s.%s.g%d", model, field, groupID)
 }
 
-func buildFieldACLMatrixPage(ctx context.Context, model string) (settingsFieldACLData, error) {
-	out := settingsFieldACLData{Model: model}
+func buildFieldACLMatrixPage(ctx context.Context, model, groupFilter, fieldFilter string, showAllGroups bool) (settingsFieldACLData, error) {
+	out := settingsFieldACLData{
+		Model:         model,
+		GroupFilter:   groupFilter,
+		FieldFilter:   fieldFilter,
+		ShowAllGroups: showAllGroups,
+	}
 	if model == "" {
 		return out, nil
 	}
 	if orm.RegistryModel(model) == nil {
 		return out, fmt.Errorf("unknown model %q", model)
 	}
-	groups, err := loadFieldACLGroups(ctx)
+	out.DebugAccessHref = "/web/debug/access?model=" + model
+	groups, err := loadACLGroups(ctx, groupFilter)
 	if err != nil {
 		return out, err
 	}
-	out.Groups = groups
+	display, truncated := matrixGroupsForDisplay(groups, showAllGroups)
+	out.Groups = display
+	out.GroupsTruncated = truncated
 	existing, err := loadFieldACLExistingByCell(ctx, model)
 	if err != nil {
 		return out, err
 	}
-	for _, field := range listFieldACLFields(model) {
-		row := fieldACLMatrixRow{FieldName: field}
-		for _, g := range append([]fieldACLGroupCol{{ID: 0, Label: "Global"}}, groups...) {
+	fields := filterFieldNames(listFieldACLFields(model), fieldFilter)
+	for _, field := range fields {
+		row := fieldACLMatrixRow{
+			FieldName:    field,
+			SchemaGroups: fieldHasGroupsAttr(model, field),
+			KernelTags:   security.FieldKernelPolicyTags(model, field),
+		}
+		for _, g := range display {
 			key := matrixCellKey(g.ID, field)
 			cell := fieldACLMatrixCell{
 				FieldName:  field,
@@ -193,10 +247,6 @@ func buildFieldACLMatrixPage(ctx context.Context, model string) (settingsFieldAC
 			if st, ok := existing[key]; ok {
 				cell.DenyRead = !st.read
 				cell.DenyWrite = !st.write
-			}
-			if fieldHasGroupsAttr(model, field) {
-				cell.HasGroups = true
-				row.HasGroups = true
 			}
 			row.Cells = append(row.Cells, cell)
 		}
@@ -247,21 +297,43 @@ func loadFieldACLExisting(ctx context.Context, model string) (map[string]int, er
 	return out, nil
 }
 
-func loadFieldACLGroups(ctx context.Context) ([]fieldACLGroupCol, error) {
-	rows, err := orm.Search(ctx, "core.group", nil)
+func exportFieldACLCSV(ctx context.Context, model string) (string, error) {
+	rows, err := orm.Search(ctx, "sys.field.access", [][]interface{}{{"model", "=", model}})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	out := make([]fieldACLGroupCol, 0, len(rows))
-	for _, row := range rows {
-		id := intField(row["id"])
-		if id <= 0 {
-			continue
+	sort.Slice(rows, func(i, j int) bool {
+		fi := stringField(rows[i]["field_name"])
+		fj := stringField(rows[j]["field_name"])
+		if fi != fj {
+			return fi < fj
 		}
-		out = append(out, fieldACLGroupCol{ID: id, Label: stringField(row["name"])})
+		return intField(rows[i]["group_id"]) < intField(rows[j]["group_id"])
+	})
+	var buf strings.Builder
+	w := csv.NewWriter(&buf)
+	_ = w.Write([]string{"id", "name", "model", "field_name", "group_id:id", "perm_read", "perm_write"})
+	for _, row := range rows {
+		gid := intField(row["group_id"])
+		groupRef := ""
+		if gid > 0 {
+			groupRef = fmt.Sprintf("%d", gid)
+		}
+		_ = w.Write([]string{
+			stringField(row["name"]),
+			stringField(row["name"]),
+			model,
+			stringField(row["field_name"]),
+			groupRef,
+			fmt.Sprintf("%v", boolField(row["perm_read"], true)),
+			fmt.Sprintf("%v", boolField(row["perm_write"], true)),
+		})
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Label < out[j].Label })
-	return out, nil
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func listFieldACLFields(model string) []string {
@@ -295,45 +367,6 @@ func fieldHasGroupsAttr(model, field string) bool {
 	return false
 }
 
-func stringField(v interface{}) string {
-	if v == nil {
-		return ""
-	}
-	switch t := v.(type) {
-	case string:
-		return strings.TrimSpace(t)
-	default:
-		return strings.TrimSpace(fmt.Sprint(t))
-	}
-}
-
-func intField(v interface{}) int {
-	switch t := v.(type) {
-	case int:
-		return t
-	case int64:
-		return int(t)
-	case float64:
-		return int(t)
-	case string:
-		n, _ := strconv.Atoi(strings.TrimSpace(t))
-		return n
-	default:
-		return 0
-	}
-}
-
-func boolField(v interface{}, defaultVal bool) bool {
-	switch t := v.(type) {
-	case bool:
-		return t
-	case string:
-		return strings.EqualFold(strings.TrimSpace(t), "true") || strings.TrimSpace(t) == "1"
-	default:
-		return defaultVal
-	}
-}
-
 func renderSettingsFieldACLPage(w http.ResponseWriter, r *http.Request, pageData settingsFieldACLData, menuIDStr string) {
 	ctx := r.Context()
 	renderShellPage(w, r, shellPageOpts{
@@ -349,10 +382,10 @@ func buildSettingsFieldACLPageData(ctx context.Context, menuIDStr string, page s
 	crumbs := render.BuildSettingsHubBreadcrumbs(ctx)
 	crumbs = append(crumbs, render.BreadcrumbItem{Label: "Field access matrix"})
 	pd := render.PageData{
-		Title:             "Field access matrix",
-		SettingsNavActive: true,
-		ActiveMenuID:      menuIDStr,
-		BreadcrumbItems:   crumbs,
+		Title:                "Field access matrix",
+		SettingsNavActive:    true,
+		ActiveMenuID:         menuIDStr,
+		BreadcrumbItems:      crumbs,
 		ViewStylesheetURLs:   []string{settingsHubStylesheetURL},
 		ExtraBodyClasses:     settingsHubBodyClass,
 	}

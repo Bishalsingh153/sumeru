@@ -346,3 +346,31 @@
   text-align: left;
   white-space: nowrap;
 }
+
+.sum-settings-field-acl-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--sum-surface, #fff);
+  z-index: 1;
+}
+
+.sum-settings-acl-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border-radius: 3px;
+  background: var(--sum-border, #e5e5e5);
+  color: var(--sum-text, #333);
+  vertical-align: middle;
+}
+
+.sum-settings-acl-badge--kernel {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sum-settings-field-acl-actions {
+  margin: 0 0 1rem;
+}
