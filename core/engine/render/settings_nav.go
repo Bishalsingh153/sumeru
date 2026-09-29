@@ -13,8 +13,16 @@ import (
 const MenuGeneralSettingsXMLID = "base.menu_general_settings"
 
 const (
-	SettingsHubPath    = "/web/settings"
-	SettingsAccountPath = "/web/settings/account"
+	SettingsHubPath         = "/web/settings"
+	SettingsAccountPath     = "/web/settings/account"
+	SettingsFieldACLPath    = "/web/settings/field-acl"
+	SettingsModelACLPath    = "/web/settings/model-acl"
+)
+
+// Menu XML ids for settings security matrix pages (active sidebar highlight).
+const (
+	MenuFieldAccessMatrixXMLID = "base.menu_sys_field_access_matrix"
+	MenuModelAccessMatrixXMLID = "base.menu_sys_access_matrix"
 )
 
 func settingsNavExcludedSection(title string) bool {
@@ -53,15 +61,30 @@ func MenuIDIsGeneralSettings(ctx context.Context, menuID string) bool {
 	return isSettingsHubNavMenu(ctx, menuID)
 }
 
+// MenuIDForXMLID resolves a menu xml id to the numeric menu id string used in the shell.
+func MenuIDForXMLID(ctx context.Context, xmlID string) string {
+	return menuIDForXMLID(ctx, xmlID)
+}
+
 func applySettingsNavHrefOverrides(ctx context.Context, menus []parser.MenuItem) {
-	generalID := menuIDForXMLID(ctx, MenuGeneralSettingsXMLID)
-	if generalID == "" {
-		return
+	type override struct {
+		xmlID string
+		href  string
 	}
-	for i := range menus {
-		if menus[i].ID == generalID {
-			menus[i].Action = SettingsHubPath
-			return
+	for _, o := range []override{
+		{MenuGeneralSettingsXMLID, SettingsHubPath},
+		{MenuFieldAccessMatrixXMLID, SettingsFieldACLPath},
+		{MenuModelAccessMatrixXMLID, SettingsModelACLPath},
+	} {
+		menuID := menuIDForXMLID(ctx, o.xmlID)
+		if menuID == "" {
+			continue
+		}
+		for i := range menus {
+			if menus[i].ID == menuID {
+				menus[i].Action = o.href
+				break
+			}
 		}
 	}
 }
