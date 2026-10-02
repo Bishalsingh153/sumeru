@@ -6,7 +6,10 @@ import (
 	"net/http"
 )
 
-const recordErrorFlashCookie = "sumeru_record_error_flash"
+const (
+	apiKeyFlashCookie        = "sumeru_api_key_flash"
+	recordErrorFlashCookie   = "sumeru_record_error_flash"
+)
 
 type recordErrorFlashPayload struct {
 	Kind        string   `json:"kind"`
@@ -14,6 +17,30 @@ type recordErrorFlashPayload struct {
 	Body        string   `json:"body"`
 	Details     string   `json:"details,omitempty"`
 	FieldErrors []string `json:"field_errors,omitempty"`
+}
+
+// PageFlash is a one-time user-visible banner after redirect.
+type PageFlash struct {
+	Kind        string   `json:"kind"` // success, info, warning, error
+	Title       string   `json:"title"`
+	Body        string   `json:"body"`
+	Details     string   `json:"details,omitempty"`
+	FieldErrors []string `json:"field_errors,omitempty"`
+}
+
+// SetAPIKeyFlash stores a one-time raw API key in an HttpOnly cookie (never in redirect URLs).
+func SetAPIKeyFlash(w http.ResponseWriter, raw string) {
+	setNamedCookie(w, apiKeyFlashCookie, raw, "/", 120, http.SameSiteLaxMode)
+}
+
+// ConsumeAPIKeyFlash reads and clears the one-time API key flash cookie.
+func ConsumeAPIKeyFlash(r *http.Request, w http.ResponseWriter) string {
+	c, err := r.Cookie(apiKeyFlashCookie)
+	clearNamedCookie(w, apiKeyFlashCookie, "/", http.SameSiteLaxMode)
+	if err != nil || c.Value == "" {
+		return ""
+	}
+	return c.Value
 }
 
 func recordErrorFlashCookieAttrs() *http.Cookie {
@@ -51,4 +78,20 @@ func ConsumeRecordErrorFlash(r *http.Request, w http.ResponseWriter) (PageFlash,
 		return PageFlash{}, false
 	}
 	return PageFlash(payload), true
+}
+
+// ConsumePageFlashes reads and clears one-time flash data (cookies).
+func ConsumePageFlashes(r *http.Request, w http.ResponseWriter) []PageFlash {
+	var out []PageFlash
+	if c, err := r.Cookie(apiKeyFlashCookie); err == nil && c.Value != "" {
+		out = append(out, PageFlash{
+			Kind:  "success",
+			Title: "API key created",
+			Body:  "Open the one-time reveal page to copy your key (available for 2 minutes):\n/web/apikey/reveal",
+		})
+	}
+	if flash, ok := ConsumeRecordErrorFlash(r, w); ok {
+		out = append(out, flash)
+	}
+	return out
 }
