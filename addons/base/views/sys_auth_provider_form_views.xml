@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.auth.provider_form" model="sys.auth.provider" type="form">
+            <sheet>
+                <div class="sum_title">
+                    <h1>
+                        <field name="name" placeholder="e.g. Corporate Azure AD"/>
+                    </h1>
+                </div>
+                <group>
+                    <group string="General">
+                        <field name="enabled" string="Enabled"/>
+                        <field name="button_label" string="Sign-in button label" placeholder="Sign in with Azure"/>
+                        <field name="provider_type" string="Protocol"/>
+                        <field name="link_policy" string="Unknown users"/>
+                    </group>
+                    <group string="OAuth client">
+                        <field name="client_id" string="Client ID"/>
+                        <field name="client_secret" string="Client secret"/>
+                        <field name="scopes" string="Scopes"/>
+                    </group>
+                </group>
+                <group string="Endpoints">
+                    <group>
+                        <field name="issuer_url" string="Issuer URL"/>
+                        <field name="authorize_url" string="Authorize URL"/>
+                    </group>
+                    <group>
+                        <field name="token_url" string="Token URL"/>
+                        <field name="jwks_url" string="JWKS URL"/>
+                    </group>
+                </group>
+                <group string="Login callback">
+                    <label string="Redirect URI registered at your IdP must be: https://YOUR_HOST/web/auth/oauth/callback (use http only in local development)."/>
+                    <label string="To hide password login, set System Parameter auth.local_enabled to false (requires at least one enabled provider)."/>
+                </group>
+            </sheet>
+        </view>
+    </data>
+</sumeru>

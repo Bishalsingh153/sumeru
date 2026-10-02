@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.auth.provider_list" model="sys.auth.provider" type="list">
+            <field name="name" string="Name"/>
+            <field name="provider_type" string="Type"/>
+            <field name="enabled" string="Enabled"/>
+            <field name="button_label" string="Button Label"/>
+            <field name="link_policy" string="Unknown Users"/>
+        </view>
+    </data>
+</sumeru>
