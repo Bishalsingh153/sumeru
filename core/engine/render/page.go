@@ -13,16 +13,14 @@ func RenderPage(ctx context.Context, templatesDir string, data PageData, bootstr
 	if len(data.SWCBootstrapJSON) == 0 {
 		data.SWCBootstrapJSON = BuildSWCBootstrapJSON(ctx, data, bootstrapWorkspace)
 	}
-	tmpl, err := template.ParseFiles(
-		filepath.Join(templatesDir, "base.html"),
-		filepath.Join(templatesDir, "shell_partials.html"),
-	)
+	paths := ShellLayoutTemplateFiles(templatesDir)
+	tmpl, err := template.ParseFiles(paths...)
 	if err != nil {
 		return "", err
 	}
 	var buf bytes.Buffer
 	// Must execute the layout by name: the partials file only defines {{template "sumMenuIcon"}}.
-	if err := tmpl.ExecuteTemplate(&buf, "base.html", data); err != nil {
+	if err := tmpl.ExecuteTemplate(&buf, filepath.Base(TemplateShellBase), data); err != nil {
 		return "", err
 	}
 	return buf.String(), nil

@@ -141,6 +141,33 @@ System administrators see a **bug icon** in the web top bar (`features.debugMenu
 
 With developer mode on, the top-bar **bug menu** shows sectioned actions (Record, User interface, Security, Tools). Each form field label gets an **info icon**; hover it for a technical popover (field, model, domain, modifiers). **Metadata** and **Data** open modals; **Access rights** opens the secondary debug drawer (collapsed by default). The **field inspector** toggle enables click-to-select on the field widget without blocking normal input when off. **SWC Vision** and **Open metrics** remain admin-gated.
 
+## Realtime bus channels (SWC WebSocket)
+
+Clients connect to `GET /web/swc/bus` (session cookie). Wire frames are JSON:
+
+- Client → server: `subscribe` / `unsubscribe` (with `channels`, optional `last_event_id`), `ping`.
+- Server → client: `event` (`id`, `channel`, `payload`), `pong`, `error`.
+
+**Channel ACL** (server enforces before subscribe):
+
+| Prefix | Rule |
+|--------|------|
+| `user/{uid}/…` | Session uid must match `{uid}` |
+| `group/{xmlid}` | User must belong to group |
+| `record/{model}/{id}` | Read access on record |
+| `company/{id}` | User allowed company |
+| `model/{model}` | Model read ACL |
+
+Events are persisted in `sys.bus.event`; PostgreSQL `NOTIFY sumeru_bus` fan-out supports multiple app processes. Payloads carry record ids only — never field values from elevated writes.
+
+## Mail thread and notifications
+
+Models with `mail_thread` on the embedded model tag auto-subscribe creator and common assignee fields on create. Chatter uses `mail.message` subtypes (`mail.message.subtype`). Followers (`mail.follower`) drive `mail.notification` rows and optional HTML email via the mail queue. @mentions in chatter bodies notify mentioned users by login.
+
+## Auth providers and MFA
+
+Configure IdPs under **Settings → Security → Authentication providers** (`sys.auth.provider`; PKCE on start/callback). **Linked identities** lists `core.user.identity` rows. The login page shows enabled providers as SSO buttons. Local password login stays available unless system parameter `auth.local_enabled` is `false` and at least one provider is enabled. TOTP: users enroll under **Settings → Account security**; login uses `totp_enabled` / `totp_secret` with an HMAC-signed pending-MFA cookie before session creation; trusted devices use a signed cookie bound to the user id. SAML is not implemented — use OIDC-capable IdPs. When `jwks_url` is set, the callback verifies the `id_token` signature against JWKS (RS256/ES256) before linking the user.
+
 ## View modifier expressions (SWC)
 
 Dynamic `invisible` / `readonly` / `required` expressions in form and list arch are evaluated client-side with a **frozen allowlist** of identifiers: record field names, `user_id`, `company_id`, and `context` (object). Expressions must be boolean JavaScript fragments (for example `state == 'done'`), not statements. Tokens such as `function`, `=>`, `[`, `` ` ``, or `;` are rejected. Static arch flags still apply when an expression is missing or invalid. List column expressions that reference record fields are evaluated without a row context (static arch flags apply). Action `context` on the workspace payload is not wired yet — `context` is an empty object until then.

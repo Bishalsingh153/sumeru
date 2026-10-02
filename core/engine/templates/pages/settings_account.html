@@ -1,0 +1,62 @@
+<div class="sum-settings-hub sum-settings-account">
+    <header class="sum-settings-hub-head">
+        <div class="sum-settings-hub-head-text">
+            <h1 class="sum-settings-hub-title">Account security</h1>
+            <p class="sum-settings-hub-lead">Manage your password and two-factor authentication.</p>
+        </div>
+        <a href="/web/settings" class="sum-settings-hub-cta">Back to Settings</a>
+    </header>
+
+    <section class="sum-settings-account-section">
+        <h2 class="sum-settings-section-title">Password</h2>
+        <form class="sum-settings-account-form" method="post" action="/web/settings/account" data-password-match>
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+            <div class="sum-form-group-outer sum-field-region--sheet">
+                <div class="sum-form-group-grid">
+                    <label class="sum-field-label" for="password_plain">Password</label>
+                    <input id="password_plain" name="password_plain" type="password" autocomplete="new-password" required minlength="8" maxlength="72" class="sum-field-input" data-password-primary/>
+                    <label class="sum-field-label" for="password_plain_confirm">Confirm</label>
+                    <input id="password_plain_confirm" name="password_plain_confirm" type="password" autocomplete="new-password" required minlength="8" maxlength="72" class="sum-field-input" data-password-confirm/>
+                    <p class="sum-field-hint" data-password-match-hint role="alert" aria-live="polite" hidden></p>
+                </div>
+            </div>
+            <button type="submit" class="sum-btn sum-btn--primary">Update password</button>
+        </form>
+    </section>
+
+    <section class="sum-settings-account-section">
+        <h2 class="sum-settings-section-title">Two-factor authentication</h2>
+        {{if .TOTP.Enabled}}
+        <p class="sum-settings-hub-lead">Two-factor authentication is <strong>enabled</strong> for your account.</p>
+        <form class="sum-settings-account-form" method="post" action="/web/settings/account">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+            <input type="hidden" name="action" value="totp_disable"/>
+            <div class="sum-form-group-outer sum-field-region--sheet">
+                <label class="sum-field-label" for="totp_disable_code">Authenticator code</label>
+                <input id="totp_disable_code" name="totp_code" type="text" inputmode="numeric" autocomplete="one-time-code" required maxlength="6" pattern="[0-9]{6}" class="sum-field-input"/>
+            </div>
+            <button type="submit" class="sum-btn sum-btn--secondary">Disable two-factor</button>
+        </form>
+        {{else if .TOTP.EnrollPending}}
+        <p class="sum-settings-hub-lead">Scan this QR code with your authenticator app, then enter the verification code.</p>
+        <img src="/web/settings/account/totp-qr" alt="QR code for authenticator setup" width="220" height="220" class="sum-settings-totp-qr"/>
+        <form class="sum-settings-account-form" method="post" action="/web/settings/account">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+            <input type="hidden" name="action" value="totp_enroll_confirm"/>
+            <div class="sum-form-group-outer sum-field-region--sheet">
+                <label class="sum-field-label" for="totp_enroll_code">Verification code</label>
+                <input id="totp_enroll_code" name="totp_code" type="text" inputmode="numeric" autocomplete="one-time-code" required maxlength="6" pattern="[0-9]{6}" class="sum-field-input"/>
+            </div>
+            <button type="submit" class="sum-btn sum-btn--primary">Enable two-factor</button>
+        </form>
+        {{else}}
+        <p class="sum-settings-hub-lead">Add an extra verification step when signing in on new devices.</p>
+        <form class="sum-settings-account-form" method="post" action="/web/settings/account">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+            <input type="hidden" name="action" value="totp_enroll_start"/>
+            <button type="submit" class="sum-btn sum-btn--primary">Set up authenticator app</button>
+        </form>
+        {{end}}
+    </section>
+</div>
+<script src="/static/js/sumeru-password-match.js"></script>

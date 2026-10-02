@@ -31,6 +31,20 @@ func bypassCtx() context.Context {
 	return orm.ContextWithBypass(context.Background(), true)
 }
 
+func TestGetConfig_readsValue(t *testing.T) {
+	mock := setupMockORM(t)
+	mock.ExpectQuery(`SELECT value FROM .+ WHERE key = \$1`).
+		WithArgs("auth.local_enabled").
+		WillReturnRows(sqlmock.NewRows([]string{"value"}).AddRow("false"))
+	got := orm.GetConfig(bypassCtx(), "auth.local_enabled", "true")
+	if got != "false" {
+		t.Fatalf("got %q", got)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSearchWithMockDB(t *testing.T) {
 	mock := setupMockORM(t)
 	rows := sqlmock.NewRows([]string{"id", "name", "active"}).

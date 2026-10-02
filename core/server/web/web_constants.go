@@ -31,7 +31,7 @@ const (
 // Setup wizard limits and templates.
 const (
 	maxSetupInitBodyBytes = 1 << 17 // 128 KiB
-	setupTemplateFile     = "setup.html"
+	setupTemplateFile     = render.TemplateAuthSetup
 	setupOperation        = "setup"
 	setupCompleteMessage  = "Setup complete — server is restarting…"
 	setupTokenHeader      = "X-Setup-Token"
@@ -41,8 +41,7 @@ const (
 
 // Shell layout templates and defaults.
 const (
-	shellPartialsTemplate = "shell_partials.html"
-	defaultPageTitle      = "Sumeru"
+	defaultPageTitle = "Sumeru"
 )
 
 // Pinned apps API form fields and limits.
@@ -61,13 +60,23 @@ const (
 
 // Login page identifiers and form fields.
 const (
-	loginTemplateFile   = "login.html"
-	loginField          = "login"
-	passwordField       = "password"
-	nextField           = "next"
-	invalidLoginMessage = "Invalid login or password."
-	resetPasswordMsg    = "reset_requested"
-	resetUserIDField    = "id"
+	loginTemplateFile       = render.TemplateAuthLogin
+	totpLoginTemplateFile   = render.TemplateAuthTOTP
+	totpLoginRoute          = "/web/login/totp"
+	loginCSRFCookie         = "sumeru_login_csrf"
+	loginNextCookie         = "sumeru_login_next"
+	pendingMFACookie        = "sumeru_pending_mfa"
+	trustedDeviceCookie     = "sumeru_trusted_device"
+	loginLockoutMaxFailures = 5
+	loginField              = "login"
+	passwordField           = "password"
+	nextField               = "next"
+	invalidLoginMessage     = "Invalid login or password."
+	resetPasswordMsg        = "reset_requested"
+	oauthDeniedMsg          = "oauth_denied"
+	authLocalDisabledMsg    = "auth_local_disabled"
+	authLocalConfigKey      = "auth.local_enabled"
+	resetUserIDField        = "id"
 )
 
 // Auth HTTP headers.
@@ -118,7 +127,7 @@ const (
 // Home dashboard page identifiers.
 const (
 	homeMenuRootXMLID = "base.menu_home_root"
-	homeInnerTemplate = "home_dashboard_inner.html"
+	homeInnerTemplate = render.TemplatePagesHome
 	homePageTitle     = "Home"
 	homeStylesheetURL = "/static/css/sumeru-home.css"
 	homeEmptyMessage  = "No installed applications. Install apps from Apps."
@@ -128,7 +137,7 @@ const (
 // App logs page identifiers.
 const (
 	appLogsMenuXMLID       = "base.menu_app_logs"
-	appLogsInnerTemplate   = "app_logs_inner.html"
+	appLogsInnerTemplate   = render.TemplatePagesAppLogs
 	appLogsPageTitle       = "App Logs"
 	appLogsBreadcrumb      = "Event Log"
 	appLogModel            = "app.log"
@@ -141,13 +150,13 @@ const (
 const (
 	settingsRootMenuXMLID      = "base.menu_settings_root"
 	settingsHubMenuXMLID       = render.MenuGeneralSettingsXMLID
-	settingsHubInnerTemplate   = "settings_hub_inner.html"
+	settingsHubInnerTemplate   = render.TemplatePagesSettingsHub
 	settingsHubPageTitle       = "Settings"
 	settingsHubStylesheetURL   = "/static/css/sumeru-settings-hub.css"
 	settingsHubBodyClass         = " sum-body--settings-hub"
-	settingsAccountInnerTemplate  = "settings_account_inner.html"
-	settingsFieldACLInnerTemplate = "settings_field_acl_inner.html"
-	settingsModelACLInnerTemplate = "settings_model_acl_inner.html"
+	settingsAccountInnerTemplate  = render.TemplatePagesSettingsAccount
+	settingsFieldACLInnerTemplate = render.TemplatePagesSettingsFieldACL
+	settingsModelACLInnerTemplate = render.TemplatePagesSettingsModelACL
 	groupUserXML                 = "base.group_user"
 )
 
@@ -288,7 +297,7 @@ const (
 const (
 	appsRoute         = "/web/apps"
 	appsPageTitle     = "Apps"
-	appsInnerTemplate = "apps_inner.html"
+	appsInnerTemplate = render.TemplatePagesApps
 	appsModuleModel   = "sys.module"
 )
 

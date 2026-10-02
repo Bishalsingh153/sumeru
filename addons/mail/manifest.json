@@ -10,6 +10,7 @@
     "security/security.xml",
     "security/sys.access.csv",
     "data/mail_activity_type_data.xml",
+    "data/mail_subtype_data.xml",
     "views/actions.xml",
     "views/mail_message_list_views.xml",
     "views/mail_message_form_views.xml",

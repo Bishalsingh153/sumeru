@@ -155,6 +155,8 @@ export class RecordService {
   // ponytail: FIFO eviction at 64 entries; upgrade to LRU if profiling shows churn.
   private static readonly maxCache = 64;
 
+  private readonly recordWatches = new Map<string, () => void>();
+
   constructor(rpc: RpcService, bus: BusService) {
     this.store = new RecordStore(rpc);
     this.bus = bus;
@@ -186,8 +188,19 @@ export class RecordService {
     const rec = this.store.fromPayload(model, id, data);
     if (id > 0) {
       this.remember(model, id, rec);
+      this.ensureServerWatch(model, id);
     }
     return rec;
+  }
+
+  private ensureServerWatch(model: string, id: number): void {
+    const key = this.cacheKey(model, id);
+    if (this.recordWatches.has(key)) return;
+    const unsub = this.bus.watchRecord(model, id, () => {
+      this.invalidate(model, id);
+      this.bus.emit(RECORD_UPDATED, { model, id, recordId: id });
+    });
+    this.recordWatches.set(key, unsub);
   }
 
   get(model: string, id: number): SwcRecord | undefined {

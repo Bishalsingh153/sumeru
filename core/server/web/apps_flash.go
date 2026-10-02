@@ -72,7 +72,7 @@ func appsFlashFromMessage(msg string, displayNames map[string]string) (render.Fl
 		return render.FlashMessage{Kind: "error", Title: "Error", Body: strings.ReplaceAll(msg, "_", " ")}, true
 	}
 
-	if flash, ok := flashFromQueryMessage(msg); ok {
+	if flash, ok := FlashFromQueryMessage(msg); ok {
 		return flash, true
 	}
 	return render.FlashMessage{Kind: "error", Title: "Action failed", Body: msg}, msg != ""

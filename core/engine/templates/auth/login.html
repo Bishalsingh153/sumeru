@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — {{.AppName}}</title>
+    {{template "auth_head_assets" .}}
+</head>
+<body class="sum-login-page">
+<div class="sum-login-shell">
+    {{template "login_brand_aside" .}}
+    <main class="sum-login-panel">
+        <div class="sum-login-card sum-login-card--panel">
+            <h1>Sign in</h1>
+            <p class="sum-login-subtitle">Access your {{.AppName}} workspace.</p>
+
+            {{if .InfoBody}}
+            <div class="sum-login-info">{{if .InfoTitle}}<strong>{{.InfoTitle}}</strong> {{end}}{{.InfoBody}}</div>
+            {{end}}
+            {{if .Error}}
+            <div class="sum-login-error" role="alert">{{.Error}}</div>
+            {{end}}
+
+            {{if .AuthProviders}}
+            <div class="sum-login-sso-list">
+                {{range .AuthProviders}}
+                <a class="sum-login-sso" href="/web/auth/oauth/start?provider={{.ID}}">{{.Label}}</a>
+                {{end}}
+            </div>
+            {{end}}
+
+            {{if and .LocalLoginEnabled .AuthProviders}}
+            <p class="sum-login-divider"><span>or continue with email</span></p>
+            {{end}}
+
+            {{if .LocalLoginEnabled}}
+            <form method="post" action="/web/login">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+                <input type="hidden" name="next" value="{{.Next}}"/>
+
+                <div class="field">
+                    <label for="login">Login</label>
+                    <input id="login" name="login" type="text" autocomplete="username" required autofocus placeholder="email@example.com"/>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="sum-password-field">
+                        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"/>
+                    </div>
+                </div>
+
+                <button type="submit" class="sum-login-btn">Sign in</button>
+            </form>
+            {{else if not .AuthProviders}}
+            <p class="sum-login-muted">No sign-in methods are configured. Contact your administrator.</p>
+            {{end}}
+
+            <footer class="sum-login-footer">
+                <span>© {{.Year}} {{.AppName}}</span>
+                <span class="sum-login-footer-sep">·</span>
+                <span>Authorized users only</span>
+            </footer>
+        </div>
+    </main>
+</div>
+<script>
+(function () {
+  localStorage.removeItem("sumeru_open_tabs");
+})();
+</script>
+<script src="/static/js/sumeru-password-toggle.js"></script>
+</body>
+</html>

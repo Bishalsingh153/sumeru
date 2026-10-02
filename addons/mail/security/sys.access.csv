@@ -5,3 +5,6 @@ access_mail_activity_type_user,access_mail_activity_type_user,mail.activity.type
 access_mail_activity_plan_user,access_mail_activity_plan_user,mail.activity.plan,base.group_system,1,1,1,1
 access_mail_activity_plan_template_user,access_mail_activity_plan_template_user,mail.activity.plan.template,base.group_system,1,1,1,1
 access_mail_template_user,access_mail_template_user,mail.template,base.group_system,1,1,1,1
+access_mail_follower_user,access_mail_follower_user,mail.follower,base.group_user,1,1,1,1
+access_mail_subtype_user,access_mail_subtype_user,mail.message.subtype,base.group_user,1,0,0,0
+access_mail_notification_user,access_mail_notification_user,mail.notification,base.group_user,1,1,1,0

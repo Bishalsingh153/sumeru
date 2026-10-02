@@ -15,8 +15,26 @@ function setVisible(input: HTMLInputElement, btn: HTMLButtonElement, show: boole
   btn.classList.toggle("sum-password-toggle--revealed", show);
 }
 
+function attachToggle(input: HTMLInputElement, wrapper: HTMLElement): void {
+  if (wrapper.querySelector(".sum-password-toggle")) {
+    return;
+  }
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sum-password-toggle";
+  btn.setAttribute("aria-label", "Show password");
+  btn.setAttribute("aria-pressed", "false");
+  btn.innerHTML = EYE_OPEN_SVG + EYE_CLOSED_SVG;
+  wrapper.appendChild(btn);
+  btn.addEventListener("click", () => {
+    setVisible(input, btn, input.type === "password");
+  });
+}
+
 function enhanceInput(input: HTMLInputElement): void {
-  if (input.closest(".sum-password-field")) {
+  const existingWrapper = input.closest(".sum-password-field");
+  if (existingWrapper instanceof HTMLElement) {
+    attachToggle(input, existingWrapper);
     return;
   }
   const parent = input.parentNode;
@@ -28,18 +46,7 @@ function enhanceInput(input: HTMLInputElement): void {
   wrapper.className = "sum-password-field";
   parent.insertBefore(wrapper, input);
   wrapper.appendChild(input);
-
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "sum-password-toggle";
-  btn.setAttribute("aria-label", "Show password");
-  btn.setAttribute("aria-pressed", "false");
-  btn.innerHTML = EYE_OPEN_SVG + EYE_CLOSED_SVG;
-  wrapper.appendChild(btn);
-
-  btn.addEventListener("click", () => {
-    setVisible(input, btn, input.type === "password");
-  });
+  attachToggle(input, wrapper);
 }
 
 /** Enhance password inputs inside root with show/hide toggles. */

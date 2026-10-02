@@ -14,6 +14,7 @@ func init() {
 		&orm.SysActionURL{},
 		&orm.SysActionWindow{},
 		&orm.SysApprovalRule{},
+		&orm.SysBusEvent{},
 		&orm.SysField{},
 		&orm.SysMenu{},
 		&orm.SysModel{},

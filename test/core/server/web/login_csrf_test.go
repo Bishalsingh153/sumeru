@@ -161,6 +161,42 @@ func hiddenInputValue(html, name string) string {
 	return m[1]
 }
 
+func TestLoginGet_showsInfoFlashFromQuery(t *testing.T) {
+	root := sumeruModuleRoot(t)
+	prevTemplates := config.AppConfig.TemplatesPath
+	config.AppConfig.TemplatesPath = filepath.Join(root, "core", "engine", "templates")
+	t.Cleanup(func() {
+		config.AppConfig.TemplatesPath = prevTemplates
+	})
+
+	req := httptest.NewRequest(http.MethodGet, web.TestLoginRoute+"?msg="+web.TestResetPasswordMsg, nil)
+	rec := httptest.NewRecorder()
+	web.LoginGetForTest(rec, req)
+	if !strings.Contains(rec.Body.String(), "sum-login-info") {
+		t.Fatal("expected info flash region")
+	}
+}
+
+func TestLoginGet_rendersEnterpriseShell(t *testing.T) {
+	root := sumeruModuleRoot(t)
+	prevTemplates := config.AppConfig.TemplatesPath
+	config.AppConfig.TemplatesPath = filepath.Join(root, "core", "engine", "templates")
+	t.Cleanup(func() {
+		config.AppConfig.TemplatesPath = prevTemplates
+	})
+	web.ResetAuthTemplateCacheForTest()
+
+	req := httptest.NewRequest(http.MethodGet, web.TestLoginRoute+"?msg="+web.TestOAuthDeniedMsg, nil)
+	rec := httptest.NewRecorder()
+	web.LoginGetForTest(rec, req)
+	body := rec.Body.String()
+	for _, needle := range []string{"sum-login-shell", "sum-login-brand-lockup", web.TestDefaultSumeruLogoURL, "Sign in", "Authorized users only"} {
+		if !strings.Contains(body, needle) {
+			t.Fatalf("missing %q in login HTML", needle)
+		}
+	}
+}
+
 func sumeruModuleRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()

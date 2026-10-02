@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Sumeru">
+  <defs>
+    <linearGradient id="sum-mark" x1="12" y1="8" x2="84" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b8def"/>
+      <stop offset="1" stop-color="#2d4a7a"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#sum-mark)"/>
+  <path fill="#fff" d="M28 32c0-4.4 3.6-8 8-8h24c4.4 0 8 3.6 8 8v4H28v-4zm0 12h40v4c0 4.4-3.6 8-8 8H36c-4.4 0-8-3.6-8-8v-4zm8 16h24c4.4 0 8 3.6 8 8v4H28v-4c0-4.4 3.6-8 8-8z"/>
+</svg>

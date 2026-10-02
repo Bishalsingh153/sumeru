@@ -24,4 +24,6 @@ type CoreCompany struct {
 	MailChatterEnabled       sdk.Boolean               `sumeru:"string=Chatter,default=true"`
 	MailActivityPanelEnabled sdk.Boolean               `sumeru:"string=Activity panel,default=true"`
 	Color                    sdk.Integer               `sumeru:"string=Color Index"`
+	LoginLogo                sdk.Text                  `sumeru:"string=Login logo"`
+	LoginTagline             sdk.String                `sumeru:"string=Login tagline"`
 }

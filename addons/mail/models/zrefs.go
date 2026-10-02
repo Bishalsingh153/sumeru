@@ -9,6 +9,9 @@ import (
 // CoreCompany → core.company
 type CoreCompany = basemodels.CoreCompany
 
+// CorePartner → core.partner
+type CorePartner = basemodels.CorePartner
+
 // CoreUser → core.user
 type CoreUser = basemodels.CoreUser
 
