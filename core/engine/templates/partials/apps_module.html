@@ -1,0 +1,67 @@
+{{define "apps_control_bar"}}
+<form class="sum-apps-control-bar sum-control-bar-wrap" method="get" action="/web/apps" role="search">
+    <input type="hidden" name="layout" value="{{.Layout}}" />
+    {{if .Category}}<input type="hidden" name="category" value="{{.Category}}" />{{end}}
+    <div class="sum-control-bar-row">
+        <div class="sum-control-bar-search-area">
+            <div class="sum-control-bar-search-wrap">
+                <div class="sum-control-bar-search-body">
+                    <input id="sum-apps-q" class="sum-control-bar-search" type="search" name="q" value="{{.Search}}" placeholder="Search apps…" autocomplete="off" aria-label="Search apps" />
+                </div>
+                <button type="submit" class="sum-control-bar-search-submit" aria-label="Search apps">
+                    <svg class="sum-control-bar-search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="sum-control-bar-tools">
+            <div class="sum-control-bar-segment" role="group" aria-label="Catalog options">
+                <label class="sum-apps-segment-select">
+                    <span class="sum-control-bar-segment-btn {{if ne .Filter "all"}}sum-control-bar-segment-btn--active{{end}}">
+                        <svg class="sum-control-bar-segment-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        <span class="sum-control-bar-segment-label">Filters</span>
+                        {{if ne .Filter "all"}}<span class="sum-control-bar-badge">1</span>{{end}}
+                    </span>
+                    <select name="filter" data-auto-submit aria-label="Filter apps by installation status" title="Filter apps">
+                        <option value="all" {{if eq .Filter "all"}}selected{{end}}>All apps</option>
+                        <option value="installed" {{if eq .Filter "installed"}}selected{{end}}>Installed</option>
+                        <option value="uninstalled" {{if eq .Filter "uninstalled"}}selected{{end}}>Not installed</option>
+                    </select>
+                </label>
+                <label class="sum-apps-segment-select">
+                    <span class="sum-control-bar-segment-btn {{if ne .Scope "all"}}sum-control-bar-segment-btn--active{{end}}">
+                        <svg class="sum-control-bar-segment-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                        <span class="sum-control-bar-segment-label">Show</span>
+                        {{if ne .Scope "all"}}<span class="sum-control-bar-badge">1</span>{{end}}
+                    </span>
+                    <select name="scope" data-auto-submit aria-label="Show applications or technical modules" title="Show module type">
+                        <option value="all" {{if eq .Scope "all"}}selected{{end}}>Apps &amp; technical</option>
+                        <option value="apps" {{if eq .Scope "apps"}}selected{{end}}>Apps only</option>
+                        <option value="technical" {{if eq .Scope "technical"}}selected{{end}}>Technical only</option>
+                    </select>
+                </label>
+                <label class="sum-apps-segment-select">
+                    <span class="sum-control-bar-segment-btn {{if .GroupBy}}sum-control-bar-segment-btn--active{{end}}">
+                        <svg class="sum-control-bar-segment-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span class="sum-control-bar-segment-label">Group By</span>
+                        {{if .GroupBy}}<span class="sum-control-bar-badge">1</span>{{end}}
+                    </span>
+                    <select name="group_by" data-auto-submit aria-label="Group apps in the catalog" title="Group apps">
+                        <option value="" {{if not .GroupBy}}selected{{end}}>None</option>
+                        <option value="category" {{if eq .GroupBy "category"}}selected{{end}}>Category</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+    </div>
+</form>
+{{end}}
+
+{{define "apps_post_hiddens"}}
+<input type="hidden" name="apps_layout" value="{{.Layout}}" />
+<input type="hidden" name="apps_filter" value="{{.Filter}}" />
+<input type="hidden" name="apps_scope" value="{{.Scope}}" />
+<input type="hidden" name="apps_q" value="{{.Search}}" />
+<input type="hidden" name="apps_category" value="{{.Category}}" />
+<input type="hidden" name="apps_group_by" value="{{.GroupBy}}" />
+{{if .CSRFToken}}<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />{{end}}
+{{end}}

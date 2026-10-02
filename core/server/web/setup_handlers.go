@@ -7,13 +7,13 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"sumeru/core/applog"
 	"sumeru/core/engine/assets"
+	"sumeru/core/engine/render"
 	"sumeru/core/errcode"
 	"sumeru/core/module"
 	"sumeru/core/orm"
@@ -35,6 +35,8 @@ type setupPageData struct {
 	DbName             string
 	Stylesheets        []string
 	SetupTokenRequired bool
+	AppName            string
+	Brand              loginBrand
 }
 
 // SetupInitHandler runs database sync, installs base, bootstraps security from the JSON wizard payload, then restarts.
@@ -144,14 +146,17 @@ func buildSetupPageData() setupPageData {
 		DbName:             config.AppConfig.DbName,
 		Stylesheets:        assets.LoginStylesheetURLs(),
 		SetupTokenRequired: strings.TrimSpace(config.AppConfig.SetupToken) != "",
+		AppName:            loginBrandPlatformName,
+		Brand:              setupLoginBrand(),
 	}
 }
 
 func writeSetupPage(w http.ResponseWriter, ctx context.Context, pageData setupPageData) {
-	templatePath := filepath.Join(config.AppConfig.TemplatesPath, setupTemplateFile)
-	templateFile, err := template.ParseFiles(templatePath)
+	dir := config.AppConfig.TemplatesPath
+	paths := render.AuthTemplateFiles(dir, setupTemplateFile)
+	templateFile, err := template.ParseFiles(paths...)
 	if err != nil {
-		logSetupFailure(ctx, "Failed to parse setup template", err, map[string]interface{}{"template": templatePath})
+		logSetupFailure(ctx, "Failed to parse setup template", err, map[string]interface{}{"template": setupTemplateFile})
 		http.Error(w, "Setup template missing", http.StatusInternalServerError)
 		return
 	}

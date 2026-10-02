@@ -28,6 +28,15 @@
                     </group>
                 </group>
 
+                <group string="Login branding">
+                    <group>
+                        <field name="login_logo" string="Login logo" widget="image"/>
+                    </group>
+                    <group>
+                        <field name="login_tagline" string="Login tagline" placeholder="Shown on the sign-in page…"/>
+                    </group>
+                </group>
+
                 <group string="Address">
                     <group>
                         <field name="street" string="Street"/>

@@ -60,6 +60,7 @@ func registerAuthRoutes() {
 	registerAPIKeyRevealRoute()
 	registerOAuthRoutes()
 	registerTOTPRoutes()
+	registerLoginBrandRoutes()
 }
 
 func registerWorkspaceRoutes() {

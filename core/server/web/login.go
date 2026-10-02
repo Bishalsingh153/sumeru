@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,10 +32,9 @@ type loginPageData struct {
 	Error             string
 	CSRFToken         string
 	Stylesheets       []string
-	LogoURL           string
+	Brand             loginBrand
 	AuthProviders     []loginAuthProvider
 	LocalLoginEnabled bool
-	CompanyName       string
 	AppName           string
 	InfoTitle         string
 	InfoBody          string
@@ -203,14 +201,22 @@ func parsePositiveInt(s string) int {
 	return n
 }
 
+func resetAuthTemplateCache() {
+	authTemplateMu.Lock()
+	defer authTemplateMu.Unlock()
+	authTemplateCache = map[string]*template.Template{}
+	authTemplateErrs = map[string]error{}
+}
+
 func getAuthTemplate(filename string) (*template.Template, error) {
 	authTemplateMu.Lock()
 	defer authTemplateMu.Unlock()
 	if _, loaded := authTemplateErrs[filename]; loaded {
 		return authTemplateCache[filename], authTemplateErrs[filename]
 	}
-	path := filepath.Join(config.AppConfig.TemplatesPath, filename)
-	tmpl, err := template.ParseFiles(path)
+	dir := config.AppConfig.TemplatesPath
+	paths := render.AuthTemplateFiles(dir, filename)
+	tmpl, err := template.ParseFiles(paths...)
 	authTemplateCache[filename] = tmpl
 	authTemplateErrs[filename] = err
 	return tmpl, err
@@ -223,11 +229,10 @@ func buildLoginPageData(r *http.Request, next, errorMessage, csrfToken string) l
 		Error:             errorMessage,
 		CSRFToken:         csrfToken,
 		Stylesheets:       assets.LoginStylesheetURLs(),
-		LogoURL:           render.ShellLogoURL(),
+		Brand:             resolveLoginBrand(ctx),
 		AuthProviders:     listEnabledAuthProviders(ctx),
 		LocalLoginEnabled: authLocalEnabled(ctx),
-		CompanyName:       loginPageCompanyName(ctx),
-		AppName:           "Sumeru",
+		AppName:           loginBrandPlatformName,
 		Year:              time.Now().Year(),
 	}
 	if flash, ok := FlashFromQueryMessage(r.URL.Query().Get(flashMessageParam)); ok {
@@ -244,7 +249,7 @@ func buildLoginPageData(r *http.Request, next, errorMessage, csrfToken string) l
 	return data
 }
 
-func writeAuthFormPage(w http.ResponseWriter, r *http.Request, templateFile, logRoute string, statusCode int, next, errorMessage, csrfToken string) {
+func writeAuthFormPage(w http.ResponseWriter, r *http.Request, templateFile, logRoute string, statusCode int, next, errorMessage, csrfToken string, adjust func(*loginPageData)) {
 	tmpl, err := getAuthTemplate(templateFile)
 	if err != nil {
 		if statusCode == http.StatusOK {
@@ -267,12 +272,16 @@ func writeAuthFormPage(w http.ResponseWriter, r *http.Request, templateFile, log
 	if statusCode != http.StatusOK {
 		w.WriteHeader(statusCode)
 	}
-	_ = tmpl.Execute(w, buildLoginPageData(r, next, errorMessage, csrfToken))
+	data := buildLoginPageData(r, next, errorMessage, csrfToken)
+	if adjust != nil {
+		adjust(&data)
+	}
+	_ = tmpl.Execute(w, data)
 }
 
 func showAuthFormError(w http.ResponseWriter, r *http.Request, templateFile, logRoute string, statusCode int, next, errorMessage string) {
 	csrfToken := setLoginCSRFCookie(w)
-	writeAuthFormPage(w, r, templateFile, logRoute, statusCode, next, errorMessage, csrfToken)
+	writeAuthFormPage(w, r, templateFile, logRoute, statusCode, next, errorMessage, csrfToken, nil)
 }
 
 func registerTOTPRoutes() {
@@ -286,7 +295,9 @@ func TOTPLoginGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	csrfToken := setLoginCSRFCookie(w)
-	writeAuthFormPage(w, r, totpLoginTemplateFile, totpLoginRoute, http.StatusOK, resolveLoginNext(r), "", csrfToken)
+	writeAuthFormPage(w, r, totpLoginTemplateFile, totpLoginRoute, http.StatusOK, resolveLoginNext(r), "", csrfToken, func(data *loginPageData) {
+		data.Brand = totpLoginBrand(data.Brand)
+	})
 }
 
 func TOTPLoginPost(w http.ResponseWriter, r *http.Request) {
@@ -421,7 +432,7 @@ func LoginGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	csrfToken := setLoginCSRFCookie(w)
-	writeAuthFormPage(w, r, loginTemplateFile, loginRoute, http.StatusOK, resolveLoginNext(r), "", csrfToken)
+	writeAuthFormPage(w, r, loginTemplateFile, loginRoute, http.StatusOK, resolveLoginNext(r), "", csrfToken, nil)
 }
 
 func LoginPost(w http.ResponseWriter, r *http.Request) {

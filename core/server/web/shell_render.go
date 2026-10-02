@@ -5,8 +5,6 @@ import (
 	"context"
 	"html/template"
 	"net/http"
-	"path/filepath"
-
 	"sumeru/core/engine/render"
 	"sumeru/core/errcode"
 	"sumeru/core/server/config"
@@ -50,10 +48,7 @@ func resolveShellRoute(opts shellPageOpts, r *http.Request) string {
 }
 
 func executeInnerTemplate(ctx context.Context, w http.ResponseWriter, route string, opts shellPageOpts) (template.HTML, bool) {
-	templatePaths := []string{
-		filepath.Join(config.AppConfig.TemplatesPath, opts.InnerTemplate),
-		filepath.Join(config.AppConfig.TemplatesPath, shellPartialsTemplate),
-	}
+	templatePaths := render.ShellInnerTemplateFiles(config.AppConfig.TemplatesPath, opts.InnerTemplate)
 	templateFile, err := template.ParseFiles(templatePaths...)
 	if err != nil {
 		webLogFail(ctx, route, "render", "Failed to parse inner template", err, logStatusFailure, map[string]interface{}{"template": opts.InnerTemplate})

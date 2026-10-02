@@ -4,23 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Two-factor authentication — {{.AppName}}</title>
-    {{range .Stylesheets}}
-    <link rel="stylesheet" href="{{.}}">
-    {{end}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    {{template "auth_head_assets" .}}
 </head>
 <body class="sum-login-page">
 <div class="sum-login-shell">
-    <aside class="sum-login-brand" aria-hidden="false">
-        <div class="sum-login-brand-inner">
-            <div class="sum-login-logo sum-login-logo--placeholder sum-login-brand-logo" aria-hidden="true">S</div>
-            <p class="sum-login-brand-kicker">{{.AppName}} ERP</p>
-            <h2 class="sum-login-brand-title">Verify your identity</h2>
-            <p class="sum-login-brand-copy">Enter the code from your authenticator app to finish signing in.</p>
-        </div>
-    </aside>
+    {{template "login_brand_aside" .}}
     <main class="sum-login-panel">
         <div class="sum-login-card sum-login-card--panel">
             <h1>Authentication code</h1>

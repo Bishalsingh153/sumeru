@@ -445,6 +445,50 @@ func ListEnabledAuthProvidersForTest(ctx context.Context) []LoginAuthProviderFor
 // LoginPageCompanyNameForTest returns branding text for the login page.
 func LoginPageCompanyNameForTest(ctx context.Context) string { return loginPageCompanyName(ctx) }
 
+// TestLoginBrandLogoRoute is the public company login logo URL.
+const TestLoginBrandLogoRoute = loginBrandLogoRoute
+
+// TestDefaultSumeruLogoURL is the bundled default sign-in logo path.
+const TestDefaultSumeruLogoURL = defaultSumeruLogoURL
+
+// LoginCompanyRowForTest configures synthetic login branding inputs.
+type LoginCompanyRowForTest struct {
+	Name         string
+	LoginLogo    string
+	LoginTagline string
+	Color        int
+}
+
+// LoginBrandSnapshotForTest is the resolved left-panel branding for assertions.
+type LoginBrandSnapshotForTest struct {
+	LogoURL        string
+	ShowPoweredBy  bool
+	ShowTrustChips bool
+}
+
+// BuildLoginBrandForTest resolves branding from a synthetic company row (no DB).
+func BuildLoginBrandForTest(row LoginCompanyRowForTest) LoginBrandSnapshotForTest {
+	b := buildLoginBrand(loginCompanyRow(row))
+	return LoginBrandSnapshotForTest{
+		LogoURL:        b.LogoURL,
+		ShowPoweredBy:  b.ShowPoweredBy,
+		ShowTrustChips: b.ShowTrustChips,
+	}
+}
+
+// ParseLoginLogoDataURLForTest decodes login logo data URLs for tests.
+func ParseLoginLogoDataURLForTest(raw string) (mime string, data []byte, ok bool) {
+	return parseLoginLogoDataURL(raw)
+}
+
+// LoginBrandLogoGetForTest exposes the public login logo handler.
+func LoginBrandLogoGetForTest(w http.ResponseWriter, r *http.Request) {
+	LoginBrandLogoHandler(w, r)
+}
+
+// ResetAuthTemplateCacheForTest clears parsed auth HTML templates (tests change TemplatesPath).
+func ResetAuthTemplateCacheForTest() { resetAuthTemplateCache() }
+
 // LogoutGetForTest exposes the logout GET handler for tests.
 func LogoutGetForTest(w http.ResponseWriter, r *http.Request) { LogoutGet(w, r) }
 

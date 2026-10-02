@@ -4,7 +4,6 @@ import (
 	"context"
 	"html/template"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -152,13 +151,13 @@ func loadPortalTemplates() (*template.Template, *template.Template, error) {
 	portalTemplateOnce.Do(func() {
 		dir := config.AppConfig.TemplatesPath
 		portalHomeTmpl, portalTemplateErr = template.ParseFiles(
-			filepath.Join(dir, "portal_home.html"),
+			render.TemplatePath(dir, render.TemplatePortalHome),
 		)
 		if portalTemplateErr != nil {
 			return
 		}
 		portalShareTmpl, portalTemplateErr = template.ParseFiles(
-			filepath.Join(dir, "portal_share.html"),
+			render.TemplatePath(dir, render.TemplatePortalShare),
 		)
 	})
 	return portalHomeTmpl, portalShareTmpl, portalTemplateErr

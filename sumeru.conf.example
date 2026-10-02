@@ -46,8 +46,8 @@ log_rolling = false
 # assets_path =
 # templates_path =
 # brand_css =
-# logo_path =
-# company_display_name =
+# logo_path =            # Host-level sign-in + shell logo when core.company login_logo is empty (served as /static/app-logo)
+# company_display_name = # Sign-in headline when no company name in the database yet
 # user_display_name =
 
 # Database pool (optional — tune for production load)
