@@ -61,13 +61,23 @@ const (
 
 // Login page identifiers and form fields.
 const (
-	loginTemplateFile   = "login.html"
-	loginField          = "login"
-	passwordField       = "password"
-	nextField           = "next"
-	invalidLoginMessage = "Invalid login or password."
-	resetPasswordMsg    = "reset_requested"
-	resetUserIDField    = "id"
+	loginTemplateFile       = "login.html"
+	totpLoginTemplateFile   = "totp_login.html"
+	totpLoginRoute          = "/web/login/totp"
+	loginCSRFCookie         = "sumeru_login_csrf"
+	loginNextCookie         = "sumeru_login_next"
+	pendingMFACookie        = "sumeru_pending_mfa"
+	trustedDeviceCookie     = "sumeru_trusted_device"
+	loginLockoutMaxFailures = 5
+	loginField              = "login"
+	passwordField           = "password"
+	nextField               = "next"
+	invalidLoginMessage     = "Invalid login or password."
+	resetPasswordMsg        = "reset_requested"
+	oauthDeniedMsg          = "oauth_denied"
+	authLocalDisabledMsg    = "auth_local_disabled"
+	authLocalConfigKey      = "auth.local_enabled"
+	resetUserIDField        = "id"
 )
 
 // Auth HTTP headers.

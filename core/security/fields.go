@@ -24,6 +24,12 @@ var FieldRegistry = map[string]map[string]FieldPolicy{
 	"sys.attachment": {
 		"datas": {ReadRedact: true},
 	},
+	"sys.auth.provider": {
+		"client_secret": {ReadRedact: true, WriteDenyUnlessSys: true},
+	},
+	"core.user.trusteddevice": {
+		"token_hash": {ReadRedact: true, WriteDenyUnlessSys: true},
+	},
 }
 
 // ReadRedactFields returns fields stripped on read for a model.

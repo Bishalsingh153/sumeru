@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two-factor authentication — {{.AppName}}</title>
+    {{range .Stylesheets}}
+    <link rel="stylesheet" href="{{.}}">
+    {{end}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body class="sum-login-page">
+<div class="sum-login-shell">
+    <aside class="sum-login-brand" aria-hidden="false">
+        <div class="sum-login-brand-inner">
+            <div class="sum-login-logo sum-login-logo--placeholder sum-login-brand-logo" aria-hidden="true">S</div>
+            <p class="sum-login-brand-kicker">{{.AppName}} ERP</p>
+            <h2 class="sum-login-brand-title">Verify your identity</h2>
+            <p class="sum-login-brand-copy">Enter the code from your authenticator app to finish signing in.</p>
+        </div>
+    </aside>
+    <main class="sum-login-panel">
+        <div class="sum-login-card sum-login-card--panel">
+            <h1>Authentication code</h1>
+            <p class="sum-login-subtitle">6-digit code from your authenticator app.</p>
+            {{if .Error}}
+            <div class="sum-login-error" role="alert">{{.Error}}</div>
+            {{end}}
+            <form method="post" action="/web/login/totp">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+                <input type="hidden" name="next" value="{{.Next}}"/>
+                <div class="field">
+                    <label for="totp_code">Code</label>
+                    <input id="totp_code" name="totp_code" type="text" inputmode="numeric" autocomplete="one-time-code" required maxlength="6" pattern="[0-9]{6}" class="sum-login-totp-input"/>
+                </div>
+                <label class="sum-login-trust-device"><input type="checkbox" name="trust_device" value="1"/> Trust this device for 30 days</label>
+                <button type="submit" class="sum-login-btn">Verify</button>
+            </form>
+            <p class="sum-login-back"><a href="/web/login">Back to sign in</a></p>
+            <footer class="sum-login-footer">
+                <span>© {{.Year}} {{.AppName}}</span>
+            </footer>
+        </div>
+    </main>
+</div>
+</body>
+</html>
