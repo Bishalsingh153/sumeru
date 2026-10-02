@@ -4,32 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in — {{.AppName}}</title>
-    {{range .Stylesheets}}
-    <link rel="stylesheet" href="{{.}}">
-    {{end}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    {{template "auth_head_assets" .}}
 </head>
 <body class="sum-login-page">
 <div class="sum-login-shell">
-    <aside class="sum-login-brand" aria-hidden="false">
-        <div class="sum-login-brand-inner">
-            {{if .LogoURL}}
-            <img src="{{.LogoURL}}" alt="" class="sum-login-brand-logo"/>
-            {{else}}
-            <div class="sum-login-logo sum-login-logo--placeholder sum-login-brand-logo" aria-hidden="true">S</div>
-            {{end}}
-            <p class="sum-login-brand-kicker">{{.AppName}} ERP</p>
-            <h2 class="sum-login-brand-title">{{if .CompanyName}}{{.CompanyName}}{{else}}Secure workspace access{{end}}</h2>
-            <p class="sum-login-brand-copy">Enterprise resource planning with role-based access, audit trails, and optional single sign-on.</p>
-            <ul class="sum-login-trust-list">
-                <li>Encrypted sessions</li>
-                <li>Multi-factor authentication</li>
-                <li>Administrator-controlled identity providers</li>
-            </ul>
-        </div>
-    </aside>
+    {{template "login_brand_aside" .}}
     <main class="sum-login-panel">
         <div class="sum-login-card sum-login-card--panel">
             <h1>Sign in</h1>

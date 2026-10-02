@@ -1,0 +1,34 @@
+{{define "login_brand_aside"}}
+<aside class="sum-login-brand{{if .Brand.AccentClass}} {{.Brand.AccentClass}}{{end}}" aria-label="Sign-in branding">
+    <div class="sum-login-brand-bg" aria-hidden="true"></div>
+    <div class="sum-login-brand-inner">
+        <div class="sum-login-brand-lockup">
+            <img src="{{.Brand.LogoURL}}" alt="{{.Brand.LogoAlt}}" class="sum-login-brand-logo" width="96" height="96"/>
+        </div>
+        {{if .Brand.Kicker}}
+        <p class="sum-login-brand-kicker">{{.Brand.Kicker}}</p>
+        {{end}}
+        <h2 class="sum-login-brand-title">{{.Brand.Headline}}</h2>
+        <p class="sum-login-brand-copy">{{.Brand.Tagline}}</p>
+        {{if .Brand.ShowTrustChips}}
+        <ul class="sum-login-trust-chips" role="list">
+            <li class="sum-login-trust-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                Encrypted sessions
+            </li>
+            <li class="sum-login-trust-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                Multi-factor authentication
+            </li>
+            <li class="sum-login-trust-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                Admin-controlled SSO
+            </li>
+        </ul>
+        {{end}}
+        {{if .Brand.ShowPoweredBy}}
+        <p class="sum-login-powered">Powered by {{$.AppName}}</p>
+        {{end}}
+    </div>
+</aside>
+{{end}}
