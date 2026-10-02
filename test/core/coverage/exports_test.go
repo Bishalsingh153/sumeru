@@ -353,7 +353,8 @@ func TestForTestExports_web(t *testing.T) {
 	hub := web.NewBusHubForTest()
 	client := web.NewSwcBusClientForTest(1, 2)
 	hub.Register(client)
-	hub.Broadcast(1, []byte("ping"))
+	client.SubscribeChannel("user/1/notifications")
+	hub.PublishChannel("user/1/notifications", []byte("ping"))
 	select {
 	case msg := <-client.Recv():
 		if string(msg) != "ping" {

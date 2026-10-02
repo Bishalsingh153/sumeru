@@ -123,8 +123,14 @@ func PostMessage(ctx context.Context, model string, coreID int64, body, subtype,
 	if settings, ok := firstCompanyMailSettings(ctx); ok && settings.id > 0 {
 		vals["company_id"] = int(settings.id)
 	}
-	_, err := orm.Create(ctx, inst, vals)
-	return err
+	msgID, err := orm.Create(ctx, inst, vals)
+	if err != nil {
+		return err
+	}
+	if subtype == SubtypeComment {
+		_ = NotifyMessageFollowers(ctx, msgID, uid)
+	}
+	return nil
 }
 
 // ListCommentsForRecord returns user chatter lines (subtype comment) for a record, oldest first.

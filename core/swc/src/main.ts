@@ -126,7 +126,7 @@ function bootstrap(): void {
   initDebugManager(boot, { dialog: env.services.dialog, notification: env.services.notification });
   mountDebugEnvironment(boot);
   void updateDebugDrawer(boot);
-  initShellChrome(boot, env.services.http);
+  initShellChrome(boot, env.services.http, env.services.bus);
   initAppLauncher(boot, env.services.action, env.services.command);
 
   const mountEl = document.getElementById("swc-workspace");
