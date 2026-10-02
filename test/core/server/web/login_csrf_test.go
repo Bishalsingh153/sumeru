@@ -184,12 +184,13 @@ func TestLoginGet_rendersEnterpriseShell(t *testing.T) {
 	t.Cleanup(func() {
 		config.AppConfig.TemplatesPath = prevTemplates
 	})
+	web.ResetAuthTemplateCacheForTest()
 
 	req := httptest.NewRequest(http.MethodGet, web.TestLoginRoute+"?msg="+web.TestOAuthDeniedMsg, nil)
 	rec := httptest.NewRecorder()
 	web.LoginGetForTest(rec, req)
 	body := rec.Body.String()
-	for _, needle := range []string{"sum-login-shell", "sum-login-brand", "Sign in", "Authorized users only"} {
+	for _, needle := range []string{"sum-login-shell", "sum-login-brand-lockup", web.TestDefaultSumeruLogoURL, "Sign in", "Authorized users only"} {
 		if !strings.Contains(body, needle) {
 			t.Fatalf("missing %q in login HTML", needle)
 		}
