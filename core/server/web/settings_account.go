@@ -14,6 +14,7 @@ const settingsAccountRoute = "/web/settings/account"
 func registerSettingsAccountRoutes() {
 	registerSession(http.MethodGet, settingsAccountRoute, SettingsAccountGetHandler)
 	registerSession(http.MethodPost, settingsAccountRoute, SettingsAccountPostHandler)
+	registerSettingsAccountTOTPRoutes()
 }
 
 func SettingsAccountGetHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +29,13 @@ func SettingsAccountGetHandler(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	flash, _ := flashFromQueryMessage(r.URL.Query().Get("msg"))
-	renderSettingsAccountPage(w, r, settingsAccountData{CSRFToken: CSRFTokenForRequest(r), Flash: flash}, menuIDStr)
+	flash, _ := FlashFromQueryMessage(r.URL.Query().Get("msg"))
+	actor := orm.SecurityUID(ctx)
+	renderSettingsAccountPage(w, r, settingsAccountData{
+		CSRFToken: CSRFTokenForRequest(r),
+		Flash:     flash,
+		TOTP:      loadSettingsAccountTOTPState(ctx, actor),
+	}, menuIDStr)
 }
 
 func SettingsAccountPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +55,10 @@ func SettingsAccountPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx := r.Context()
 	actor := orm.SecurityUID(ctx)
+	action := strings.TrimSpace(r.PostForm.Get("action"))
+	if handleSettingsAccountTOTP(w, r, ctx, actor, action) {
+		return
+	}
 	pw := strings.TrimSpace(r.PostForm.Get("password_plain"))
 	confirm := strings.TrimSpace(r.PostForm.Get("password_plain_confirm"))
 	if pw == "" {
@@ -69,6 +79,7 @@ func SettingsAccountPostHandler(w http.ResponseWriter, r *http.Request) {
 type settingsAccountData struct {
 	CSRFToken string
 	Flash     render.FlashMessage
+	TOTP      settingsAccountTOTPState
 }
 
 func renderSettingsAccountPage(w http.ResponseWriter, r *http.Request, pageData settingsAccountData, menuIDStr string) {

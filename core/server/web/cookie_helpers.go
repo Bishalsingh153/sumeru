@@ -53,3 +53,10 @@ func effectiveSessionCookieName() string {
 }
 
 const hostPrefixedSessionCookieName = "__Host-sumeru_session"
+
+func sessionCookieSecure() bool {
+	if config.AppConfig.ForceSecureCookies {
+		return true
+	}
+	return !config.AppConfig.DevMode
+}

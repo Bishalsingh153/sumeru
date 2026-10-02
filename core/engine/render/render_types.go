@@ -93,7 +93,7 @@ type PageData struct {
 	// BreadcrumbTrail: when non-empty, base.html renders linked crumbs; otherwise legacy ModuleName/ViewBreadcrumb.
 	BreadcrumbItems []BreadcrumbItem
 
-	// SuppressActivityDock forces the right activity dock off (e.g. Home dashboard) regardless of mail settings.
+	// SuppressActivityDock forces the right activity dock off (e.g. settings hub) regardless of mail settings.
 	SuppressActivityDock bool
 	// SuppressSidebar omits the left sidebar entirely (e.g. Home app hub).
 	SuppressSidebar bool

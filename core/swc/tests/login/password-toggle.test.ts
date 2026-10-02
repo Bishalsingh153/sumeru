@@ -46,4 +46,14 @@ describe("initPasswordToggles", () => {
     initPasswordToggles(document);
     expect(document.querySelectorAll(".sum-password-field").length).toBe(2);
   });
+
+  it("adds toggle to pre-wrapped login-style password fields", () => {
+    document.body.innerHTML =
+      '<div class="sum-password-field"><input id="pw" type="password" /></div>';
+    initPasswordToggles(document);
+    const wrapper = document.querySelector(".sum-password-field");
+    expect(wrapper?.querySelectorAll(".sum-password-toggle").length).toBe(1);
+    initPasswordToggles(document);
+    expect(wrapper?.querySelectorAll(".sum-password-toggle").length).toBe(1);
+  });
 });

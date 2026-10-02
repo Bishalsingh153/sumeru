@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_core.user.identity_list" model="core.user.identity" type="list">
+            <field name="provider_id" string="Provider"/>
+            <field name="subject" string="Subject"/>
+            <field name="user_id" string="User"/>
+        </view>
+    </data>
+</sumeru>

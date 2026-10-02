@@ -11,6 +11,7 @@ type ModelSpec struct {
 	Extend             bool   // true when the struct uses inherit= to extend an existing model
 	DelegationParent   string // set when inherits= names a parent model (_inherits delegation)
 	CompanyShared      bool   // company=shared on model tag
+	MailThread         bool   // mail_thread on model tag
 }
 
 // ModelSpecFromStruct reads model= or inherit= from an embedded ModelMeta tag.
@@ -46,9 +47,19 @@ func ModelSpecFromTags(tags FieldTags, goName string) (ModelSpec, error) {
 		return ModelSpec{Name: "-", Extend: false}, nil
 	}
 	if tags.Model != "" {
-		return ModelSpec{Name: tags.Model, Extend: false, CompanyShared: tags.Company == "shared"}, nil
+		return ModelSpec{
+			Name:          tags.Model,
+			Extend:        false,
+			CompanyShared: tags.Company == "shared",
+			MailThread:    tags.MailThread,
+		}, nil
 	}
-	return ModelSpec{Name: ModelNameFromGo(goName), Extend: false, CompanyShared: tags.Company == "shared"}, nil
+	return ModelSpec{
+		Name:          ModelNameFromGo(goName),
+		Extend:        false,
+		CompanyShared: tags.Company == "shared",
+		MailThread:    tags.MailThread,
+	}, nil
 }
 
 // ModelNameFromStruct reads the technical model name from an embedded ModelMeta tag,

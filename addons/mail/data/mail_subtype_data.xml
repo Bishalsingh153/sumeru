@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data noupdate="true">
+        <record id="mail_subtype_comment" model="mail.message.subtype">
+            <field name="name">comment</field>
+            <field name="description">User discussion</field>
+            <field name="default">True</field>
+        </record>
+        <record id="mail_subtype_notification" model="mail.message.subtype">
+            <field name="name">notification</field>
+            <field name="description">System notification</field>
+            <field name="internal">True</field>
+            <field name="default">True</field>
+        </record>
+    </data>
+</sumeru>

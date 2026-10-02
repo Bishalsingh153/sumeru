@@ -43,3 +43,20 @@ func TestFlashFromQuerySaveOKUpdated(t *testing.T) {
 		t.Fatalf("flash = %+v ok=%v", flash, ok)
 	}
 }
+
+func TestFlashFromQueryAuthMessages(t *testing.T) {
+	cases := []struct {
+		msg, kind, title string
+	}{
+		{web.TestOAuthDeniedMsg, "error", "Sign-in failed"},
+		{web.TestAuthLocalDisabledMsg, "error", "Password sign-in disabled"},
+		{"totp_enabled", "success", "Two-factor enabled"},
+		{"totp_invalid", "error", "Invalid code"},
+	}
+	for _, c := range cases {
+		flash, ok := web.FlashFromQueryMessage(c.msg)
+		if !ok || flash.Kind != c.kind || flash.Title != c.title {
+			t.Fatalf("msg=%q flash=%+v ok=%v", c.msg, flash, ok)
+		}
+	}
+}

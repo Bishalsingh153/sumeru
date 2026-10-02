@@ -6,11 +6,15 @@ import "sumeru/core/sdk"
 
 func init() {
 	sdk.MustRegister("mail",
+		&CoreUserMail{},
 		&MailActivity{},
 		&MailActivityPlan{},
 		&MailActivityPlanTemplate{},
 		&MailActivityType{},
+		&MailFollower{},
 		&MailMessage{},
+		&MailMessageSubtype{},
+		&MailNotification{},
 		&MailTemplate{},
 	)
 }

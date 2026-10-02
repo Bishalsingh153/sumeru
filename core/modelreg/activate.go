@@ -11,6 +11,7 @@ type pendingModel struct {
 	name          string
 	extend        bool
 	companyShared bool
+	mailThread    bool
 	fields        []orm.FieldDefinition
 }
 
@@ -63,6 +64,9 @@ func activateAllLocked(moduleOrder []string) error {
 			orm.RegisterModelWithModule(&reflectedModel{name: pending.name, fields: pending.fields}, moduleName)
 			if pending.companyShared {
 				orm.SetModelCompanyShared(pending.name, true)
+			}
+			if pending.mailThread {
+				orm.SetModelMailThread(pending.name, true)
 			}
 		}
 	}

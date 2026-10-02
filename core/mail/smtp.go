@@ -4,6 +4,7 @@ package mail
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -117,6 +118,60 @@ func sendSMTPS(addr string, auth smtp.Auth, from string, to []string, msg []byte
 		return err
 	}
 	return client.Quit()
+}
+
+// SendMultipart delivers text/plain and text/html alternative parts.
+func SendMultipart(ctx context.Context, to, subject, textBody, htmlBody string) error {
+	to = strings.TrimSpace(to)
+	if to == "" {
+		return fmt.Errorf("recipient required")
+	}
+	if !Configured() {
+		return fmt.Errorf("smtp not configured")
+	}
+	boundary := "sum-mail-boundary"
+	from := strings.TrimSpace(smtpCfg.From)
+	var b strings.Builder
+	b.WriteString("From: " + from + "\r\n")
+	b.WriteString("To: " + to + "\r\n")
+	b.WriteString("Subject: " + subject + "\r\n")
+	b.WriteString("MIME-Version: 1.0\r\n")
+	b.WriteString("Content-Type: multipart/alternative; boundary=" + boundary + "\r\n\r\n")
+	writePart := func(contentType, body string) {
+		b.WriteString("--" + boundary + "\r\n")
+		b.WriteString("Content-Type: " + contentType + "; charset=UTF-8\r\n")
+		b.WriteString("Content-Transfer-Encoding: base64\r\n\r\n")
+		b.WriteString(base64.StdEncoding.EncodeToString([]byte(body)))
+		b.WriteString("\r\n")
+	}
+	writePart("text/plain", textBody)
+	writePart("text/html", htmlBody)
+	b.WriteString("--" + boundary + "--\r\n")
+	return sendRawMessage(ctx, to, subject, []byte(b.String()))
+}
+
+func sendRawMessage(ctx context.Context, to, subject string, msg []byte) error {
+	addr := fmt.Sprintf("%s:%d", strings.TrimSpace(smtpCfg.Host), smtpCfg.Port)
+	var auth smtp.Auth
+	if u := strings.TrimSpace(smtpCfg.User); u != "" {
+		auth = smtp.PlainAuth("", u, smtpCfg.Password, smtpCfg.Host)
+	}
+	from := strings.TrimSpace(smtpCfg.From)
+	if smtpCfg.Port == 465 {
+		return sendSMTPS(addr, auth, from, []string{to}, msg)
+	}
+	if err := smtp.SendMail(addr, auth, from, []string{to}, msg); err != nil {
+		applog.Warn(ctx, applog.Event{
+			Message:   "smtp send failed",
+			Component: "mail",
+			Operation: "send",
+			Status:    "failed",
+			Context:   map[string]interface{}{"to": to, "subject": subject},
+			Err:       err,
+		})
+		return err
+	}
+	return nil
 }
 
 // SendPasswordResetEmail notifies a user that an administrator requested a password reset.

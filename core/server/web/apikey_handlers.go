@@ -11,11 +11,13 @@ import (
 
 const apiKeyModel = "core.user.apikey"
 
+const apiKeyRevealRoute = "/web/apikey/reveal"
+
+func registerAPIKeyRevealRoute() {
+	registerSession(http.MethodGet, apiKeyRevealRoute, APIKeyRevealHandler)
+}
+
 // ActionCreateAPIKey generates a one-time raw API key for a user.
-//
-// Form fields: name (optional label), user_id (optional; defaults to signed-in user), next (redirect target).
-// The raw key is never placed in the redirect URL — it is delivered once via SetAPIKeyFlash
-// and shown on the next page by ConsumePageFlashes (see page_flash.go).
 func ActionCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	if !requireLoginAndPOST(w, r) {
 		return
@@ -31,7 +33,7 @@ func ActionCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	rawKey, err := orm.CreateAPIKeyForUser(ctx, targetUserID, keyName)
 	if err != nil {
 		WebLogEvent(ctx, WebLogInput{
-			Route:     "/web/action/create_api_key",
+			Route:     createAPIKeyRoute,
 			Message:   "Could not create API key",
 			Code:      errcode.InternalError,
 			Operation: "create_api_key",
@@ -49,8 +51,6 @@ func ActionCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	redirectWithWebMessage(w, r, r.PostFormValue("next"), "api_key_created")
 }
 
-// apiKeyTargetUserID resolves which user receives the new key; falls back to the session user.
-// Targeting another user requires base.group_system.
 func apiKeyTargetUserID(r *http.Request) int {
 	sessionUID := SessionUserID(r)
 	userID, _ := strconv.Atoi(strings.TrimSpace(r.PostFormValue("user_id")))
@@ -61,4 +61,28 @@ func apiKeyTargetUserID(r *http.Request) int {
 		return userID
 	}
 	return sessionUID
+}
+
+// APIKeyRevealHandler shows a one-time API key from the flash cookie (never embedded in shell HTML).
+func APIKeyRevealHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireLogin(w, r) {
+		return
+	}
+	raw := ConsumeAPIKeyFlash(r, w)
+	if raw == "" {
+		http.Error(w, "No API key pending display", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = w.Write([]byte(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>API Key</title></head><body>`))
+	_, _ = w.Write([]byte(`<h1>API key (shown once)</h1><p>Copy this key now. It will not be shown again.</p>`))
+	_, _ = w.Write([]byte(`<pre style="user-select:all">`))
+	_, _ = w.Write([]byte(htmlEscape(raw)))
+	_, _ = w.Write([]byte(`</pre><p><a href="/web">Back to app</a></p></body></html>`))
+}
+
+func htmlEscape(s string) string {
+	repl := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;")
+	return repl.Replace(s)
 }

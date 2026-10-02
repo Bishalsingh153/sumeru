@@ -52,6 +52,8 @@ const (
 	TestAppsCategoryField      = appsCategoryField
 	TestAppsGroupByField       = appsGroupByField
 	TestFlashMessageParam      = flashMessageParam
+	TestOAuthDeniedMsg         = oauthDeniedMsg
+	TestAuthLocalDisabledMsg   = authLocalDisabledMsg
 	TestResetPasswordMsg       = resetPasswordMsg
 	TestResetPasswordRoute     = resetPasswordRoute
 	TestRecordModelField       = recordModelField
@@ -418,6 +420,31 @@ func SessionCookieFromRequestForTest(r *http.Request) (sid, cookieName string) {
 // LoginGetForTest exposes the login page GET handler for tests.
 func LoginGetForTest(w http.ResponseWriter, r *http.Request) { LoginGet(w, r) }
 
+// OAuthCallbackForTest exposes the OAuth callback handler for tests.
+func OAuthCallbackForTest(w http.ResponseWriter, r *http.Request) { OAuthCallbackHandler(w, r) }
+
+// OAuthStartForTest exposes the OAuth start handler for tests.
+func OAuthStartForTest(w http.ResponseWriter, r *http.Request) { OAuthStartHandler(w, r) }
+
+// AuthLocalEnabledForTest reports whether password login is shown on the login page.
+func AuthLocalEnabledForTest(ctx context.Context) bool { return authLocalEnabled(ctx) }
+
+// LoginAuthProviderForTest is a login SSO button descriptor for tests.
+type LoginAuthProviderForTest loginAuthProvider
+
+// ListEnabledAuthProvidersForTest returns SSO providers for the login page.
+func ListEnabledAuthProvidersForTest(ctx context.Context) []LoginAuthProviderForTest {
+	rows := listEnabledAuthProviders(ctx)
+	out := make([]LoginAuthProviderForTest, len(rows))
+	for i, row := range rows {
+		out[i] = LoginAuthProviderForTest(row)
+	}
+	return out
+}
+
+// LoginPageCompanyNameForTest returns branding text for the login page.
+func LoginPageCompanyNameForTest(ctx context.Context) string { return loginPageCompanyName(ctx) }
+
 // LogoutGetForTest exposes the logout GET handler for tests.
 func LogoutGetForTest(w http.ResponseWriter, r *http.Request) { LogoutGet(w, r) }
 
@@ -462,6 +489,19 @@ func RequireModelAccessForTest(w http.ResponseWriter, r *http.Request, model, pe
 
 // ValidateLoginCSRFForTest exposes pre-session login CSRF validation for tests.
 func ValidateLoginCSRFForTest(r *http.Request) bool { return validateLoginCSRF(r) }
+
+// MintSignedUIDCookieForTest builds a signed uid cookie value for tests.
+func MintSignedUIDCookieForTest(uid int, ttl time.Duration) string {
+	return mintSignedUIDCookieValue(uid, ttl)
+}
+
+// ParseSignedUIDCookieForTest parses a signed uid cookie value for tests.
+func ParseSignedUIDCookieForTest(value string) (int, bool) {
+	return parseSignedUIDCookie(value)
+}
+
+// RateLimitedPathForTest reports whether a path is subject to IP rate limiting.
+func RateLimitedPathForTest(path string) bool { return rateLimitedPath(path) }
 
 // TestLoginCSRFCookie is the HttpOnly login CSRF cookie name.
 const TestLoginCSRFCookie = loginCSRFCookie
@@ -551,12 +591,22 @@ func NewBusHubForTest() *BusHubForTest {
 type SwcBusClientForTest struct{ client *swcBusClient }
 
 func NewSwcBusClientForTest(uid int, buffer int) *SwcBusClientForTest {
-	return &SwcBusClientForTest{client: &swcBusClient{uid: uid, send: make(chan []byte, buffer)}}
+	return &SwcBusClientForTest{client: &swcBusClient{
+		uid: uid, send: make(chan []byte, buffer), channels: make(map[string]struct{}),
+	}}
 }
 
 func (h *BusHubForTest) Register(c *SwcBusClientForTest) { h.hub.register(c.client) }
 
-func (h *BusHubForTest) Broadcast(actor int, msg []byte) { h.hub.broadcast(actor, msg) }
+func (h *BusHubForTest) PublishChannel(channel string, msg []byte) {
+	h.hub.publishChannel(channel, msg)
+}
+
+func (c *SwcBusClientForTest) SubscribeChannel(channel string) {
+	c.client.subMu.Lock()
+	c.client.channels[channel] = struct{}{}
+	c.client.subMu.Unlock()
+}
 
 func (c *SwcBusClientForTest) Recv() <-chan []byte { return c.client.send }
 

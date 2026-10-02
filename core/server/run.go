@@ -196,6 +196,7 @@ func Run() {
 	defer stop()
 	scheduler.Start(rootCtx, time.Minute)
 	orm.StartOutboxDrain(rootCtx, 5*time.Second)
+	web.StartBusListener(rootCtx, databaseSource)
 
 	listenHost := listenAddr(config.AppConfig.HttpInterface, config.AppConfig.HttpPort)
 	applog.InfoMsg(ctx, "server", "listen", "Server starting",

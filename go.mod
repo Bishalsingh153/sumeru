@@ -11,6 +11,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
+require github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
+
 replace github.com/gpdf-dev/gpdf => github.com/ProjectMeru/gpdf v1.0.13
 
 replace github.com/gorilla/websocket => github.com/ProjectMeru/websocket v1.5.3

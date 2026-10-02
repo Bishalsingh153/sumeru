@@ -14,10 +14,6 @@ var importFlashPattern = regexp.MustCompile(`^imported_(\d+)_updated_(\d+)_skipp
 
 // FlashFromQueryMessage converts ?msg= query values into workspace flash banners.
 func FlashFromQueryMessage(msg string) (render.FlashMessage, bool) {
-	return flashFromQueryMessage(msg)
-}
-
-func flashFromQueryMessage(msg string) (render.FlashMessage, bool) {
 	msg = strings.TrimSpace(msg)
 	if msg == "" {
 		return render.FlashMessage{}, false
@@ -43,6 +39,20 @@ func flashFromQueryMessage(msg string) (render.FlashMessage, bool) {
 	switch msg {
 	case resetPasswordMsg:
 		return render.FlashMessage{Kind: "info", Title: "Password reset", Body: "If the account exists, reset instructions were sent."}, true
+	case oauthDeniedMsg:
+		return render.FlashMessage{Kind: "error", Title: "Sign-in failed", Body: "Single sign-on could not complete. Try again or use your password if enabled."}, true
+	case authLocalDisabledMsg:
+		return render.FlashMessage{Kind: "error", Title: "Password sign-in disabled", Body: "Use one of the sign-in providers below."}, true
+	case "totp_enroll_started":
+		return render.FlashMessage{Kind: "info", Title: "Scan the QR code", Body: "Add the account in your authenticator app, then enter the 6-digit code to enable two-factor authentication."}, true
+	case "totp_enabled":
+		return render.FlashMessage{Kind: "success", Title: "Two-factor enabled", Body: "You will need an authenticator code when signing in on new devices."}, true
+	case "totp_disabled":
+		return render.FlashMessage{Kind: "success", Title: "Two-factor disabled", Body: "Authenticator codes are no longer required for your account."}, true
+	case "totp_invalid":
+		return render.FlashMessage{Kind: "error", Title: "Invalid code", Body: "Check the 6-digit code from your authenticator app and try again."}, true
+	case "totp_enroll_failed":
+		return render.FlashMessage{Kind: "error", Title: "Could not start enrollment", Body: "Try again or contact your administrator."}, true
 	case "password_updated":
 		return render.FlashMessage{Kind: "success", Title: "Password updated", Body: "Your password was changed."}, true
 	case "password_mismatch":
@@ -71,18 +81,42 @@ func flashFromQueryMessage(msg string) (render.FlashMessage, bool) {
 		return render.FlashMessage{Kind: "success", Title: "Updated", Body: "Stage updated.", ToastOnly: true}, true
 	default:
 		if strings.HasPrefix(msg, "error:") {
-			body := strings.TrimPrefix(msg, "error:")
+			body := sanitizeFlashQueryBody(strings.TrimPrefix(msg, "error:"))
 			return render.FlashMessage{Kind: "error", Title: "Error", Body: body}, true
 		}
 		if strings.HasPrefix(msg, "save_error:") {
-			body := strings.TrimPrefix(msg, "save_error:")
+			body := sanitizeFlashQueryBody(strings.TrimPrefix(msg, "save_error:"))
 			return render.FlashMessage{Kind: "error", Title: "Save failed", Body: body}, true
 		}
 		if strings.HasPrefix(msg, "installed_") || strings.HasPrefix(msg, "uninstalled_") || strings.HasPrefix(msg, "upgraded_") {
 			return render.FlashMessage{Kind: "success", Title: "Apps", Body: strings.ReplaceAll(msg, "_", " ")}, true
 		}
-		return render.FlashMessage{Kind: "info", Title: "", Body: msg}, true
+		return render.FlashMessage{Kind: "info", Title: "", Body: sanitizeFlashQueryBody(msg)}, true
 	}
+}
+
+func sanitizeFlashQueryBody(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return s
+	}
+	const maxRunes = 500
+	runes := []rune(s)
+	if len(runes) > maxRunes {
+		runes = runes[:maxRunes]
+	}
+	out := make([]rune, 0, len(runes))
+	for _, r := range runes {
+		if r == '\n' || r == '\r' {
+			out = append(out, ' ')
+			continue
+		}
+		if r < 0x20 {
+			continue
+		}
+		out = append(out, r)
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func appendQueryFlashesToViewRecord(r *http.Request, viewRecord *render.ViewRecordData) {
@@ -93,7 +127,7 @@ func appendQueryFlashesToViewRecord(r *http.Request, viewRecord *render.ViewReco
 	if msg == "" {
 		return
 	}
-	if flash, ok := flashFromQueryMessage(msg); ok {
+	if flash, ok := FlashFromQueryMessage(msg); ok {
 		viewRecord.FlashMessages = append(viewRecord.FlashMessages, flash)
 	}
 }

@@ -44,6 +44,7 @@ type FieldTags struct {
 	Related    string
 	Compute    string
 	Company    string // model tag: company=shared skips auto multi-company isolation
+	MailThread bool   // model tag: mail_thread — chatter auto-subscribe hooks
 }
 
 // ParseModelTag parses the sumeru tag on an embedded ModelMeta.
@@ -241,6 +242,8 @@ func setTagOption(tags *FieldTags, key, value string) error {
 		tags.Related = value
 	case "compute":
 		tags.Compute = value
+	case "mail_thread":
+		tags.MailThread = true
 	default:
 		return fmt.Errorf("unknown sumeru tag %q", key)
 	}

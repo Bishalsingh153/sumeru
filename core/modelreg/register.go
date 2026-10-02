@@ -48,6 +48,7 @@ func MustRegister(module string, models ...any) {
 			name:          entry.spec.Name,
 			extend:        entry.spec.Extend,
 			companyShared: entry.spec.CompanyShared,
+			mailThread:    entry.spec.MailThread,
 			fields:        fields,
 		})
 	}

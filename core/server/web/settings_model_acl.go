@@ -54,7 +54,7 @@ func SettingsModelACLGetHandler(w http.ResponseWriter, r *http.Request) {
 	menuID := resolveSettingsMenuXMLID(ctx, render.MenuModelAccessMatrixXMLID, rootMenuID)
 	q := r.URL.Query()
 	model := strings.TrimSpace(q.Get("model"))
-	flash, _ := flashFromQueryMessage(q.Get("msg"))
+	flash, _ := FlashFromQueryMessage(q.Get("msg"))
 	page, err := buildModelACLMatrixPage(ctx, model, q.Get("group_q"), q.Get("show_all") == "1")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
