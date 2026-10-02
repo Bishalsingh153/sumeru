@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in — Sumeru</title>
+    <title>Sign in — {{.AppName}}</title>
     {{range .Stylesheets}}
     <link rel="stylesheet" href="{{.}}">
     {{end}}
@@ -12,36 +12,78 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body class="sum-login-page">
-<div class="sum-login-card">
-    {{if .LogoURL}}
-    <img src="{{.LogoURL}}" alt="" class="sum-login-logo"/>
-    {{else}}
-    <div class="sum-login-logo sum-login-logo--placeholder" aria-hidden="true">S</div>
-    {{end}}
-    
-    <h1>Sign in</h1>
-    <p class="sum-login-subtitle">Access your Sumeru workspace.</p>
-    
-    {{if .Error}}
-    <div class="sum-login-error">{{.Error}}</div>
-    {{end}}
-    
-    <form method="post" action="/web/login">
-        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
-        <input type="hidden" name="next" value="{{.Next}}"/>
-        
-        <div class="field">
-            <label for="login">Login</label>
-            <input id="login" name="login" type="text" autocomplete="username" required autofocus placeholder="email@example.com"/>
+<div class="sum-login-shell">
+    <aside class="sum-login-brand" aria-hidden="false">
+        <div class="sum-login-brand-inner">
+            {{if .LogoURL}}
+            <img src="{{.LogoURL}}" alt="" class="sum-login-brand-logo"/>
+            {{else}}
+            <div class="sum-login-logo sum-login-logo--placeholder sum-login-brand-logo" aria-hidden="true">S</div>
+            {{end}}
+            <p class="sum-login-brand-kicker">{{.AppName}} ERP</p>
+            <h2 class="sum-login-brand-title">{{if .CompanyName}}{{.CompanyName}}{{else}}Secure workspace access{{end}}</h2>
+            <p class="sum-login-brand-copy">Enterprise resource planning with role-based access, audit trails, and optional single sign-on.</p>
+            <ul class="sum-login-trust-list">
+                <li>Encrypted sessions</li>
+                <li>Multi-factor authentication</li>
+                <li>Administrator-controlled identity providers</li>
+            </ul>
         </div>
-        
-        <div class="field">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"/>
+    </aside>
+    <main class="sum-login-panel">
+        <div class="sum-login-card sum-login-card--panel">
+            <h1>Sign in</h1>
+            <p class="sum-login-subtitle">Access your {{.AppName}} workspace.</p>
+
+            {{if .InfoBody}}
+            <div class="sum-login-info">{{if .InfoTitle}}<strong>{{.InfoTitle}}</strong> {{end}}{{.InfoBody}}</div>
+            {{end}}
+            {{if .Error}}
+            <div class="sum-login-error" role="alert">{{.Error}}</div>
+            {{end}}
+
+            {{if .AuthProviders}}
+            <div class="sum-login-sso-list">
+                {{range .AuthProviders}}
+                <a class="sum-login-sso" href="/web/auth/oauth/start?provider={{.ID}}">{{.Label}}</a>
+                {{end}}
+            </div>
+            {{end}}
+
+            {{if and .LocalLoginEnabled .AuthProviders}}
+            <p class="sum-login-divider"><span>or continue with email</span></p>
+            {{end}}
+
+            {{if .LocalLoginEnabled}}
+            <form method="post" action="/web/login">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}"/>
+                <input type="hidden" name="next" value="{{.Next}}"/>
+
+                <div class="field">
+                    <label for="login">Login</label>
+                    <input id="login" name="login" type="text" autocomplete="username" required autofocus placeholder="email@example.com"/>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="sum-password-field">
+                        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••"/>
+                    </div>
+                </div>
+
+                <button type="submit" class="sum-login-btn">Sign in</button>
+            </form>
+            {{else if not .AuthProviders}}
+            <p class="sum-login-muted">No sign-in methods are configured. Contact your administrator.</p>
+            {{end}}
+
+            <footer class="sum-login-footer">
+                <span>© {{.Year}} {{.AppName}}</span>
+                <span class="sum-login-footer-sep">·</span>
+                <span>Authorized users only</span>
+            </footer>
         </div>
-        
-        <button type="submit" class="sum-login-btn">Sign in</button>
-    </form>
+    </main>
 </div>
 <script>
 (function () {

@@ -12,9 +12,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 </head>
 <body class="sum-login-page">
-<div class="sum-login-card sum-setup-card sum-setup-card--wide">
-    <div class="sum-login-logo sum-login-logo--placeholder" aria-hidden="true">S</div>
-
+<div class="sum-login-shell">
+    <aside class="sum-login-brand" aria-hidden="false">
+        <div class="sum-login-brand-inner">
+            <div class="sum-login-logo sum-login-logo--placeholder sum-login-brand-logo" aria-hidden="true">S</div>
+            <p class="sum-login-brand-kicker">Sumeru ERP</p>
+            <h2 class="sum-login-brand-title">Database setup</h2>
+            <p class="sum-login-brand-copy">Connect your PostgreSQL database, create your company, and define the first administrator account.</p>
+        </div>
+    </aside>
+    <main class="sum-login-panel">
+<div class="sum-login-card sum-setup-card sum-setup-card--wide sum-login-card--panel">
     <p class="sum-setup-progress" id="stepLabel" aria-live="polite">Step 1 of 4</p>
     <h1 id="stepTitle">Welcome</h1>
 
@@ -93,6 +101,8 @@
 
     <div id="loader" class="sum-setup-loader" hidden>Working… please wait.</div>
     <div id="result" class="sum-setup-result" role="status" aria-live="polite"></div>
+</div>
+    </main>
 </div>
 
 <script src="/static/js/sumeru-password-toggle.js"></script>
