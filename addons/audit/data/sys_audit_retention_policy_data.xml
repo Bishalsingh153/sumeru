@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data noupdate="true">
+        <record id="audit_retention_policy_default" model="sys.audit.retention.policy">
+            <field name="name">Default audit retention</field>
+            <field name="hot_retention_days">90</field>
+            <field name="auto_enabled">False</field>
+            <field name="batch_size">500</field>
+            <field name="max_rows_per_run">5000</field>
+            <field name="compress">True</field>
+            <field name="delete_after_export">False</field>
+            <field name="legal_hold">False</field>
+        </record>
+    </data>
+</sumeru>

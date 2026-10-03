@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit_search" model="sys.audit" type="search">
+            <field name="model"/>
+            <field name="action"/>
+            <field name="user_id"/>
+            <field name="detail"/>
+            <field name="create_date"/>
+            <filter name="group_model" string="Model" group_by="model"/>
+            <filter name="group_action" string="Action" group_by="action"/>
+            <filter name="group_user" string="User" group_by="user_id"/>
+        </view>
+    </data>
+</sumeru>

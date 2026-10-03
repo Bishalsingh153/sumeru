@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <menuitem id="menu_i18n_section" name="Internationalization" parent="base.menu_settings_root"
+            sequence="70" web_icon="settings" />
+        <menuitem id="menu_core_lang" name="Languages" parent="menu_i18n_section" sequence="10"
+            action="i18n.action_core.lang" web_icon="settings" />
+        <menuitem id="menu_sys_translation" name="Translated Terms" parent="menu_i18n_section"
+            sequence="20" action="i18n.action_sys.translation" web_icon="settings" />
+    </data>
+</sumeru>

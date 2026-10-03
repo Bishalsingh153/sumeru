@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <action id="action_sys.audit" type="window" model="sys.audit" name="Audit Trail" view_mode="list,form"/>
+        <action id="action_sys.audit.retention.policy" type="window" model="sys.audit.retention.policy" name="Audit retention" view_mode="list,form"/>
+        <action id="action_sys.audit.archive" type="window" model="sys.audit.archive" name="Audit archives" view_mode="list,form"/>
+        <action id="action_sys.audit.cleanup" type="window" model="sys.audit.cleanup" name="Clear Audit Log" view_mode="form"/>
+    </data>
+</sumeru>

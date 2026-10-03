@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit.cleanup_form" model="sys.audit.cleanup" type="form">
+            <sheet>
+                <group>
+                    <field name="retention_preset" string="Delete entries" />
+                    <field name="retention_days" string="Custom days"
+                        invisible_expr="retention_preset != 'custom'" />
+                    <field name="filter_model" string="Limit to model" />
+                    <field name="dry_run" string="Dry run only" />
+                </group>
+                <group>
+                    <field name="result_summary" string="Result" readonly="true" />
+                </group>
+                <p class="sum-field-help">Exports matching rows then deletes them unless dry run or legal hold on Audit retention policy. Prefer Audit retention for scheduled export and database cleanup.</p>
+            </sheet>
+            <footer>
+                <button name="action_purge" string="Clear audit log" type="object"
+                    class="sum_highlight" />
+            </footer>
+        </view>
+    </data>
+</sumeru>

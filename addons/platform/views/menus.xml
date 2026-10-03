@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <menuitem id="menu_platform_section" name="Platform" parent="base.menu_settings_root"
+            sequence="16" web_icon="settings" groups="base.group_system" />
+        <menuitem id="menu_sys_attachment" name="Attachments" parent="menu_platform_section"
+            sequence="10" action="platform.action_sys.attachment" web_icon="settings" />
+        <menuitem id="menu_sys_sequence" name="Sequences" parent="menu_platform_section"
+            sequence="20" action="platform.action_sys.sequence" web_icon="settings" />
+        <menuitem id="menu_sys_config" name="System Parameters" parent="menu_platform_section"
+            sequence="30" action="platform.action_sys.config.parameter" web_icon="settings" />
+        <menuitem id="menu_sys_report_action" name="Report Actions" parent="menu_platform_section"
+            sequence="40" action="platform.action_sys.report.action" groups="base.group_system"
+            web_icon="settings" />
+        <menuitem id="menu_sys_import_template" name="Import Templates"
+            parent="menu_platform_section" sequence="45" action="platform.action_sys.import.template"
+            groups="base.group_system" web_icon="settings" />
+    </data>
+</sumeru>

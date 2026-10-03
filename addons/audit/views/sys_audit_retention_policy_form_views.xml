@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit.retention.policy_form" model="sys.audit.retention.policy" type="form">
+            <sheet>
+                <group string="Hot storage in PostgreSQL">
+                    <field name="hot_retention_days" string="Keep in database days"/>
+                    <field name="filter_model" string="Limit to model"/>
+                    <field name="legal_hold" string="Legal hold no deletes"/>
+                </group>
+                <group string="Export and cleanup">
+                    <field name="auto_enabled" string="Run on schedule"/>
+                    <field name="batch_size" string="Batch size"/>
+                    <field name="max_rows_per_run" string="Max rows per run"/>
+                    <field name="compress" string="Gzip exports"/>
+                    <field name="delete_after_export" string="Delete from database after successful export"/>
+                    <field name="dry_run_next" string="Dry run on next manual run"/>
+                </group>
+                <group string="Last run">
+                    <field name="last_run_at" string="When" readonly="true"/>
+                    <field name="last_run_summary" string="Summary" readonly="true"/>
+                </group>
+                <p class="sum-field-help">Older audit rows are exported as JSONL files. Download them under Audit archives and store off-site as your organization requires. S3 R2 and similar uploads belong in a separate addon not shipped with the core engine. Activity Log and Audit Trail only show rows still in the database.</p>
+            </sheet>
+            <footer>
+                <button name="action_run_retention" string="Run retention now" type="object" class="sum_highlight"/>
+            </footer>
+        </view>
+    </data>
+</sumeru>
