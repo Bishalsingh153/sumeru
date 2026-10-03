@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit.archive_list" model="sys.audit.archive" type="list">
+            <field name="create_date" string="Created"/>
+            <field name="name" string="File"/>
+            <field name="state" string="State"/>
+            <field name="period_from" string="From"/>
+            <field name="period_to" string="To"/>
+            <field name="row_count" string="Rows"/>
+            <field name="byte_size" string="Bytes"/>
+            <field name="attachment_id" string="Download"/>
+        </view>
+    </data>
+</sumeru>

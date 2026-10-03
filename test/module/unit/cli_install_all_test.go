@@ -10,18 +10,18 @@ import (
 func TestExpandInstallModuleNamesExplicitOrder(t *testing.T) {
 	module.DiscoveredAddons = map[string]*module.Addon{
 		"base": {Manifest: module.Manifest{Name: "base", Depends: []string{}}},
-		"mail": {Manifest: module.Manifest{Name: "mail", Depends: []string{"base"}}},
-		"crm":  {Manifest: module.Manifest{Name: "crm", Depends: []string{"base", "mail"}}},
+		"im":  {Manifest: module.Manifest{Name: "im", Depends: []string{"base"}}},
+		"crm": {Manifest: module.Manifest{Name: "crm", Depends: []string{"base", "im"}}},
 	}
 	ctx := context.Background()
-	names, err := module.ExpandInstallModuleNamesForTest(ctx, []string{"crm", "mail"})
+	names, err := module.ExpandInstallModuleNamesForTest(ctx, []string{"crm", "im"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(names) != 2 {
 		t.Fatalf("expected 2 modules, got %v", names)
 	}
-	if names[0] != "mail" || names[1] != "crm" {
+	if names[0] != "im" || names[1] != "crm" {
 		t.Fatalf("unexpected order: %v", names)
 	}
 }

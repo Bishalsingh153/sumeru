@@ -14,7 +14,6 @@ var InitialSetupModelNames = []string{
 	"core.group",
 	"core.partner",
 	"core.user",
-	"mail.message",
 	"sys.access",
 	"sys.action.window",
 	"sys.action.url",

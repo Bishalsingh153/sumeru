@@ -280,4 +280,6 @@ export interface SwcWorkspacePayload {
   defaults?: Record<string, unknown>;
   iframeUrl?: string;
   userSecurity?: SwcUserSecurityMeta;
+  recordMessagesEligible?: boolean;
+  recordLogEligible?: boolean;
 }

@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"sumeru/addons/automation"
+	"sumeru/addons/audit"
+	"sumeru/addons/im"
 	"sumeru/core/applog"
 	"sumeru/core/engine/parser"
 	"sumeru/core/engine/render"
@@ -182,6 +184,22 @@ func TestForTestExports_report(t *testing.T) {
 	if sheet == "" {
 		t.Fatal("SheetXMLForTest empty")
 	}
+	csvBytes, err := report.ParseUploadContentForTest("t.csv", []byte("h\n1\n"))
+	if err != nil || len(csvBytes) == 0 {
+		t.Fatalf("ParseUploadContentForTest: err=%v", err)
+	}
+	if err := report.RunBulkJobCronForTest(context.Background()); err != nil {
+		t.Fatalf("RunBulkJobCronForTest: %v", err)
+	}
+}
+
+func TestForTestExports_reportCoerce(t *testing.T) {
+	t.Parallel()
+	_, err := orm.ResolveContentAttachmentForTest(context.Background(), 1, "", "", 0)
+	if err == nil {
+		t.Fatal("ResolveContentAttachmentForTest expected error")
+	}
+	_ = report.ApplyImportTemplateMapping(context.Background(), "core.partner", []string{"Email"}, 1)
 }
 
 func TestForTestExports_swcmeta(t *testing.T) {
@@ -373,4 +391,42 @@ func TestForTestExports_web(t *testing.T) {
 	if !ok || flash.Title != "err" {
 		t.Fatalf("record error flash: ok=%v flash=%+v", ok, flash)
 	}
+	if _, id, ok := web.ParseContentPathForTest("12"); !ok || id != 12 {
+		t.Fatalf("ParseContentPathForTest: id=%d ok=%v", id, ok)
+	}
+	if !web.ContentInlineAllowedForTest("image/png") {
+		t.Fatal("ContentInlineAllowedForTest image")
+	}
+	payload := &swcmeta.WorkspacePayload{}
+	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "list", 0, "core.user")
+	if payload.RecordMessagesEligible {
+		t.Fatal("record messages flag should stay off")
+	}
+	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "form", 0, "core.user")
+	if payload.RecordMessagesEligible {
+		t.Fatal("record messages flag should stay off on unsaved form")
+	}
+	if d, err := audit.RetentionDaysFromRecordForTest(map[string]interface{}{"retention_preset": "7_days"}); err != nil || d != 7 {
+		t.Fatalf("retention 7d: %d %v", d, err)
+	}
+	opts := audit.RetentionOptionsFromPolicyForTest(map[string]interface{}{"hot_retention_days": 60}, true)
+	if opts.RetentionDays != 60 || !opts.DryRun {
+		t.Fatalf("retention opts: %+v", opts)
+	}
+	if err := audit.RunAuditRetentionCronForTest(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := audit.EncodeAuditJSONLForTest([]audit.AuditExportRowForTest{{ID: 1, Action: "read", Model: "x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := audit.DecodeAuditJSONLForTest(raw); err != nil {
+		t.Fatal(err)
+	}
+	if name := im.UserDisplayNameForTest(context.Background(), 1); name == "" {
+		t.Fatal("UserDisplayNameForTest")
+	}
+	directRec := httptest.NewRecorder()
+	directReq := httptest.NewRequest(http.MethodGet, "/web/swc/direct/conversations", nil)
+	web.SwcDirectConversationsHandlerForTest(directRec, directReq)
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <menuitem id="menu_audit_section" name="Audit" parent="base.menu_settings_root" sequence="80"
+            web_icon="log"/>
+        <menuitem id="menu_sys_audit" name="Audit Trail" parent="menu_audit_section" sequence="10"
+            action="audit.action_sys.audit" web_icon="log"/>
+        <menuitem id="menu_sys_audit_retention" name="Audit retention" parent="menu_audit_section"
+            sequence="20" action="audit.action_sys.audit.retention.policy" web_icon="log"
+            groups="base.group_system"/>
+        <menuitem id="menu_sys_audit_archive" name="Audit archives" parent="menu_audit_section"
+            sequence="25" action="audit.action_sys.audit.archive" web_icon="log"
+            groups="base.group_system"/>
+        <menuitem id="menu_sys_audit_cleanup" name="Clear audit log manual" parent="menu_audit_section"
+            sequence="30" action="audit.action_sys.audit.cleanup" web_icon="log"
+            groups="base.group_system"/>
+    </data>
+</sumeru>

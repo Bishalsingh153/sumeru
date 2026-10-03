@@ -11,6 +11,7 @@ import { ShellPageView } from "../../shell/ShellPageView.js";
 import { syncWorkspaceViewTabs } from "../../shell/view-tab-sync.js";
 import { syncWorkspaceBreadcrumbs } from "../../shell/breadcrumb-sync.js";
 import { ACTION_CLOSED, RECORD_UPDATED, SWC_API_BASE } from "../../constants/routes.js";
+import { ACTIVITY_CONTEXT, activityContextFromWorkspace } from "../../shell/activity-context.js";
 import { RouterService } from "../../services/router.js";
 import { runWillStart } from "../../runtime/lifecycle.js";
 
@@ -69,9 +70,22 @@ export class WorkspaceRouter extends SwcComponent {
       syncWorkspaceViewTabs(this.payload.viewTabs);
       syncWorkspaceBreadcrumbs(this.payload.breadcrumbs);
       this.syncView();
+      this.emitActivityContext(this.payload);
       void updateDebugDrawer(this.env.bootstrap, this.debugContext(this.payload));
     } catch (err) {
       this.error = err instanceof SwcError ? err.message : String(err);
+      this.emitActivityContext({
+        actionId: 0,
+        menuId: "",
+        viewType: "",
+        model: "",
+        recordId: 0,
+        formEdit: false,
+        csrfToken: "",
+        arch: { type: "", model: "", fields: [] },
+        viewTabs: [],
+        breadcrumbs: [],
+      });
     } finally {
       this.loading = false;
       this.rerender();
@@ -128,6 +142,10 @@ export class WorkspaceRouter extends SwcComponent {
     this.activeViewType = type;
   }
 
+  private emitActivityContext(payload: SwcWorkspacePayload): void {
+    this.env.services.bus.emit(ACTIVITY_CONTEXT, activityContextFromWorkspace(payload));
+  }
+
   private renderView(): HTMLElement {
     if (!this.payload || !this.activeView) return document.createElement("div");
     return this.activeView.renderOrPatch();
@@ -141,6 +159,7 @@ export class WorkspaceRouter extends SwcComponent {
         syncWorkspaceViewTabs(payload.viewTabs);
         syncWorkspaceBreadcrumbs(payload.breadcrumbs);
         this.syncView();
+        this.emitActivityContext(payload);
         this.patch();
         void updateDebugDrawer(this.env.bootstrap, this.debugContext(payload));
       })

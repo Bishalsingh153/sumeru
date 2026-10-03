@@ -9,12 +9,73 @@ import {
   EXPORT_XLSX_ROUTE,
   EXPORT_PIVOT_ROUTE,
   EXPORT_GRAPH_ROUTE,
+  EXPORT_ASYNC_ROUTE,
+  MAX_SYNC_EXPORT_ROWS,
   VIEW_FORM,
   VIEW_GRAPH,
   VIEW_PIVOT,
 } from "../../constants/routes.js";
 import { RouterService } from "../../services/router.js";
 import { graphAxes, pivotFields } from "./arch-fields.js";
+
+function bulkJobFormUrl(jobId: number): string {
+  const params = new URLSearchParams({
+    model: "sys.bulk.import",
+    view_type: VIEW_FORM,
+    id: String(jobId),
+  });
+  return `/web?${params.toString()}`;
+}
+
+async function queueAsyncExport(
+  payload: SwcWorkspacePayload,
+  fields: string,
+  format: "csv" | "xlsx",
+): Promise<void> {
+  const query = exportQuery(payload, fields);
+  query.delete("csrf_token");
+  const body = new URLSearchParams();
+  body.set("csrf_token", payload.csrfToken);
+  body.set("model", payload.model);
+  body.set("fields", fields);
+  body.set("format", format);
+  const res = await fetch(`${EXPORT_ASYNC_ROUTE}?${query.toString()}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "X-CSRF-Token": payload.csrfToken },
+    body,
+  });
+  if (!res.ok) {
+    window.alert(`Export could not be queued: ${await res.text()}`);
+    return;
+  }
+  const data = (await res.json()) as { jobId?: number };
+  const jobId = data.jobId ?? 0;
+  if (jobId <= 0) {
+    window.alert("Export queued but no job id was returned.");
+    return;
+  }
+  const open = window.confirm(
+    `Export queued (job #${jobId}). Background jobs need the platform bulk cron. Open the job record to download when ready?`,
+  );
+  if (open) {
+    window.location.href = bulkJobFormUrl(jobId);
+  }
+}
+
+function asyncExportButton(
+  label: string,
+  payload: SwcWorkspacePayload,
+  fields: string,
+  format: "csv" | "xlsx",
+): HTMLElement {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "sum-popover-menu-link";
+  btn.textContent = label;
+  btn.addEventListener("click", () => void queueAsyncExport(payload, fields, format));
+  return btn;
+}
 
 function linkButton(href: string, label: string, className = "sum-btn sum-btn--secondary"): HTMLElement {
   const a = document.createElement("a");
@@ -235,6 +296,8 @@ export function buildReportActionEntries(
 
   const exportParams = exportQuery(payload, fields, recordId);
   const entries: ReportActionEntry[] = [];
+  const listTotal = payload.listTotal ?? 0;
+  const largeList = listTotal > MAX_SYNC_EXPORT_ROWS;
 
   if (report.download) {
     const formats = (report.formats || "csv,pdf")
@@ -243,12 +306,31 @@ export function buildReportActionEntries(
       .filter(Boolean);
     const showAll = formats.length === 0;
     for (const { fmt, route, label } of EXPORT_FORMAT_LINKS) {
-      if (showAll || formats.includes(fmt)) {
-        entries.push({
-          label,
-          node: linkButton(`${route}?${exportParams.toString()}`, label, "sum-popover-menu-link"),
-        });
+      if (!showAll && !formats.includes(fmt)) continue;
+      if (largeList && (fmt === "csv" || fmt === "xlsx")) {
+        continue;
       }
+      const syncLabel =
+        largeList && fmt === "pdf"
+          ? `${label} (max ${MAX_SYNC_EXPORT_ROWS} rows)`
+          : listTotal > 0 && !largeList && (fmt === "csv" || fmt === "xlsx")
+            ? label
+            : label;
+      const node = linkButton(`${route}?${exportParams.toString()}`, syncLabel, "sum-popover-menu-link");
+      if (largeList && fmt === "pdf") {
+        node.title = `PDF export includes at most ${MAX_SYNC_EXPORT_ROWS} rows. Use background CSV export for full data.`;
+      }
+      entries.push({ label: syncLabel, node });
+    }
+    if (largeList && fields) {
+      entries.push({
+        label: "Export all CSV (background)",
+        node: asyncExportButton("Export all CSV (background)", payload, fields, "csv"),
+      });
+      entries.push({
+        label: "Export all Excel (background)",
+        node: asyncExportButton("Export all Excel (background)", payload, fields, "xlsx"),
+      });
     }
   }
   if (report.upload && fields) {

@@ -1,0 +1,5 @@
+id,name,model,group_id,perm_read,perm_write,perm_create,perm_unlink
+access_sys_audit_cleanup_system,access_sys_audit_cleanup_system,sys.audit.cleanup,base.group_system,1,1,1,1
+access_sys_audit_unlink_system,access_sys_audit_unlink_system,sys.audit,base.group_system,1,0,0,1
+access_sys_audit_retention_policy_system,access_sys_audit_retention_policy_system,sys.audit.retention.policy,base.group_system,1,1,0,0
+access_sys_audit_archive_system,access_sys_audit_archive_system,sys.audit.archive,base.group_system,1,1,0,0

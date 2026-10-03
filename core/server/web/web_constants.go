@@ -108,7 +108,6 @@ const (
 
 // Flash query parameter appended to redirects after form actions.
 const flashMessageParam = "msg"
-const fieldErrorsParam = "field_errors"
 
 const saveOKCreatedMsg = "save_ok_created"
 const saveOKUpdatedMsg = "save_ok_updated"
@@ -273,6 +272,13 @@ const (
 	bulkUploadRoute     = "/web/bulk/upload"
 	bulkConfirmRoute    = "/web/bulk/confirm"
 	bulkCancelRoute     = "/web/bulk/cancel"
+	bulkPreviewRoute    = "/web/bulk/preview"
+	bulkDryRunRoute       = "/web/bulk/dry-run"
+	bulkSaveTemplateRoute = "/web/bulk/save-template"
+	exportAsyncRoute    = "/web/export/async"
+	bulkStatusRoute     = "/web/bulk/status"
+	importWizardRoute   = "/web/import"
+	swcImportRoute      = "/web/swc/import"
 	maxImportBodyBytes  = 8 << 20
 	importModelField    = "model"
 	importFileField     = "file"
@@ -282,16 +288,7 @@ const (
 	actionIDField       = "action"
 )
 
-// Chatter POST route, form fields, and limits.
-const (
-	chatterPostRoute     = "/web/chatter/post"
-	recordModelField     = "model"
-	chatterRecordIDField = "res_id"
-	chatterBodyField     = "body"
-	mailMessageModel     = "mail.message"
-	maxChatterBodyRunes  = 10000
-	chatterDefaultAuthor = "User"
-)
+const recordModelField = "model"
 
 // Apps page routes, templates, and ORM model.
 const (

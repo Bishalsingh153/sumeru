@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys_bulk_import_form" model="sys.bulk.import" type="form">
+            <sheet>
+                <group>
+                    <field name="name" string="Batch"/>
+                    <field name="target_model" string="Model"/>
+                    <field name="import_mode" string="Mode"/>
+                    <field name="direction" string="Direction"/>
+                    <field name="state" string="State"/>
+                    <field name="progress" string="Progress"/>
+                    <field name="total_rows" string="Total rows"/>
+                    <field name="result_summary" string="Result"/>
+                </group>
+                <group>
+                    <field name="attachment_id" string="Staged file or export download"/>
+                    <field name="template_id" string="Template"/>
+                    <field name="export_format" string="Export format"/>
+                </group>
+                <notebook>
+                    <page string="Column mapping">
+                        <field name="column_mapping" string="Mapping"/>
+                        <field name="selected_fields" string="Fields"/>
+                        <field name="csv_headers" string="Headers"/>
+                    </page>
+                    <page string="Preview">
+                        <field name="preview_json" string="Preview"/>
+                        <field name="error_json" string="Errors"/>
+                    </page>
+                </notebook>
+            </sheet>
+            <footer>
+                <button name="action_confirm_import" string="Confirm import" type="object"/>
+                <button name="action_cancel_import" string="Cancel" type="object"/>
+            </footer>
+        </view>
+    </data>
+</sumeru>

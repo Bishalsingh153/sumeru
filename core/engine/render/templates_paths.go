@@ -26,6 +26,7 @@ const (
 	TemplatePagesSettingsAccount = "pages/settings_account.html"
 	TemplatePagesSettingsFieldACL = "pages/settings_field_acl.html"
 	TemplatePagesSettingsModelACL = "pages/settings_model_acl.html"
+	TemplatePagesImportWizard     = "pages/import_wizard.html"
 )
 
 // TemplatePath joins templatesDir with a relative template path.

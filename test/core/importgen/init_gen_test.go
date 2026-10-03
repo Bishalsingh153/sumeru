@@ -77,9 +77,9 @@ func TestExpectedInitDependsImportPathsWorkspace(t *testing.T) {
 			Manifest: module.Manifest{Name: "contacts", Depends: []string{"base"}},
 			Path:     filepath.Join(root, "addons", "contacts"),
 		},
-		"mail": {
-			Manifest: module.Manifest{Name: "mail", Depends: []string{"base"}},
-			Path:     filepath.Join(root, "addons", "mail"),
+		"im": {
+			Manifest: module.Manifest{Name: "im", Depends: []string{"base"}},
+			Path:     filepath.Join(root, "addons", "im"),
 		},
 		"hr": {
 			Manifest: module.Manifest{Name: "hr", Depends: []string{"base", "contacts"}},
@@ -88,7 +88,7 @@ func TestExpectedInitDependsImportPathsWorkspace(t *testing.T) {
 		"engagement_cookbook": {
 			Manifest: module.Manifest{
 				Name:    "engagement_cookbook",
-				Depends: []string{"base", "contacts", "hr", "mail"},
+				Depends: []string{"base", "contacts", "hr", "im"},
 			},
 			Path: cookbookPath,
 		},
@@ -108,7 +108,7 @@ func TestExpectedInitDependsImportPathsWorkspace(t *testing.T) {
 		"sumeru/addons/base",
 		"sumeru/addons/contacts",
 		"sumeru_addons/hr",
-		"sumeru/addons/mail",
+		"sumeru/addons/im",
 	} {
 		if _, ok := set[want]; !ok {
 			t.Fatalf("missing import %q in %v", want, paths)

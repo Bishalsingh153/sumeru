@@ -38,4 +38,9 @@ export const EXPORT_PIVOT_ROUTE = "/web/export/pivot";
 export const EXPORT_GRAPH_ROUTE = "/web/export/graph";
 export const BULK_TEMPLATE_ROUTE = "/web/bulk/template";
 export const BULK_UPLOAD_ROUTE = "/web/bulk/upload";
+export const EXPORT_ASYNC_ROUTE = "/web/export/async";
+export const BULK_STATUS_ROUTE = "/web/bulk/status";
+
+/** Must match sumeru/core/report/types.go maxSyncExportRows */
+export const MAX_SYNC_EXPORT_ROWS = 500;
 export const SAVED_SEARCHES_ROUTE = "/web/swc/saved-searches";

@@ -1,0 +1,7 @@
+# Sample catalog for the base module (loaded on -u base).
+msgid ""
+msgstr ""
+"Language: en_US\n"
+
+msgid "Settings"
+msgstr "Settings"

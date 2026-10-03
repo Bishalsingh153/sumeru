@@ -2,12 +2,9 @@ package render
 
 import (
 	"context"
-	"fmt"
 	"html/template"
 	"strings"
-	"time"
 
-	"sumeru/addons/mail"
 	"sumeru/core/orm"
 	"sumeru/core/server/config"
 )
@@ -112,7 +109,8 @@ func EnrichShellPageData(ctx context.Context, d *PageData) {
 	}
 	d.ShellUserInitials = UserInitialsFromName(d.ShellUser)
 
-	d.ActivityEnabled = mail.CompanyChatterEnabled(ctx) && mail.CompanyActivityPanelEnabled(ctx)
+	// Activity dock (Messages + Log) stays visible for logged-in users; IM APIs gate chat separately.
+	d.ActivityEnabled = orm.SecurityUID(ctx) > 0
 	if len(d.ExtraScriptURLs) == 0 {
 		d.ExtraScriptURLs = ExtraScriptURLs
 	}
@@ -122,29 +120,6 @@ func EnrichShellPageData(ctx context.Context, d *PageData) {
 	if d.SuppressActivityDock {
 		d.ActivityEnabled = false
 	}
-	if !d.ActivityEnabled {
-		d.ActivityLogItems = nil
-		d.appendShellHooks(ctx)
-		return
-	}
-	rows, err := mail.QueryActivityLog(ctx, 40, d.ActivityContextModel, d.ActivityContextRecordID)
-	if err != nil {
-		d.ActivityLogItems = nil
-		d.appendShellHooks(ctx)
-		return
-	}
-	for _, r := range rows {
-		author := strings.TrimSpace(r.Author)
-		if author == "" {
-			author = "System"
-		}
-		meta := author
-		if !r.CreateDate.IsZero() {
-			meta = fmt.Sprintf("%s · %s", author, shortRelTime(r.CreateDate))
-		}
-		d.ActivityLogItems = append(d.ActivityLogItems, ActivityItem{Meta: meta, Body: strings.TrimSpace(r.Body)})
-	}
-
 	d.appendShellHooks(ctx)
 }
 
@@ -198,23 +173,3 @@ func shellCompanyNameFromOptions(opts []ShellCompanyOption, preferID int) string
 	return ""
 }
 
-func shortRelTime(t time.Time) string {
-	t = t.UTC()
-	now := time.Now().UTC()
-	if t.After(now) {
-		t = now
-	}
-	d := now.Sub(t)
-	switch {
-	case d < time.Minute:
-		return "just now"
-	case d < time.Hour:
-		return fmt.Sprintf("%dm ago", int(d.Minutes()))
-	case d < 24*time.Hour:
-		return fmt.Sprintf("%dh ago", int(d.Hours()))
-	case d < 48*time.Hour:
-		return "yesterday"
-	default:
-		return t.Local().Format("Jan 02")
-	}
-}

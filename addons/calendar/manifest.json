@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "Sumeru",
   "description": "Schedule meetings and link them to business documents.",
-  "depends": ["base", "mail", "contacts"],
+  "depends": ["base", "im", "contacts"],
   "application": true,
   "data": [
     "security/security.xml",

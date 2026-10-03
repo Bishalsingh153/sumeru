@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"sumeru/core/orm"
 )
@@ -119,21 +118,11 @@ func StoreReportPDFAttachment(ctx context.Context, modelName string, recordID in
 	if name == "" {
 		name = "report.pdf"
 	}
-	storeKey := fmt.Sprintf("%s_%d_%s", modelName, recordID, time.Now().UTC().Format("20060102T150405"))
-	storeFname, size, err := orm.StoreAttachment(ctx, storeKey, pdf)
-	if err != nil {
-		return 0, err
-	}
-	vals := map[string]interface{}{
-		"name":        name,
-		"model":       modelName,
-		"res_id":      recordID,
-		"mimetype":    "application/pdf",
-		"file_size":   size,
-		"store_fname": storeFname,
-	}
-	if cid := orm.CompanyIDFromContext(ctx); cid > 0 {
-		vals["company_id"] = cid
-	}
-	return orm.Create(ctx, orm.Registry["sys.attachment"], vals)
+	return orm.CreateBinaryAttachment(ctx, orm.CreateBinaryAttachmentInput{
+		Name:     name,
+		ResModel: modelName,
+		ResID:    recordID,
+		Data:     pdf,
+		Mimetype: "application/pdf",
+	})
 }

@@ -32,6 +32,38 @@ func FetchRows(ctx context.Context, modelName string, domain [][]interface{}, re
 	return rows, nil
 }
 
+// FetchRowsUnlimitedForTest exposes paged export fetch for external tests.
+func FetchRowsUnlimitedForTest(ctx context.Context, modelName string, domain [][]interface{}, recordID int) ([]map[string]interface{}, error) {
+	return FetchRowsUnlimited(ctx, modelName, domain, recordID)
+}
+
+// FetchRowsUnlimited loads all rows matching domain (paged) for async export.
+func FetchRowsUnlimited(ctx context.Context, modelName string, domain [][]interface{}, recordID int) ([]map[string]interface{}, error) {
+	if recordID > 0 {
+		return FetchRows(ctx, modelName, domain, recordID)
+	}
+	const page = 500
+	var all []map[string]interface{}
+	offset := 0
+	for {
+		chunk, err := orm.SearchPage(ctx, modelName, domain, page, offset, "id ASC")
+		if err != nil {
+			return nil, err
+		}
+		if len(chunk) == 0 {
+			break
+		}
+		uid := orm.SecurityUID(ctx)
+		orm.RedactSearchResults(ctx, uid, modelName, chunk)
+		all = append(all, chunk...)
+		if len(chunk) < page {
+			break
+		}
+		offset += len(chunk)
+	}
+	return all, nil
+}
+
 // ValidateFields filters field names against model metadata.
 func ValidateFields(modelName string, fields []string) ([]string, error) {
 	modelInst, ok := orm.Registry[modelName]

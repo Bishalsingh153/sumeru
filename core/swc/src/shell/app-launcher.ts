@@ -1,6 +1,9 @@
 import type { ActionService } from "../services/action.js";
 import type { CommandService } from "../services/command.js";
 import type { SwcBootstrap, SwcBootstrapApp } from "../types/bootstrap.js";
+import { fuzzyScore } from "../util/fuzzy.js";
+
+export { fuzzyScore } from "../util/fuzzy.js";
 
 export interface LauncherItem {
   kind: "app" | "menu" | "command";
@@ -56,22 +59,6 @@ function appToLauncherItem(app: SwcBootstrapApp): LauncherItem {
     action: app.action,
     description: app.description,
   };
-}
-
-export function fuzzyScore(query: string, text: string): number {
-  const q = query.trim().toLowerCase();
-  const t = text.trim().toLowerCase();
-  if (!q) return 1;
-  if (!t) return 0;
-  if (t === q) return 100;
-  if (t.startsWith(q)) return 80;
-  if (t.includes(q)) return 60;
-
-  let qi = 0;
-  for (let i = 0; i < t.length && qi < q.length; i++) {
-    if (t[i] === q[qi]) qi++;
-  }
-  return qi === q.length ? 40 : 0;
 }
 
 export function scoreLauncherItem(query: string, item: LauncherItem): number {

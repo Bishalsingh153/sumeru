@@ -2905,6 +2905,67 @@ label.sum-form-label--hint {
   min-width: 5.5rem;
 }
 
+.sum-chatter-upload {
+  display: block;
+  margin-bottom: var(--sum-space-sm);
+}
+
+.sum-chatter-attachment-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--sum-accent);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.sum-attachment-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sum-z-modal, 1200);
+  background: color-mix(in srgb, var(--sum-ink) 45%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sum-space-md);
+}
+
+.sum-attachment-preview {
+  background: var(--sum-surface);
+  border-radius: var(--sum-radius-md);
+  max-width: min(960px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--sum-shadow-lg);
+}
+
+.sum-attachment-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sum-space-sm);
+  padding: var(--sum-space-sm) var(--sum-space-md);
+  border-bottom: 1px solid var(--sum-border);
+}
+
+.sum-attachment-preview-body {
+  padding: var(--sum-space-md);
+  overflow: auto;
+}
+
+.sum-attachment-preview-img {
+  max-width: 100%;
+  height: auto;
+}
+
+.sum-attachment-preview-pdf {
+  width: min(880px, 90vw);
+  height: min(70vh, 640px);
+  border: none;
+}
+
 .sum-form-reports-anchor,
 .sum-reports-anchor {
   position: relative;
@@ -2946,6 +3007,32 @@ label.sum-form-label--hint {
 .sum-user-security-hint {
   font-size: var(--sum-font-size-sm);
   margin: 0.5rem 0;
+}
+
+.sum-chatter-composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sum-chatter--disabled {
+  color: var(--sum-muted);
+  font-size: var(--sum-font-size-sm);
+  padding: 0.5rem 0;
+}
+
+.sum-chatter--embedded {
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.sum-chatter-attachments--inline {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
 }
 
 .sum-chatter-composer {

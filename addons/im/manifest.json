@@ -1,0 +1,14 @@
+{
+  "name": "im",
+  "display_name": "Internal chat",
+  "version": "1.0.0",
+  "author": "Sumeru",
+  "description": "Internal user-to-user messaging in the activity dock (no email or record chatter).",
+  "depends": ["base"],
+  "auto_install": true,
+  "application": false,
+  "data": [
+    "security/sys.access.csv",
+    "views/core_company_form_inherit_views.xml"
+  ]
+}

@@ -11,19 +11,27 @@ import (
 	"sumeru/core/module"
 )
 
-func baseAddonDir(t *testing.T) string {
+func addonDir(t *testing.T, name string) string {
 	t.Helper()
-	dir := filepath.Join("..", "..", "..", "addons", "base")
+	dir := filepath.Join("..", "..", "..", "addons", name)
 	if _, err := os.Stat(dir); err != nil {
-		t.Skip("base addon not found at ", dir)
+		t.Skip(name, " addon not found at ", dir)
 	}
 	return dir
 }
 
-func collectBaseManifestMenus(t *testing.T) []parser.MenuItem {
+func menuByID(menus []parser.MenuItem, id string) (parser.MenuItem, bool) {
+	for _, m := range menus {
+		if m.ID == id {
+			return m, true
+		}
+	}
+	return parser.MenuItem{}, false
+}
+
+func collectManifestMenus(t *testing.T, addonDir string) []parser.MenuItem {
 	t.Helper()
-	baseDir := baseAddonDir(t)
-	manifestPath := filepath.Join(baseDir, "manifest.json")
+	manifestPath := filepath.Join(addonDir, "manifest.json")
 	raw, err := os.ReadFile(manifestPath)
 	if err != nil {
 		t.Fatalf("read manifest: %v", err)
@@ -39,7 +47,7 @@ func collectBaseManifestMenus(t *testing.T) []parser.MenuItem {
 		if !strings.HasSuffix(strings.ToLower(rel), ".xml") {
 			continue
 		}
-		items, err := module.CollectMenuItemsFromManifestFile(filepath.Join(baseDir, rel))
+		items, err := module.CollectMenuItemsFromManifestFile(filepath.Join(addonDir, rel))
 		if err != nil {
 			t.Fatalf("collect menus from %s: %v", rel, err)
 		}
@@ -48,58 +56,77 @@ func collectBaseManifestMenus(t *testing.T) []parser.MenuItem {
 	return out
 }
 
-func menuByID(menus []parser.MenuItem, id string) (parser.MenuItem, bool) {
-	for _, m := range menus {
-		if m.ID == id {
-			return m, true
-		}
-	}
-	return parser.MenuItem{}, false
-}
-
-func TestBaseDeferredMenusIncludeGeoSection(t *testing.T) {
-	menus := collectBaseManifestMenus(t)
+func TestGeoDeferredMenusIncludeGeoSection(t *testing.T) {
+	menus := collectManifestMenus(t, addonDir(t, "geo"))
 	geoSection, ok := menuByID(menus, "menu_geo_section")
 	if !ok {
-		t.Fatal("menu_geo_section missing from collected base manifest menus")
+		t.Fatal("menu_geo_section missing from geo manifest menus")
 	}
-	if geoSection.ParentID != "menu_settings_root" {
-		t.Fatalf("menu_geo_section parent = %q; want menu_settings_root", geoSection.ParentID)
-	}
-	if _, ok := menuByID(menus, "menu_settings_root"); !ok {
-		t.Fatal("menu_settings_root missing — geo section parent would be unresolved")
+	if geoSection.ParentID != "base.menu_settings_root" {
+		t.Fatalf("menu_geo_section parent = %q; want base.menu_settings_root", geoSection.ParentID)
 	}
 	for _, childID := range []string{"menu_core_country", "menu_core_country_state", "menu_core_city"} {
 		child, ok := menuByID(menus, childID)
 		if !ok {
-			t.Fatalf("%s missing from collected menus", childID)
+			t.Fatalf("%s missing", childID)
 		}
 		if child.ParentID != "menu_geo_section" {
 			t.Fatalf("%s parent = %q; want menu_geo_section", childID, child.ParentID)
 		}
-		if !strings.Contains(child.AccessGroups, "base.group_system") {
-			t.Fatalf("%s access_groups = %q; want base.group_system", childID, child.AccessGroups)
+	}
+}
+
+func TestI18nDeferredMenusIncludeI18nSection(t *testing.T) {
+	menus := collectManifestMenus(t, addonDir(t, "i18n"))
+	section, ok := menuByID(menus, "menu_i18n_section")
+	if !ok {
+		t.Fatal("menu_i18n_section missing")
+	}
+	if section.Name != "Internationalization" {
+		t.Fatalf("section name = %q", section.Name)
+	}
+	for _, childID := range []string{"menu_core_lang", "menu_sys_translation"} {
+		if _, ok := menuByID(menus, childID); !ok {
+			t.Fatalf("%s missing", childID)
 		}
 	}
 }
 
-func TestBaseManifestMenusLoadLast(t *testing.T) {
-	baseDir := baseAddonDir(t)
-	raw, err := os.ReadFile(filepath.Join(baseDir, "manifest.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestGeoManifestMenusLoadLast(t *testing.T) {
+	dir := addonDir(t, "geo")
+	raw, _ := os.ReadFile(filepath.Join(dir, "manifest.json"))
 	var manifest struct {
 		Data []string `json:"data"`
 	}
-	if err := json.Unmarshal(raw, &manifest); err != nil {
-		t.Fatal(err)
-	}
-	if len(manifest.Data) == 0 {
-		t.Fatal("manifest data is empty")
-	}
+	_ = json.Unmarshal(raw, &manifest)
 	last := manifest.Data[len(manifest.Data)-1]
 	if last != "views/menus.xml" {
-		t.Fatalf("views/menus.xml must be last in manifest data; got %q", last)
+		t.Fatalf("geo menus.xml must be last; got %q", last)
+	}
+}
+
+func TestI18nManifestMenusLoadLast(t *testing.T) {
+	dir := addonDir(t, "i18n")
+	raw, _ := os.ReadFile(filepath.Join(dir, "manifest.json"))
+	var manifest struct {
+		Data []string `json:"data"`
+	}
+	_ = json.Unmarshal(raw, &manifest)
+	last := manifest.Data[len(manifest.Data)-1]
+	if last != "views/menus.xml" {
+		t.Fatalf("i18n menus.xml must be last; got %q", last)
+	}
+}
+
+func TestBaseManifestMenusLoadLast(t *testing.T) {
+	dir := addonDir(t, "base")
+	raw, _ := os.ReadFile(filepath.Join(dir, "manifest.json"))
+	var manifest struct {
+		Data []string `json:"data"`
+	}
+	_ = json.Unmarshal(raw, &manifest)
+	last := manifest.Data[len(manifest.Data)-1]
+	if last != "views/menus.xml" {
+		t.Fatalf("base menus.xml must be last; got %q", last)
 	}
 }

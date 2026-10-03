@@ -32,6 +32,25 @@ export class HttpService {
     });
   }
 
+  async postMultipart(url: string, form: FormData, onProgress?: (pct: number) => void): Promise<Response> {
+    form.set("csrf_token", this.csrfToken);
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      xhr.withCredentials = true;
+      xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }));
+      xhr.onerror = () => reject(new SwcError(`POST ${url} failed`, "http_post"));
+      if (onProgress) {
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            onProgress(Math.round((ev.loaded / ev.total) * 100));
+          }
+        };
+      }
+      xhr.send(form);
+    });
+  }
+
   async postFormFields(url: string, data: Record<string, string | string[]>): Promise<Response> {
     const body = new URLSearchParams();
     body.set("csrf_token", this.csrfToken);

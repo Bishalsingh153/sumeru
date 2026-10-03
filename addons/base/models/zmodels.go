@@ -6,13 +6,8 @@ import "sumeru/core/sdk"
 
 func init() {
 	sdk.MustRegister("base",
-		&CoreCity{},
 		&CoreCompany{},
-		&CoreCountry{},
-		&CoreCountryState{},
-		&CoreCurrency{},
 		&CoreGroup{},
-		&CoreLang{},
 		&CorePartner{},
 		&CoreUser{},
 		&CoreUserAPIKey{},
@@ -20,14 +15,7 @@ func init() {
 		&CoreUserLog{},
 		&CoreUserTrustedDevice{},
 		&ResConfigSettings{},
-		&SysAttachment{},
-		&SysAudit{},
 		&SysAuthProvider{},
-		&SysBulkImport{},
-		&SysConfigParameter{},
 		&SysFieldAccess{},
-		&SysReportAction{},
-		&SysSequence{},
-		&SysTranslation{},
 	)
 }

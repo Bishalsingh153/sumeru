@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data noupdate="true">
+        <record id="cron_platform_bulk_job" model="sys.cron">
+            <field name="name">Platform bulk import/export jobs</field>
+            <field name="code">platform.bulk_job</field>
+            <field name="interval_number">1</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</sumeru>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit.retention.policy_list" model="sys.audit.retention.policy" type="list">
+            <field name="name" string="Policy"/>
+            <field name="hot_retention_days" string="Hot days"/>
+            <field name="auto_enabled" string="Automatic"/>
+            <field name="delete_after_export" string="Delete after export"/>
+            <field name="last_run_at" string="Last run"/>
+        </view>
+    </data>
+</sumeru>

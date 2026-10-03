@@ -34,6 +34,26 @@ func TestValidateCSRF_acceptsMatchingHeader(t *testing.T) {
 	}
 }
 
+func TestValidateCSRF_acceptsMatchingQueryOnGET(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/web/export/csv?model=core.user&fields=name", nil)
+	req.AddCookie(&http.Cookie{Name: web.TestSessionCookieName, Value: "export-session-sid"})
+	token := web.CSRFTokenForRequest(req)
+	req.URL.RawQuery = "model=core.user&fields=name&csrf_token=" + token
+	if !web.ValidateCSRF(req) {
+		t.Fatal("expected CSRF validation to pass with matching query token on GET")
+	}
+}
+
+func TestValidateCSRF_rejectsQueryTokenOnPOST(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/web/bulk/confirm?csrf_token=only-in-query", nil)
+	req.AddCookie(&http.Cookie{Name: web.TestSessionCookieName, Value: "post-session-sid"})
+	token := web.CSRFTokenForRequest(req)
+	req.URL.RawQuery = "csrf_token=" + token
+	if web.ValidateCSRF(req) {
+		t.Fatal("expected CSRF validation to fail when token is only in query on POST")
+	}
+}
+
 func TestValidateProductionCSRFSecret_devModeSkips(t *testing.T) {
 	prevDev := config.AppConfig.DevMode
 	prevSecret := config.AppConfig.CSRFSecret
