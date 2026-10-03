@@ -12,4 +12,6 @@ P2P messaging between internal users via the shell activity dock **Messages** ta
 - Optional **record link** on each message (`res_model` / `res_id`) when sent while a form record is open.
 - **`GET /web/swc/direct/status`**: `enabled`, `unread`, `companyFormHref` for the activity UI.
 
+Message attachments are `sys.attachment` rows served at `/web/content/<id>` with ACL checks. Optional virus scanning: `orm.SetAttachmentScanner` (see platform README / `core/orm/attachment_binary.go`).
+
 Upgrade from the old Discuss addon: install **im**, uninstall **mail**, and migrate direct message rows if needed. After model changes, run **`-u im`** so `is_read`, `res_model`, and `res_id` columns exist.

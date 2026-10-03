@@ -223,9 +223,10 @@ func listMessageAttachments(ctx context.Context, uid, messageID int) []map[strin
 	for _, row := range rows {
 		id, _ := orm.CoerceInt64(row["id"])
 		out = append(out, map[string]interface{}{
-			"id":   int(id),
-			"name": strings.TrimSpace(orm.AsString(row["name"])),
-			"url":  fmt.Sprintf("/web/content/%d", id),
+			"id":       int(id),
+			"name":     strings.TrimSpace(orm.AsString(row["name"])),
+			"url":      fmt.Sprintf("/web/content/%d", id),
+			"mimetype": strings.TrimSpace(orm.AsString(row["mimetype"])),
 		})
 	}
 	return out

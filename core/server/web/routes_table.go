@@ -92,6 +92,7 @@ func registerRecordRoutes() {
 	registerSession(http.MethodPost, bulkDryRunRoute, BulkDryRunHandler)
 	registerSession(http.MethodPost, bulkSaveTemplateRoute, BulkSaveImportTemplateHandler)
 	registerSession(http.MethodPost, exportAsyncRoute, ExportAsyncHandler)
+	registerSession(http.MethodGet, bulkStatusRoute, BulkStatusHandler)
 	registerSession(http.MethodGet, importWizardRoute, ImportWizardPageHandler)
 }
 

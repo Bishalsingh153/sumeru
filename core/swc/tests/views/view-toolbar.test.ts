@@ -69,6 +69,26 @@ describe("view-toolbar", () => {
     expect(entries.some((e) => e.label === "Export pivot CSV")).toBe(true);
   });
 
+  it("buildReportActionEntries offers background export when list exceeds sync cap", () => {
+    const entries = buildReportActionEntries(
+      basePayload({
+        listTotal: 600,
+        arch: {
+          type: "list",
+          model: "crm.lead",
+          fields: [],
+          report: { download: true, upload: false, formats: "csv,xlsx,pdf", pdfSizes: "", bulkModes: "" },
+        },
+      }),
+      "name,email",
+    );
+    const labels = entries.map((e) => e.label);
+    expect(labels).toContain("Export all CSV (background)");
+    expect(labels).toContain("Export all Excel (background)");
+    expect(labels).not.toContain("Export CSV");
+    expect(labels.some((l) => l.includes("PDF"))).toBe(true);
+  });
+
   it("buildReportActionEntries lists export formats for actions menu", () => {
     const entries = buildReportActionEntries(
       basePayload({

@@ -276,6 +276,7 @@ const (
 	bulkDryRunRoute       = "/web/bulk/dry-run"
 	bulkSaveTemplateRoute = "/web/bulk/save-template"
 	exportAsyncRoute    = "/web/export/async"
+	bulkStatusRoute     = "/web/bulk/status"
 	importWizardRoute   = "/web/import"
 	swcImportRoute      = "/web/swc/import"
 	maxImportBodyBytes  = 8 << 20

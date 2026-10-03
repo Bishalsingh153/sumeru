@@ -414,6 +414,10 @@ func BulkSaveImportTemplateHandlerForTest(w http.ResponseWriter, r *http.Request
 	BulkSaveImportTemplateHandler(w, r)
 }
 
+func BulkStatusHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	BulkStatusHandler(w, r)
+}
+
 func SwcImportHandlerForTest(w http.ResponseWriter, r *http.Request) {
 	SwcImportHandler(w, r)
 }
