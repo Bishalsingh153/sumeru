@@ -34,6 +34,11 @@ func CoerceFieldValueForTest(fieldDef FieldDefinition, v interface{}) (interface
 	return coerceFieldValue(fieldDef, v)
 }
 
+// FormatAuditLogBodyForTest exposes audit log formatting for tests.
+func FormatAuditLogBodyForTest(ctx context.Context, model, action, beforeJSON, afterJSON, detail string) string {
+	return FormatAuditLogBody(ctx, model, action, beforeJSON, afterJSON, detail)
+}
+
 func SplitDomainORPrefixForTest(domain [][]interface{}) (orCount int, leaves [][]interface{}, ok bool) {
 	return splitDomainORPrefix(domain)
 }

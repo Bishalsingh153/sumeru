@@ -12,8 +12,8 @@ import (
 
 
 func TestShouldMaterializeServerActionRequiresAutomationModule(t *testing.T) {
-	_ = modelreg.ActivateAll([]string{"base", "mail", "automation"})
-	installed := map[string]struct{}{"base": {}, "mail": {}}
+	_ = modelreg.ActivateAll([]string{"base", "im", "automation"})
+	installed := map[string]struct{}{"base": {}, "im": {}}
 	if orm.ShouldMaterializeModel("sys.server.action", installed) {
 		t.Fatal("sys.server.action should not materialize without automation module")
 	}

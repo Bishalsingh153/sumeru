@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "Sumeru",
   "description": "Periodic KPI digests for application metrics.",
-  "depends": ["base", "mail"],
+  "depends": ["base", "im"],
   "application": false,
   "data": [
     "security/security.xml",

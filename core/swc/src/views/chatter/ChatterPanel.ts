@@ -29,6 +29,8 @@ interface ChatterPanelProps {
   model: string;
   recordId: number;
   csrfToken: string;
+  /** When true, omit outer aside chrome (activity dock mount). */
+  embedded?: boolean;
 }
 
 export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
@@ -38,7 +40,6 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
   private loading = true;
   private posting = false;
   private enabled = true;
-  private tab: "messages" | "attachments" = "messages";
   private uploadPct = 0;
   private uploading = false;
   private preview: AttachmentPreviewTarget | null = null;
@@ -61,6 +62,12 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
   override onWillUnmount(): void {
     this.unsubRecordUpdated?.();
     this.unsubRecordUpdated = null;
+  }
+
+  override onPropsChanged(props: ChatterPanelProps): void {
+    if (props.model !== this.props.model || props.recordId !== this.props.recordId) {
+      void this.load();
+    }
   }
 
   private async load(): Promise<void> {
@@ -104,7 +111,6 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
         return;
       }
       await this.load();
-      this.tab = "attachments";
     } finally {
       this.uploading = false;
       this.uploadPct = 0;
@@ -139,73 +145,18 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
 
   override template() {
     if (this.props.recordId <= 0) {
-      return html`<aside class="sum-chatter sum-chatter--empty">Save the record to post messages.</aside>`;
+      return html`<div class="sum-chatter sum-chatter--empty">Save the record to post messages.</div>`;
     }
-    if (!this.enabled) return html``;
     if (this.loading) {
-      return html`<aside class="sum-chatter sum-chatter--loading">Loading messages…</aside>`;
+      return html`<div class="sum-chatter sum-chatter--loading">Loading messages…</div>`;
     }
-    return html`
-      <aside class="sum-chatter">
-        <div class="sum-chatter-tabs">
-          <button type="button" class="sum-chatter-tab${this.tab === "messages" ? " sum-chatter-tab--active" : ""}" @click=${() => { this.tab = "messages"; this.rerender(); }}>Messages</button>
-          <button type="button" class="sum-chatter-tab${this.tab === "attachments" ? " sum-chatter-tab--active" : ""}" @click=${() => { this.tab = "attachments"; this.rerender(); }}>Attachments (${this.attachments.length})</button>
-        </div>
-        ${this.tab === "attachments"
-          ? html`<div class="sum-chatter-attachments-panel">
-              <label class="sum-chatter-upload">
-                <input
-                  type="file"
-                  hidden
-                  @change=${(event: Event) => {
-                    const input = event.target as HTMLInputElement;
-                    const file = input.files?.[0];
-                    input.value = "";
-                    if (file) void this.uploadFile(file);
-                  }}
-                />
-                <span class="sum-btn sum-btn--secondary">${this.uploading ? `Uploading ${this.uploadPct}%` : "Add file"}</span>
-              </label>
-              <ul class="sum-chatter-attachments">
-                ${this.attachments.length === 0
-                  ? html`<li class="sum-chatter-empty">No attachments.</li>`
-                  : this.attachments.map(
-                      (a) => html`<li>
-                        <button
-                          type="button"
-                          class="sum-chatter-attachment-link"
-                          @click=${() => {
-                            this.preview = { name: a.name, url: a.url, mimetype: a.mimetype };
-                            this.rerender();
-                          }}
-                        >
-                          ${a.name}
-                        </button>
-                      </li>`,
-                    )}
-              </ul>
-            </div>`
-          : html`
-        <div class="sum-chatter-composer">
-          <textarea
-            class="sum-chatter-input"
-            placeholder="Write a message…"
-            rows="3"
-            value=${this.draft}
-            @input=${(event: Event) => {
-              this.draft = inputValueFromEvent(event);
-              this.rerender();
-            }}
-          ></textarea>
-          <button
-            type="button"
-            class="sum-btn sum-btn--primary sum-chatter-send"
-            disabled=${this.posting ? "disabled" : undefined}
-            @click=${() => void this.post()}
-          >
-            Post
-          </button>
-        </div>
+    if (!this.enabled) {
+      return html`<div class="sum-chatter sum-chatter--disabled">
+        <p>Internal messages are disabled for this company. Enable chatter on the company record to post comments.</p>
+      </div>`;
+    }
+    const inner = html`
+      <div class="sum-chatter${this.props.embedded ? " sum-chatter--embedded" : ""}">
         <ul class="sum-chatter-messages">
           ${this.messages.length === 0
             ? html`<li class="sum-chatter-empty">No messages yet.</li>`
@@ -215,12 +166,69 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
                   <div class="sum-chatter-body">${m.body}</div>
                 </li>`,
               )}
-        </ul>`}
+        </ul>
+        ${this.attachments.length > 0
+          ? html`<ul class="sum-chatter-attachments sum-chatter-attachments--inline">
+              ${this.attachments.map(
+                (a) => html`<li>
+                  <button
+                    type="button"
+                    class="sum-chatter-attachment-link"
+                    @click=${() => {
+                      this.preview = { name: a.name, url: a.url, mimetype: a.mimetype };
+                      this.rerender();
+                    }}
+                  >
+                    ${a.name}
+                  </button>
+                </li>`,
+              )}
+            </ul>`
+          : ""}
+        <div class="sum-chatter-composer">
+          <textarea
+            class="sum-chatter-input"
+            placeholder="Write an internal message…"
+            rows="3"
+            value=${this.draft}
+            @input=${(event: Event) => {
+              this.draft = inputValueFromEvent(event);
+              this.rerender();
+            }}
+          ></textarea>
+          <div class="sum-chatter-composer-actions">
+            <label class="sum-chatter-upload">
+              <input
+                type="file"
+                hidden
+                @change=${(event: Event) => {
+                  const input = event.target as HTMLInputElement;
+                  const file = input.files?.[0];
+                  input.value = "";
+                  if (file) void this.uploadFile(file);
+                }}
+              />
+              <span class="sum-btn sum-btn--secondary">${this.uploading ? `Uploading ${this.uploadPct}%` : "Attach"}</span>
+            </label>
+            <button
+              type="button"
+              class="sum-btn sum-btn--primary sum-chatter-send"
+              disabled=${this.posting ? "disabled" : undefined}
+              @click=${() => void this.post()}
+            >
+              Post
+            </button>
+          </div>
+        </div>
         ${attachmentPreviewModal(this.preview, () => {
           this.preview = null;
           this.rerender();
         })}
-      </aside>
+      </div>
     `;
+    if (this.props.embedded) {
+      return html`<div class="sum-msg-shell">${inner}</div>`;
+    }
+    return html`<aside class="sum-chatter-host">${inner}</aside>`;
   }
 }

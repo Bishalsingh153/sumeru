@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "author": "Sumeru",
   "description": "Scheduled jobs, workflow transitions, server actions, and event bindings.",
-  "depends": ["base", "mail"],
+  "depends": ["base", "audit", "im"],
   "application": false,
   "data": [
     "data/platform_bulk_job_cron.xml",
+    "data/audit_retention_cron.xml",
     "security/security.xml",
     "security/sys.access.csv",
     "views/actions.xml",

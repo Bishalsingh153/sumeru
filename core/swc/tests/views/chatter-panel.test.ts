@@ -7,7 +7,7 @@ describe("ChatterPanel", () => {
     const panel = new ChatterPanel({ model: "demo.model", recordId: 0, csrfToken: "tok" }, collectionEnv());
     panel.callSetup();
     const el = panel.render();
-    expect(el.classList.contains("sum-chatter--empty")).toBe(true);
+    expect(el.textContent).toContain("Save the record");
     panel.destroy();
   });
 
@@ -21,39 +21,20 @@ describe("ChatterPanel", () => {
         }),
         postForm: vi.fn().mockResolvedValue(undefined),
         postJSON: vi.fn(),
+        postMultipart: vi.fn(),
       },
     });
-    const panel = new ChatterPanel({ model: "demo.model", recordId: 5, csrfToken: "tok" }, env);
+    const panel = new ChatterPanel({ model: "demo.model", recordId: 5, csrfToken: "tok", embedded: true }, env);
     panel.callSetup();
     await vi.waitFor(() => {
       expect(panel.render().querySelector(".sum-chatter-message")?.textContent).toContain("Hello");
     });
+    expect(panel.render().querySelector(".sum-chatter-attachment-link")?.textContent).toContain("doc.pdf");
     const textarea = panel.render().querySelector(".sum-chatter-input") as HTMLTextAreaElement;
     textarea.value = "Reply";
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
     (panel.render().querySelector(".sum-chatter-send") as HTMLButtonElement).click();
     await vi.waitFor(() => expect(env.services.http.postForm).toHaveBeenCalled());
-    panel.destroy();
-  });
-
-  it("switches to attachments tab", async () => {
-    const env = collectionEnv({
-      http: {
-        getJSON: vi.fn().mockResolvedValue({
-          messages: [],
-          attachments: [{ id: 2, name: "file.txt", url: "/file.txt" }],
-          enabled: true,
-        }),
-        postForm: vi.fn(),
-        postJSON: vi.fn(),
-      },
-    });
-    const panel = new ChatterPanel({ model: "demo.model", recordId: 3, csrfToken: "tok" }, env);
-    panel.callSetup();
-    await vi.waitFor(() => expect(panel.render().querySelector(".sum-chatter")).toBeTruthy());
-    const tabs = panel.render().querySelectorAll(".sum-chatter-tab");
-    (tabs[1] as HTMLButtonElement).click();
-    expect(panel.render().querySelector(".sum-chatter-attachments")?.textContent).toContain("file.txt");
     panel.destroy();
   });
 });

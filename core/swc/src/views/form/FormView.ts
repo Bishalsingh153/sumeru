@@ -11,7 +11,6 @@ import { collectFormFields, renderFormSheet } from "./form-sheet.js";
 import { initFormInteractions } from "./form-interactions.js";
 import { validatePasswordMatchGroups } from "../../widgets/password-match.js";
 import { FieldHost } from "../../widgets/field-host.js";
-import { ChatterPanel } from "../chatter/ChatterPanel.js";
 import { isFieldVisible, modifierViewContext, resolveFieldModifiers } from "../../model/modifiers.js";
 import { VIEW_FORM, VIEW_LIST } from "../../constants/routes.js";
 import { runObjectAction } from "../shared/object-action.js";
@@ -39,29 +38,14 @@ export class FormView extends SwcComponent<FormViewProps> {
   private activeNotebookPages: Record<number, number> = {};
   private teardownInteractions: (() => void) | null = null;
   private fieldHost!: FieldHost;
-  private chatterPanel!: ChatterPanel;
 
   override setup(): void {
     this.fieldHost = new FieldHost(this.env);
     this.initRecordState(this.props.payload);
-    this.chatterPanel = new ChatterPanel(
-      {
-        model: this.props.payload.model,
-        recordId: this.props.payload.recordId,
-        csrfToken: this.props.payload.csrfToken,
-      },
-      this.env,
-    );
-    this.chatterPanel.callSetup();
   }
 
   override onPropsChanged(props: FormViewProps): void {
     this.initRecordState(props.payload);
-    this.chatterPanel.updateProps({
-      model: props.payload.model,
-      recordId: props.payload.recordId,
-      csrfToken: props.payload.csrfToken,
-    });
     this.fieldHost.clear();
   }
 
@@ -79,7 +63,6 @@ export class FormView extends SwcComponent<FormViewProps> {
     this.teardownInteractions?.();
     this.teardownInteractions = null;
     this.fieldHost.clear();
-    this.chatterPanel.destroy();
   }
 
   override patch(): void {
@@ -366,7 +349,6 @@ export class FormView extends SwcComponent<FormViewProps> {
     });
 
     const footerButtons = payload.arch.footer?.buttons ?? [];
-    const showChatter = payload.arch.hasChatter && payload.recordId > 0;
 
     return html`
       <div class="sum-form-view sum-form-view--workspace-chrome${readonly ? " sum-form-view--readonly" : ""}">
@@ -404,7 +386,7 @@ export class FormView extends SwcComponent<FormViewProps> {
           },
         })}
         ${this.error ? html`<div class="sum-flash sum-flash--error">${this.error}</div>` : ""}
-        <div class="sum-form-layout${showChatter ? " sum-form-layout--with-chatter" : ""}">
+        <div class="sum-form-layout">
           <div class="sum-form-sheet-bg">
             ${sheet}
             ${footerButtons.length > 0
@@ -420,7 +402,6 @@ export class FormView extends SwcComponent<FormViewProps> {
                 </div>`
               : ""}
           </div>
-          ${showChatter ? this.chatterPanel.render() : ""}
         </div>
       </div>
     `;

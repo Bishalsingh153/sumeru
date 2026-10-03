@@ -3009,6 +3009,32 @@ label.sum-form-label--hint {
   margin: 0.5rem 0;
 }
 
+.sum-chatter-composer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sum-chatter--disabled {
+  color: var(--sum-muted);
+  font-size: var(--sum-font-size-sm);
+  padding: 0.5rem 0;
+}
+
+.sum-chatter--embedded {
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.sum-chatter-attachments--inline {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
 .sum-chatter-composer {
   display: flex;
   flex-direction: column;
