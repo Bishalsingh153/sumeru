@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"sumeru/core/orm"
 	"sumeru/core/report"
 )
 
@@ -30,7 +29,7 @@ func resolveExportRequest(w http.ResponseWriter, r *http.Request) (report.Export
 		http.Error(w, "fields required", http.StatusBadRequest)
 		return report.ExportCSVInput{}, false
 	}
-	domain := exportDomain(r)
+	domain := listExportDomain(r.Context(), r, modelName)
 	recordID, _ := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get(workspaceRecordIDParam)))
 	return report.ExportCSVInput{
 		Model:    modelName,
@@ -40,16 +39,26 @@ func resolveExportRequest(w http.ResponseWriter, r *http.Request) (report.Export
 	}, true
 }
 
-func exportDomain(r *http.Request) [][]interface{} {
-	actionID := report.ParseActionIDParam(r.URL.Query().Get(actionIDField))
-	if actionID <= 0 {
-		return nil
+func listExportDomain(ctx context.Context, r *http.Request, modelName string) [][]interface{} {
+	q := r.URL.Query()
+	actionID := report.ParseActionIDParam(q.Get(actionIDField))
+	var actionData map[string]interface{}
+	if actionID > 0 {
+		if row, err := loadWindowAction(ctx, actionID); err == nil {
+			actionData = row
+		}
 	}
-	actionData, err := orm.SearchOne(r.Context(), "sys.action.window", map[string]interface{}{"id": actionID})
-	if err != nil {
-		return nil
+	if actionData == nil {
+		actionData = map[string]interface{}{}
 	}
-	return actionListDomain(r.Context(), actionData)
+	searchView := loadSearchViewForAction(ctx, modelName, actionData)
+	return workspaceListDomain(ctx, listDomainInput{
+		ActionData:  actionData,
+		SearchView:  searchView,
+		SearchQuery: strings.TrimSpace(q.Get(workspaceListSearchParam)),
+		FilterCSV:   strings.TrimSpace(q.Get(workspaceFilterParam)),
+		DomainJSON:  strings.TrimSpace(q.Get(workspaceDomainParam)),
+	})
 }
 
 // analyticsExportDomain merges action domain with workspace search/filter/domain query params.
@@ -174,6 +183,37 @@ func ExportTemplatePDFHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", safeContentDispositionFilename(report.ExportFilename("template_report", "pdf")))
 	_, _ = w.Write(data)
+}
+
+// ExportAsyncHandler POST — queue large export as background job.
+func ExportAsyncHandler(w http.ResponseWriter, r *http.Request) {
+	if !RequirePOST(w, r) || !requireLogin(w, r) || !validateSessionCSRF(w, r) {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	modelName := strings.TrimSpace(r.FormValue(importModelField))
+	if modelName == "" {
+		http.Error(w, "model required", http.StatusBadRequest)
+		return
+	}
+	if !requireModelAccess(w, r, modelName, "read") {
+		return
+	}
+	fields := report.ParseFieldsParam(r.FormValue(reportFieldsParam))
+	domain := listExportDomain(r.Context(), r, modelName)
+	format := strings.TrimSpace(r.FormValue("format"))
+	if format == "" {
+		format = "csv"
+	}
+	jobID, err := report.QueueExportJob(r.Context(), modelName, fields, domain, format, AuthenticatedUserID(r))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSONResponse(w, map[string]interface{}{"jobId": jobID, "state": report.BulkStateQueued})
 }
 
 func BulkTemplateHandler(w http.ResponseWriter, r *http.Request) {

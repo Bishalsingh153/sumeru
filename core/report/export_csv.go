@@ -39,6 +39,32 @@ func ExportCSV(ctx context.Context, in ExportCSVInput) ([]byte, error) {
 	return writeCSV(fields, data)
 }
 
+// ExportCSVUnlimitedForTest exposes unlimited CSV export for external tests.
+func ExportCSVUnlimitedForTest(ctx context.Context, in ExportCSVInput) ([]byte, error) {
+	return ExportCSVUnlimited(ctx, in)
+}
+
+// ExportCSVUnlimited exports all matching rows (no 500 cap).
+func ExportCSVUnlimited(ctx context.Context, in ExportCSVInput) ([]byte, error) {
+	fields, err := ValidateFields(in.Model, in.Fields)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := FetchRowsUnlimited(ctx, in.Model, in.Domain, in.RecordID)
+	if err != nil {
+		return nil, err
+	}
+	var data [][]string
+	for _, row := range rows {
+		line := make([]string, len(fields))
+		for i, f := range fields {
+			line[i] = formatCell(ctx, in.Model, f, row[f])
+		}
+		data = append(data, line)
+	}
+	return writeCSV(fields, data)
+}
+
 // BulkTemplateCSV returns header-only CSV for selected fields.
 func BulkTemplateCSV(modelName string, fields []string) ([]byte, error) {
 	fields, err := ValidateFields(modelName, fields)

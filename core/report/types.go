@@ -11,7 +11,22 @@ const (
 
 	BulkModelName = "sys.bulk.import"
 
-	maxExportRows = 500
+	DirectionImport = "import"
+	DirectionExport = "export"
+
+	BulkStateDraft    = "draft"
+	BulkStateQueued   = "queued"
+	BulkStateRunning  = "running"
+	BulkStateDone     = "done"
+	BulkStateFailed   = "failed"
+	BulkStateCancelled = "cancelled"
+
+	BulkJobCronCode = "platform.bulk_job"
+
+	maxExportRows       = 500
+	maxSyncExportRows   = 500
+	maxPreviewRows      = 50
+	asyncImportRowThreshold = 500
 )
 
 // Capabilities describes report download and bulk upload enabled on a view.

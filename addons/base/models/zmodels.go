@@ -26,6 +26,7 @@ func init() {
 		&SysBulkImport{},
 		&SysConfigParameter{},
 		&SysFieldAccess{},
+		&SysImportTemplate{},
 		&SysReportAction{},
 		&SysSequence{},
 		&SysTranslation{},

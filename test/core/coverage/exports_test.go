@@ -182,6 +182,22 @@ func TestForTestExports_report(t *testing.T) {
 	if sheet == "" {
 		t.Fatal("SheetXMLForTest empty")
 	}
+	csvBytes, err := report.ParseUploadContentForTest("t.csv", []byte("h\n1\n"))
+	if err != nil || len(csvBytes) == 0 {
+		t.Fatalf("ParseUploadContentForTest: err=%v", err)
+	}
+	if err := report.RunBulkJobCronForTest(context.Background()); err != nil {
+		t.Fatalf("RunBulkJobCronForTest: %v", err)
+	}
+}
+
+func TestForTestExports_reportCoerce(t *testing.T) {
+	t.Parallel()
+	_, err := orm.ResolveContentAttachmentForTest(context.Background(), 1, "", "", 0)
+	if err == nil {
+		t.Fatal("ResolveContentAttachmentForTest expected error")
+	}
+	_ = report.ApplyImportTemplateMapping(context.Background(), "core.partner", []string{"Email"}, 1)
 }
 
 func TestForTestExports_swcmeta(t *testing.T) {
@@ -372,5 +388,11 @@ func TestForTestExports_web(t *testing.T) {
 	flash, ok := web.ConsumeRecordErrorFlashForTest(r2, httptest.NewRecorder())
 	if !ok || flash.Title != "err" {
 		t.Fatalf("record error flash: ok=%v flash=%+v", ok, flash)
+	}
+	if _, id, ok := web.ParseContentPathForTest("12"); !ok || id != 12 {
+		t.Fatalf("ParseContentPathForTest: id=%d ok=%v", id, ok)
+	}
+	if !web.ContentInlineAllowedForTest("image/png") {
+		t.Fatal("ContentInlineAllowedForTest image")
 	}
 }

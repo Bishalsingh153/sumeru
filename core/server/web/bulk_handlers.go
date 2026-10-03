@@ -1,8 +1,10 @@
 package web
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"sumeru/core/orm"
@@ -22,7 +24,7 @@ func BulkUploadHandler(w http.ResponseWriter, r *http.Request) {
 	if !requireModelAccess(w, r, modelName, "create") {
 		return
 	}
-	upload, _, err := r.FormFile(importFileField)
+	upload, fileHeader, err := r.FormFile(importFileField)
 	if err != nil {
 		http.Error(w, "file required", http.StatusBadRequest)
 		return
@@ -31,6 +33,15 @@ func BulkUploadHandler(w http.ResponseWriter, r *http.Request) {
 	content, err := io.ReadAll(upload)
 	if err != nil || len(content) == 0 {
 		http.Error(w, "empty file", http.StatusBadRequest)
+		return
+	}
+	filename := ""
+	if fileHeader != nil {
+		filename = fileHeader.Filename
+	}
+	content, err = report.ParseUploadContent(filename, content)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := orm.ValidateAttachmentMIME("", content); err != nil {
@@ -57,8 +68,112 @@ func BulkUploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	actionID = report.BulkImportFormActionID(r.Context())
-	http.Redirect(w, r, report.MappingFormURL(batchID, actionID), http.StatusSeeOther)
+	http.Redirect(w, r, importWizardURL(batchID), http.StatusSeeOther)
+}
+
+func importWizardURL(batchID int) string {
+	return "/web/import?batch=" + strconv.Itoa(batchID)
+}
+
+// BulkPreviewHandler POST JSON preview for a staged batch.
+func BulkPreviewHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireLoginJSONPost(w, r) {
+		return
+	}
+	var body struct {
+		BatchID int               `json:"batch_id"`
+		Mapping map[string]string `json:"column_mapping"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.BatchID <= 0 {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	out, err := report.PreviewBulkImport(r.Context(), report.PreviewBulkImportInput{
+		BatchID: body.BatchID,
+		Mapping: body.Mapping,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSONResponse(w, out)
+}
+
+// BulkSaveImportTemplateHandler POST JSON — persist column mapping as sys.import.template.
+func BulkSaveImportTemplateHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireLoginJSONPost(w, r) {
+		return
+	}
+	var body struct {
+		Name    string            `json:"name"`
+		BatchID int               `json:"batch_id"`
+		Mapping map[string]string `json:"column_mapping"`
+		Shared  bool              `json:"shared"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.BatchID <= 0 {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	name := strings.TrimSpace(body.Name)
+	if name == "" {
+		http.Error(w, "name required", http.StatusBadRequest)
+		return
+	}
+	batch, err := orm.SearchOne(r.Context(), report.BulkModelName, map[string]interface{}{"id": body.BatchID})
+	if err != nil || len(batch) == 0 {
+		http.NotFound(w, r)
+		return
+	}
+	targetModel := orm.AsString(batch["target_model"])
+	if !requireModelAccess(w, r, targetModel, "create") {
+		return
+	}
+	mapping := body.Mapping
+	if len(mapping) == 0 {
+		mapping, err = report.ParseMappingJSON(orm.AsString(batch["column_mapping"]))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+	mappingJSON, err := json.Marshal(mapping)
+	if err != nil {
+		http.Error(w, "mapping encode failed", http.StatusBadRequest)
+		return
+	}
+	selected := orm.AsString(batch["selected_fields"])
+	importMode := orm.AsString(batch["import_mode"])
+	uid := AuthenticatedUserID(r)
+	templateID, err := report.SaveImportTemplate(r.Context(), name, targetModel, importMode, selected, string(mappingJSON), uid, body.Shared)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSONResponse(w, map[string]interface{}{"template_id": templateID})
+}
+
+// BulkDryRunHandler POST JSON dry-run validation for entire file.
+func BulkDryRunHandler(w http.ResponseWriter, r *http.Request) {
+	if !requireLoginJSONPost(w, r) {
+		return
+	}
+	var body struct {
+		BatchID int               `json:"batch_id"`
+		Mapping map[string]string `json:"column_mapping"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.BatchID <= 0 {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	preview, messages, err := report.DryRunBulkImport(r.Context(), report.PreviewBulkImportInput{
+		BatchID: body.BatchID,
+		Mapping: body.Mapping,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	writeJSONResponse(w, map[string]interface{}{"preview": preview, "messages": messages})
 }
 
 // BulkConfirmHandler POST /web/bulk/confirm — run import after mapping (non-object-action path).

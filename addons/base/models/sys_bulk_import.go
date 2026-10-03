@@ -19,4 +19,12 @@ type SysBulkImport struct {
 	UserID         sdk.Many2One[CoreUser]      `sumeru:"string=User"`
 	ActionID       sdk.Integer                 `sumeru:"string=Source Action"`
 	State          sdk.String                  `sumeru:"string=State"`
+	Direction      sdk.String                  `sumeru:"string=Direction"`
+	TemplateID     sdk.Many2One[SysImportTemplate] `sumeru:"string=Import Template"`
+	ErrorJson      sdk.Text                    `sumeru:"string=Errors"`
+	Progress       sdk.Integer                 `sumeru:"string=Progress"`
+	TotalRows      sdk.Integer                 `sumeru:"string=Total Rows"`
+	ResultSummary  sdk.String                  `sumeru:"string=Result Summary"`
+	ExportFormat   sdk.String                  `sumeru:"string=Export Format"`
+	ExportDomain   sdk.Text                    `sumeru:"string=Export Domain"`
 }

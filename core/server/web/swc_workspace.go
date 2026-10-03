@@ -13,6 +13,7 @@ func registerSwcRoutes() {
 	registerSwcBusRoute()
 	registerSwcChatterRoute()
 	registerSwcNotificationRoutes()
+	registerSwcImportRoute()
 }
 
 // SwcWorkspaceHandler GET /web/swc/workspace — JSON workspace payload for SWC.

@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,6 +28,23 @@ func actionConfirmImport(ctx context.Context, model string, id int, vals map[str
 		mapping, _ = ParseMappingJSON(orm.AsString(batch["column_mapping"]))
 	}
 	skipInvalid := vals["skip_invalid"] == "1" || vals["skip_invalid"] == "true"
+	rowCount, _ := CountBatchRows(ctx, id)
+	if rowCount > asyncImportRowThreshold {
+		_ = orm.UpdateRecordByID(ctx, BulkModelName, id, map[string]interface{}{
+			"state":       BulkStateQueued,
+			"total_rows":  rowCount,
+			"column_mapping": orm.AsString(batch["column_mapping"]),
+		})
+		if len(mapping) > 0 {
+			mappingJSON, _ := json.Marshal(mapping)
+			_ = orm.UpdateRecordByID(ctx, BulkModelName, id, map[string]interface{}{"column_mapping": string(mappingJSON)})
+		}
+		next := orm.AsString(batch["next_url"])
+		if next == "" {
+			next = "/web/home"
+		}
+		return next + "?msg=Import+queued+for+background+processing", nil
+	}
 	result, err := ExecuteBulkImport(ctx, ExecuteBulkImportInput{
 		BatchID:     id,
 		Mapping:     mapping,
