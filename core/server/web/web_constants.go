@@ -108,7 +108,6 @@ const (
 
 // Flash query parameter appended to redirects after form actions.
 const flashMessageParam = "msg"
-const fieldErrorsParam = "field_errors"
 
 const saveOKCreatedMsg = "save_ok_created"
 const saveOKUpdatedMsg = "save_ok_updated"
@@ -288,16 +287,7 @@ const (
 	actionIDField       = "action"
 )
 
-// Chatter POST route, form fields, and limits.
-const (
-	chatterPostRoute     = "/web/chatter/post"
-	recordModelField     = "model"
-	chatterRecordIDField = "res_id"
-	chatterBodyField     = "body"
-	mailMessageModel     = "mail.message"
-	maxChatterBodyRunes  = 10000
-	chatterDefaultAuthor = "User"
-)
+const recordModelField = "model"
 
 // Apps page routes, templates, and ORM model.
 const (

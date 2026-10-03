@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sumeru/core/engine/render"
+	"sumeru/core/engine/swcmeta"
 	"sumeru/core/orm"
 	"sumeru/core/report"
 )
@@ -35,7 +36,6 @@ const (
 	TestLoginRoute             = loginRoute
 	TestLogoutRoute            = logoutRoute
 	TestPinnedAppsRoute        = pinnedAppsRoute
-	TestChatterPostRoute       = chatterPostRoute
 	TestCompanySwitchRoute     = companySwitchRoute
 	TestModuleActionRoute      = moduleActionRoute
 	TestAPIRPCRoute            = apiRPCRoute
@@ -77,7 +77,6 @@ var (
 	TestSettingsHubStylesheetURL       = settingsHubStylesheetURL
 	TestSettingsHubScriptURL           = settingsHubScriptURL
 	TestMaxRPCBodyBytes          int64 = maxRPCBodyBytes
-	TestMaxChatterBodyRunes            = maxChatterBodyRunes
 	TestSetupRateLimitWindow           = setupRateLimitWindow
 	TestSetupRateLimitMax              = setupRateLimitMax
 )
@@ -260,14 +259,6 @@ func WorkspaceListURL(actionID, menuID string) string { return workspaceListURL(
 
 func FormOrQueryValue(r *http.Request, field string) string { return formOrQueryValue(r, field) }
 
-func ParseChatterPostForm(r *http.Request) chatterPostForm { return parseChatterPostForm(r) }
-
-func ChatterBodyTooLong(body string) bool { return chatterBodyTooLong(body) }
-
-func ParseChatterRecordID(recordIDRaw string) (int64, error) {
-	return parseChatterRecordID(recordIDRaw)
-}
-
 func CoerceCSVValue(raw string) interface{} { return coerceCSVValue(raw) }
 
 func ImportableRowValues(header []string, record []string, allowedFields map[string]struct{}) map[string]interface{} {
@@ -427,16 +418,36 @@ func SwcImportHandlerForTest(w http.ResponseWriter, r *http.Request) {
 	SwcImportHandler(w, r)
 }
 
+func SwcActivityLogHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcActivityLogHandler(w, r)
+}
+
+func SwcDirectUsersHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcDirectUsersHandler(w, r)
+}
+
+func SwcDirectThreadHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcDirectThreadHandler(w, r)
+}
+
+func SwcDirectConversationsHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcDirectConversationsHandler(w, r)
+}
+
+func SwcDirectPostHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcDirectPostHandler(w, r)
+}
+
+func ApplyActivityRecordFlagsForTest(ctx context.Context, payload *swcmeta.WorkspacePayload, viewMode string, recordID int, model string) {
+	applyActivityRecordFlags(ctx, payload, viewMode, recordID, model)
+}
+
 func ImportWizardPageHandlerForTest(w http.ResponseWriter, r *http.Request) {
 	ImportWizardPageHandler(w, r)
 }
 
 func ExportAsyncHandlerForTest(w http.ResponseWriter, r *http.Request) {
 	ExportAsyncHandler(w, r)
-}
-
-func ChatterUploadHandlerForTest(w http.ResponseWriter, r *http.Request) {
-	ChatterUploadHandler(w, r)
 }
 
 // SetTestSessionUserIDForTest overrides SessionUserID for handler tests.

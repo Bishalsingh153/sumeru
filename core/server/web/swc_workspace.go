@@ -11,8 +11,9 @@ func registerSwcRoutes() {
 	registerSession(http.MethodGet, swcWorkspaceRoute, SwcWorkspaceHandler)
 	registerSwcSavedSearchRoutes()
 	registerSwcBusRoute()
-	registerSwcChatterRoute()
+	registerSwcActivityLogRoute()
 	registerSwcNotificationRoutes()
+	registerSwcDirectRoutes()
 	registerSwcImportRoute()
 }
 

@@ -30,25 +30,47 @@ function paintActivityRevealIcon(): void {
   if (reveal && !reveal.firstChild) reveal.innerHTML = CHEVRON_LEFT;
 }
 
+function activateActivityTab(name: string): void {
+  const panes: Record<string, string> = {
+    messages: "sum-activity-pane-messages",
+    log: "sum-activity-pane-log",
+  };
+  document.querySelectorAll("[data-sum-activity-tab]").forEach((t) => {
+    const on = t.getAttribute("data-sum-activity-tab") === name;
+    t.classList.toggle("is-active", on);
+    t.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  for (const [key, id] of Object.entries(panes)) {
+    const el = document.getElementById(id);
+    if (el) el.hidden = key !== name;
+  }
+}
+
 function initActivityTabs(): void {
   document.querySelectorAll("[data-sum-activity-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
       const name = tab.getAttribute("data-sum-activity-tab");
-      const panes: Record<string, string> = {
-        messages: "sum-activity-pane-messages",
-        log: "sum-activity-pane-log",
-      };
-      document.querySelectorAll("[data-sum-activity-tab]").forEach((t) => {
-        const on = t.getAttribute("data-sum-activity-tab") === name;
-        t.classList.toggle("is-active", on);
-        t.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      for (const [key, id] of Object.entries(panes)) {
-        const el = document.getElementById(id);
-        if (el) el.hidden = key !== name;
-      }
+      if (name) activateActivityTab(name);
     });
   });
+}
+
+/** Show or hide the Log tab; switches to Messages when Log is hidden while active. */
+export function setActivityLogTabVisible(visible: boolean): void {
+  const logTab = document.querySelector<HTMLElement>('[data-sum-activity-tab="log"]');
+  if (logTab) {
+    logTab.hidden = !visible;
+    logTab.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+  const logPane = document.getElementById("sum-activity-pane-log");
+  if (logPane && !visible) {
+    logPane.hidden = true;
+    logPane.innerHTML = "";
+  }
+  if (!visible) {
+    const logActive = logTab?.classList.contains("is-active");
+    if (logActive) activateActivityTab("messages");
+  }
 }
 
 function initActivityResizer(shell: HTMLElement): void {

@@ -68,8 +68,6 @@ func registerWorkspaceRoutes() {
 	registerSession(http.MethodPost, pinnedAppsRoute, PinnedAppsSaveHandler)
 	registerSession(http.MethodGet, workspaceRoute, WebHandler)
 	registerSession(http.MethodPost, companySwitchRoute, SwitchCompanyPost)
-	registerSession(http.MethodPost, chatterPostRoute, ChatterPostHandler)
-	registerSession(http.MethodPost, chatterUploadRoute, ChatterUploadHandler)
 	registerSession(http.MethodPost, importCSVRoute, ImportCSVHandler)
 }
 

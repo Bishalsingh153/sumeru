@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data noupdate="true">
+        <record id="cron_audit_retention" model="sys.cron">
+            <field name="name">Audit log retention and export</field>
+            <field name="code">audit.retention</field>
+            <field name="interval_number">1440</field>
+            <field name="active">True</field>
+        </record>
+    </data>
+</sumeru>

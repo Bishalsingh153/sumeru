@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"strings"
 
-	"sumeru/addons/mail"
+	"sumeru/addons/im"
 	"sumeru/core/orm"
 )
 
@@ -197,7 +197,7 @@ func shellActivityEnabled(ctx context.Context, page PageData) bool {
 	if page.ActivityEnabled {
 		return true
 	}
-	return mail.CompanyChatterEnabled(ctx) && mail.CompanyActivityPanelEnabled(ctx)
+	return im.IMEnabled(ctx)
 }
 
 func parseSWCPinnedApps(raw template.JS) []string {

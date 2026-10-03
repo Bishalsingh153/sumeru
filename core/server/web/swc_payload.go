@@ -74,7 +74,20 @@ func buildSwcWorkspacePayload(
 			payload.UserSecurity = &us
 		}
 	}
+	applyActivityRecordFlags(ctx, &payload, resolved.selectedMode, viewRecord.RecordID, viewRecord.ResModel)
 	return payload
+}
+
+func applyActivityRecordFlags(ctx context.Context, payload *swcmeta.WorkspacePayload, viewMode string, recordID int, model string) {
+	_ = viewMode
+	if payload == nil || recordID <= 0 || model == "" {
+		return
+	}
+	uid := orm.SecurityUID(ctx)
+	if err := orm.CheckModelAccess(ctx, uid, model, "read"); err != nil {
+		return
+	}
+	payload.RecordLogEligible = orm.CheckModelAccess(ctx, uid, "sys.audit", "read") == nil
 }
 
 func serializeSwcViewTabs(tabs []render.ViewSwitchTab) []swcmeta.ViewTab {
