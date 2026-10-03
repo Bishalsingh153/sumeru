@@ -886,6 +886,18 @@
   background: rgba(255, 255, 255, 0.6);
 }
 
+.sum-activity-tab-badge {
+  margin-left: 0.35rem;
+  min-width: 1rem;
+  padding: 0 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1rem;
+  border-radius: 999px;
+  background: var(--sum-danger, #dc2626);
+  color: #fff;
+}
+
 .sum-activity-tab.is-active {
   color: var(--sum-header);
   background: var(--sum-surface);
@@ -925,6 +937,8 @@
 .sum-activity-pane--messages {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  padding: 0.45rem 0.5rem 0.5rem;
 }
 
 .sum-activity-body {

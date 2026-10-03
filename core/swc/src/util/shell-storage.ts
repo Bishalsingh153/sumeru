@@ -28,11 +28,12 @@ export function writeBool(key: string, value: boolean): void {
 export function readActivityWidth(): number {
   try {
     const n = parseInt(localStorage.getItem(KEY_ACTIVITY_WIDTH) ?? "", 10);
-    if (n >= 200 && n <= 520) return n;
+    if (n >= 280 && n <= 520) return n;
+    if (n >= 200 && n < 280) return 280;
   } catch (err) {
     storageWarn("readActivityWidth", KEY_ACTIVITY_WIDTH, err);
   }
-  return 300;
+  return 320;
 }
 
 export function writeActivityWidth(px: number): void {

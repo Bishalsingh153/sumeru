@@ -56,6 +56,8 @@ export interface SwcBootstrap {
   appsNavAllowed: boolean;
   settingsNavAllowed: boolean;
   activityEnabled: boolean;
+  internalMessagesEnabled?: boolean;
+  companyFormHref?: string;
   busEnabled?: boolean;
   docsUrl: string;
   profileUrl: string;

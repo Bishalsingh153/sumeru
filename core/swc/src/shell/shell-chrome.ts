@@ -5,6 +5,8 @@ import type { SwcEnv } from "../runtime/env.js";
 import { initActivityPanel } from "./activity-panel.js";
 import { initActivityMessages } from "./activity-messages.js";
 import { initActivityLog } from "./activity-log.js";
+import { initInternalMessagesBanner } from "./activity-im-banner.js";
+import { initMessagesUnreadPoll } from "./messages-unread.js";
 import { ACTIVITY_CONTEXT, emptyActivityContext } from "./activity-context.js";
 import { initHomeDashboard } from "./home-dashboard.js";
 import { initPinnedApps } from "./pinned-apps.js";
@@ -23,11 +25,14 @@ export function initShellChrome(boot: SwcBootstrap, http: HttpService, bus?: Bus
   initViewTabNavigation();
   initBreadcrumbNavigation();
 
+  initInternalMessagesBanner(boot);
+
   if (boot.activityEnabled) {
     initActivityPanel(shell);
     if (env) {
       initActivityMessages(env);
       initActivityLog(env);
+      initMessagesUnreadPoll(http, boot.swcApiBase);
       env.services.bus.emit(ACTIVITY_CONTEXT, emptyActivityContext());
     }
   }

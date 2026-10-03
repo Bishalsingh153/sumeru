@@ -11,6 +11,8 @@ interface ActivityLogItem {
 interface ActivityLogResponse {
   items: ActivityLogItem[];
   hasLog?: boolean;
+  hasMore?: boolean;
+  offset?: number;
 }
 
 export function initActivityLog(env: SwcEnv): void {
@@ -18,15 +20,37 @@ export function initActivityLog(env: SwcEnv): void {
   if (!host) return;
 
   let current: ActivityContextPayload | null = null;
+  let logOffset = 0;
+  let logHasMore = false;
+  let cachedItems: ActivityLogItem[] = [];
 
   const clearLogPane = (): void => {
     host.innerHTML = "";
     host.hidden = true;
     setActivityLogTabVisible(false);
+    logOffset = 0;
+    logHasMore = false;
+    cachedItems = [];
   };
 
-  const renderItems = (items: ActivityLogItem[]): void => {
-    const rows = items
+  const renderListHint = (): void => {
+    host.innerHTML = `<div class="sum-activity-body"><p class="sum-msg-thread-empty-hint">Open a saved record (form view) to view its change history here.</p></div>`;
+    host.hidden = false;
+  };
+
+  const renderEmpty = (): void => {
+    host.innerHTML = `<div class="sum-activity-body"><p class="sum-msg-thread-empty-hint">No changes logged yet.</p></div>`;
+    host.hidden = false;
+  };
+
+  const renderItems = (items: ActivityLogItem[], append: boolean): void => {
+    if (items.length === 0 && !append) {
+      renderEmpty();
+      return;
+    }
+    const all = append ? [...cachedItems, ...items] : items;
+    cachedItems = all;
+    const rows = all
       .map(
         (item) => `<div class="sum-activity-entry">
         <span class="sum-activity-dot"></span>
@@ -34,34 +58,49 @@ export function initActivityLog(env: SwcEnv): void {
       </div>`,
       )
       .join("");
-    host.innerHTML = `<div class="sum-activity-body">${rows}</div>`;
+    const moreBtn = logHasMore
+      ? `<button type="button" class="sum-btn sum-btn--secondary sum-activity-log-more">Load more</button>`
+      : "";
+    host.innerHTML = `<div class="sum-activity-body">${rows}${moreBtn}</div>`;
+    host.hidden = false;
+    host.querySelector(".sum-activity-log-more")?.addEventListener("click", () => {
+      if (current) void loadLog(current, logOffset, true);
+    });
   };
 
-  const loadLog = async (ctx: ActivityContextPayload): Promise<void> => {
-    if (!ctx.recordLogEligible || ctx.recordId <= 0 || !ctx.model) {
+  const loadLog = async (ctx: ActivityContextPayload, offset = 0, append = false): Promise<void> => {
+    if (!ctx.recordLogEligible || !ctx.model) {
       clearLogPane();
+      return;
+    }
+    setActivityLogTabVisible(true);
+    if (ctx.recordId <= 0) {
+      renderListHint();
       return;
     }
     try {
       const base = env.bootstrap.swcApiBase || SWC_API_BASE;
       const data = await env.services.http.getJSON<ActivityLogResponse>(
-        `${base}/activity-log?model=${encodeURIComponent(ctx.model)}&id=${ctx.recordId}`,
+        `${base}/activity-log?model=${encodeURIComponent(ctx.model)}&id=${ctx.recordId}&offset=${offset}`,
       );
+      logOffset = (data.offset ?? offset) + (data.items?.length ?? 0);
+      logHasMore = data.hasMore === true;
       const items = data.items ?? [];
-      const hasLog = data.hasLog === true || items.length > 0;
-      if (!hasLog) {
-        clearLogPane();
-        return;
+      if (data.hasLog === true || items.length > 0 || append) {
+        renderItems(items, append);
+      } else {
+        renderEmpty();
       }
-      setActivityLogTabVisible(true);
-      renderItems(items);
     } catch {
-      clearLogPane();
+      renderEmpty();
     }
   };
 
   env.services.bus.subscribe(ACTIVITY_CONTEXT, (payload) => {
     current = payload as ActivityContextPayload;
+    logOffset = 0;
+    logHasMore = false;
+    cachedItems = [];
     void loadLog(current);
   });
 
@@ -70,6 +109,9 @@ export function initActivityLog(env: SwcEnv): void {
     if (!current?.recordLogEligible) return;
     const rid = msg.id ?? msg.recordId;
     if (msg.model !== current.model || rid !== current.recordId) return;
+    logOffset = 0;
+    logHasMore = false;
+    cachedItems = [];
     void loadLog(current);
   });
 

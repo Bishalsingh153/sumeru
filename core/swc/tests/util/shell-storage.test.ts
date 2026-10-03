@@ -24,11 +24,11 @@ describe("shell-storage", () => {
   });
 
   it("readActivityWidth clamps and defaults", () => {
-    expect(readActivityWidth()).toBe(300);
+    expect(readActivityWidth()).toBe(320);
     writeActivityWidth(999);
-    expect(readActivityWidth()).toBe(300);
+    expect(readActivityWidth()).toBe(320);
     writeActivityWidth(240);
-    expect(readActivityWidth()).toBe(240);
+    expect(readActivityWidth()).toBe(280);
   });
 
   it("readJSON and writeJSON round-trip arrays", () => {

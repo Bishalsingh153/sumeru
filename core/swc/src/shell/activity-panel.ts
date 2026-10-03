@@ -55,6 +55,24 @@ function initActivityTabs(): void {
   });
 }
 
+/** Unread badge on the Messages activity tab (P3). */
+export function setMessagesUnreadBadge(count: number): void {
+  const tab = document.querySelector<HTMLElement>('[data-sum-activity-tab="messages"]');
+  if (!tab) return;
+  let badge = tab.querySelector<HTMLElement>(".sum-activity-tab-badge");
+  if (count <= 0) {
+    badge?.remove();
+    return;
+  }
+  if (!badge) {
+    badge = document.createElement("span");
+    badge.className = "sum-activity-tab-badge";
+    badge.setAttribute("aria-hidden", "true");
+    tab.appendChild(badge);
+  }
+  badge.textContent = count > 99 ? "99+" : String(count);
+}
+
 /** Show or hide the Log tab; switches to Messages when Log is hidden while active. */
 export function setActivityLogTabVisible(visible: boolean): void {
   const logTab = document.querySelector<HTMLElement>('[data-sum-activity-tab="log"]');
@@ -95,7 +113,7 @@ function initActivityResizer(shell: HTMLElement): void {
     if (!dragging) return;
     const delta = startX - ev.clientX;
     let width = startW + delta;
-    width = Math.min(520, Math.max(200, width));
+    width = Math.min(520, Math.max(280, width));
     applyActivityWidth(width);
   });
 
