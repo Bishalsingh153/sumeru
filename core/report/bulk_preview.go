@@ -36,13 +36,17 @@ func PreviewBulkImport(ctx context.Context, in PreviewBulkImportInput) (PreviewR
 	}
 	allowed := allowedFieldNames(modelInst)
 	result := PreviewResult{TotalRows: len(rows)}
-	limit := 10
+	limit := maxPreviewRows
 	if len(rows) < limit {
 		limit = len(rows)
 	}
 	for i := 0; i < limit; i++ {
 		vals := rowValuesFromMapping(headers, rows[i], mapping)
-		errs := validateRowValues(modelInst, vals, allowed, orm.AsString(batch["import_mode"]))
+		coerced, coerceErrs := coerceImportValues(ctx, modelInst, vals)
+		vals = coerced
+		var errs []string
+		errs = append(errs, coerceErrs...)
+		errs = append(errs, validateRowValues(modelInst, vals, allowed, orm.AsString(batch["import_mode"]))...)
 		if len(errs) > 0 {
 			result.ErrorCount += len(errs)
 			result.BlockingErr = true

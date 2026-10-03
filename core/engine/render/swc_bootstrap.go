@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"strings"
 
-	"sumeru/addons/mail"
+	"sumeru/addons/im"
 	"sumeru/core/orm"
 )
 
@@ -37,7 +37,9 @@ type swcBootstrap struct {
 	PinnedApps          []string               `json:"pinnedApps"`
 	AppsNavAllowed      bool                   `json:"appsNavAllowed"`
 	SettingsNavAllowed  bool                   `json:"settingsNavAllowed"`
-	ActivityEnabled     bool                   `json:"activityEnabled"`
+	ActivityEnabled           bool   `json:"activityEnabled"`
+	InternalMessagesEnabled   bool   `json:"internalMessagesEnabled"`
+	CompanyFormHref           string `json:"companyFormHref,omitempty"`
 	BusEnabled          bool                   `json:"busEnabled"`
 	DocsURL             string                 `json:"docsUrl"`
 	ProfileURL          string                 `json:"profileUrl"`
@@ -100,7 +102,9 @@ func BuildSWCBootstrapJSON(ctx context.Context, page PageData, ws *SWCBootstrapW
 		ActiveMenuID:        page.ActiveMenuID,
 		AppsNavAllowed:      page.AppsNavAllowed,
 		SettingsNavAllowed:  page.SettingsNavAllowed,
-		ActivityEnabled:     shellActivityEnabled(ctx, page),
+		ActivityEnabled:           shellActivityEnabled(ctx, page),
+		InternalMessagesEnabled:   im.IMEnabled(ctx),
+		CompanyFormHref:           im.CompanySettingsFormHref(ctx, page.ShellActiveCompanyID),
 		BusEnabled:          true,
 		DocsURL:             page.UserDocsHref,
 		ProfileURL:          page.UserProfileHref,
@@ -191,13 +195,11 @@ func parseSWCLauncherApps(raw template.JS) []swcBootstrapApp {
 }
 
 func shellActivityEnabled(ctx context.Context, page PageData) bool {
+	_ = ctx
 	if page.SuppressActivityDock {
 		return false
 	}
-	if page.ActivityEnabled {
-		return true
-	}
-	return mail.CompanyChatterEnabled(ctx) && mail.CompanyActivityPanelEnabled(ctx)
+	return page.ActivityEnabled
 }
 
 func parseSWCPinnedApps(raw template.JS) []string {

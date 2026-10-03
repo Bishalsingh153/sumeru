@@ -4,6 +4,7 @@ package automation
 
 import (
 	_ "sumeru/addons/base"
-	_ "sumeru/addons/mail"
+	_ "sumeru/addons/im"
+	_ "sumeru/addons/audit"
 	_ "sumeru/addons/automation/models"
 )

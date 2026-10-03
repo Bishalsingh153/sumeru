@@ -36,11 +36,16 @@ export class HtmlField extends DefaultField {
 
 export class BinaryField extends SwcComponent<FieldWidgetProps> {
   override template() {
-    const { field, record } = this.props;
+    const { field, record, modelName } = this.props;
     const name = stringFromUnknown(record.get(`${field.name}_name`) ?? record.get(field.name) ?? "Download");
+    const model = modelName ?? record.model ?? "";
+    const href =
+      model && record.id > 0
+        ? `/web/content/${encodeURIComponent(model)}/${encodeURIComponent(field.name)}/${record.id}`
+        : "#";
     return renderFieldShell(
       field,
-      html`<a class="sum-field-link" href="/web/content/${field.name}/${record.id}" download>${name}</a>`,
+      html`<a class="sum-field-link" href=${href} download>${name}</a>`,
       shellOptions(record, { labelFor: false }),
     );
   }

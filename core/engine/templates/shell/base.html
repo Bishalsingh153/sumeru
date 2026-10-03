@@ -272,7 +272,7 @@
                                     <button type="button" class="sum-activity-tab is-active" role="tab"
                                         aria-selected="true" data-sum-activity-tab="messages">Messages</button>
                                     <button type="button" class="sum-activity-tab" role="tab" aria-selected="false"
-                                        data-sum-activity-tab="log">Log</button>
+                                        data-sum-activity-tab="log" hidden>Log</button>
                                 </div>
                                 <button type="button" id="sum-activity-collapse" class="sum-activity-collapse-btn"
                                     aria-label="Hide messages panel" title="Hide panel">
@@ -283,45 +283,9 @@
                                 </button>
                             </div>
                             <div id="sum-activity-pane-messages" class="sum-activity-pane sum-activity-pane--messages"
-                                role="tabpanel">
-                                {{if .ActivityPanelChatter}}
-                                {{.ActivityChatterHTML}}
-                                {{else}}
-                                <div class="sum-msg-empty" role="status">
-                                    <div class="sum-msg-empty-visual" aria-hidden="true">
-                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="1.25">
-                                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                                        </svg>
-                                    </div>
-                                    <p class="sum-msg-empty-title">Messages</p>
-                                    <p class="sum-msg-empty-hint">Open a record to view and post comments here. List
-                                        views show the activity log on the Log tab.</p>
-                                </div>
-                                {{end}}
-                            </div>
+                                role="tabpanel"></div>
                             <div id="sum-activity-pane-log" class="sum-activity-pane sum-activity-pane--log"
-                                role="tabpanel" hidden>
-                                <div class="sum-activity-body">
-                                    {{range .ActivityLogItems}}
-                                    <div class="sum-activity-entry">
-                                        <span class="sum-activity-dot"></span>
-                                        <div>
-                                            <div class="sum-activity-meta">{{.Meta}}</div>
-                                            <div class="sum-activity-msg">{{.Body}}</div>
-                                        </div>
-                                    </div>
-                                    {{else}}
-                                    <div class="sum-activity-entry sum-activity-entry--empty">
-                                        <span class="sum-activity-dot sum-activity-dot--muted"></span>
-                                        <div>
-                                            <div class="sum-activity-meta">Log</div>
-                                            <div class="sum-activity-msg">No log entries yet.</div>
-                                        </div>
-                                    </div>
-                                    {{end}}
-                                </div>
-                            </div>
+                                role="tabpanel" hidden></div>
                         </aside><button type="button" id="sum-activity-reveal" class="sum-activity-reveal" hidden
                             aria-label="Show messages panel" title="Messages / Log"></button>
                     </div>{{- end -}}

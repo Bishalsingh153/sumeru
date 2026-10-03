@@ -3,6 +3,7 @@ package orm
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -79,4 +80,48 @@ func scrubAuditMap(m map[string]interface{}) map[string]interface{} {
 // LogAccessDeny records a permission denial in sys.audit.
 func LogAccessDeny(ctx context.Context, model, op, detail string) {
 	AppendAudit(ctx, "access_deny", model, 0, nil, nil, op+": "+detail)
+}
+
+const recordAuditLogMax = 40
+
+// RecordAuditLogAvailable reports whether the audit module materialized sys.audit.
+func RecordAuditLogAvailable(ctx context.Context) bool {
+	if _, ok := Registry["sys.audit"]; !ok {
+		return false
+	}
+	if DB == nil {
+		return true
+	}
+	installed, err := InstalledModuleNames(ctx)
+	if err != nil {
+		return true
+	}
+	if len(installed) == 0 {
+		return true
+	}
+	_, ok := installed["audit"]
+	return ok
+}
+
+// SearchRecordAuditLog returns audit rows for one record. Caller must verify model read access.
+func SearchRecordAuditLog(ctx context.Context, model string, resID int, limit, offset int) ([]map[string]interface{}, error) {
+	model = strings.TrimSpace(model)
+	if model == "" || resID <= 0 {
+		return nil, fmt.Errorf("invalid record")
+	}
+	if !RecordAuditLogAvailable(ctx) {
+		return nil, nil
+	}
+	if limit <= 0 || limit > recordAuditLogMax {
+		limit = recordAuditLogMax
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	domain := [][]interface{}{
+		{"model", "=", model},
+		{"res_id", "=", resID},
+	}
+	elevated := AuditedBypass(ctx, "activity_log.record_timeline")
+	return SearchPage(elevated, "sys.audit", domain, limit, offset, "create_date DESC")
 }

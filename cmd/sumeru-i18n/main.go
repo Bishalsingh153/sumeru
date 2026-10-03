@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"sumeru/core/orm"
@@ -27,6 +28,10 @@ func main() {
 		runImport(*configPath, args[1:])
 	case "export":
 		runExport(*configPath, args[1:])
+	case "import-po":
+		runImportPO(*configPath, args[1:])
+	case "export-po":
+		runExportPO(*configPath, args[1:])
 	default:
 		usage()
 		os.Exit(2)
@@ -34,10 +39,12 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `Usage: sumeru-i18n [-c sumeru.conf] import|export [flags]
+	fmt.Fprintf(os.Stderr, `Usage: sumeru-i18n [-c sumeru.conf] import|export|import-po|export-po [flags]
 
   import [-i translations.csv]
   export [-o translations.csv]
+  import-po -i catalog.po -m module [-l lang]
+  export-po -o catalog.po -m module -l lang
 `)
 }
 
@@ -98,4 +105,78 @@ func runExport(configPath string, subArgs []string) {
 		os.Exit(1)
 	}
 	fmt.Printf("Exported %d translation rows to %s\n", count, *outPath)
+}
+
+func runImportPO(configPath string, subArgs []string) {
+	fs := flag.NewFlagSet("import-po", flag.ExitOnError)
+	inPath := fs.String("i", "", "Input PO path (required)")
+	moduleName := fs.String("m", "", "Module name for sys.translation.module (required)")
+	lang := fs.String("l", "", "Language code (optional if set in PO header or filename)")
+	_ = fs.Parse(subArgs)
+	if *inPath == "" || *moduleName == "" {
+		fmt.Fprintln(os.Stderr, "import-po requires -i and -m")
+		os.Exit(2)
+	}
+	f, err := os.Open(*inPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "open: %v\n", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+	langHint, entries, err := orm.ParsePO(f)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "po: %v\n", err)
+		os.Exit(1)
+	}
+	langCode := strings.TrimSpace(*lang)
+	if langCode == "" {
+		langCode = langHint
+	}
+	if langCode == "" {
+		langCode = orm.LangCodeFromPOFilename(*inPath)
+	}
+	ctx, db, cancel, err := cliboot.OpenConfiguredDB(configPath, 2*time.Minute)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer cancel()
+	defer db.Close()
+	imported, err := orm.ImportTranslationsPO(ctx, orm.NewDBWrapper(db), *moduleName, langCode, entries)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "import: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Imported %d PO strings (%s, module %s) from %s\n", imported, langCode, *moduleName, *inPath)
+}
+
+func runExportPO(configPath string, subArgs []string) {
+	fs := flag.NewFlagSet("export-po", flag.ExitOnError)
+	outPath := fs.String("o", "", "Output PO path (required)")
+	moduleName := fs.String("m", "", "Module name (required)")
+	lang := fs.String("l", "", "Language code (required)")
+	_ = fs.Parse(subArgs)
+	if *outPath == "" || *moduleName == "" || *lang == "" {
+		fmt.Fprintln(os.Stderr, "export-po requires -o, -m, and -l")
+		os.Exit(2)
+	}
+	ctx, db, cancel, err := cliboot.OpenConfiguredDB(configPath, 30*time.Second)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer cancel()
+	defer db.Close()
+	f, err := os.Create(*outPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "create: %v\n", err)
+		os.Exit(1)
+	}
+	defer f.Close()
+	count, err := orm.ExportTranslationsPO(ctx, orm.NewDBWrapper(db), *moduleName, *lang, f)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "export: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Exported %d PO strings to %s\n", count, *outPath)
 }

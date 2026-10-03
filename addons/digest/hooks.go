@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"sumeru/addons/mail"
 	"sumeru/core/applog"
 	"sumeru/core/event"
 	"sumeru/core/orm"
@@ -76,5 +75,5 @@ func runDigest(ctx context.Context, digestRow map[string]interface{}) error {
 		return nil
 	}
 	body := name + "\n" + strings.Join(lines, "\n")
-	return mail.PostMessage(ctx, "digest.digest", digestID, body, mail.SubtypeNotification, "Digest")
+	return orm.AppendAppLog(ctx, "digest", "KPI digest", body)
 }

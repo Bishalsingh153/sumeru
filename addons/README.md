@@ -6,10 +6,16 @@ Installable modules shipped with the `sumeru` Go module. Each folder name equals
 
 | Module | Type | Depends | Purpose |
 |--------|------|---------|---------|
-| **base** | Application | — | Kernel: users, companies, partners, geo, i18n, platform metadata |
+| **base** | Application | — | Kernel: users, companies, partners, security |
+| **audit** | Technical | base, platform | Audit trail, retention, exports (auto_install) |
+| **platform** | Technical | base | Attachments, sequences, parameters, reports, import (auto_install) |
+| **geo** | Technical | base | Countries, states, cities, currency (auto_install) |
+| **i18n** | Technical | base | Internationalization: languages, translations, PO catalogs (auto_install) |
+| **im** | Technical | base | Internal P2P chat (`im.message`, auto_install) |
 | **contacts** | Application | base | Contacts app over `core.partner` (reference layout) |
-| **mail** | Technical | base | Chatter (`mail.message`), activities, `PostMessage` API |
-| **automation** | Technical | base, mail | Cron, workflow transitions, server actions on events |
+| **automation** | Technical | base, audit, im | Cron, workflow transitions, server actions |
+| **calendar** | Application | base, im, contacts | Calendar events |
+| **digest** | Technical | base, im | KPI digest cron |
 | **sumeru_ai** | Application | base | Optional AI shell hooks (`auto_import: false`) |
 
 ## Dependency graph
@@ -17,32 +23,25 @@ Installable modules shipped with the `sumeru` Go module. Each folder name equals
 ```mermaid
 flowchart BT
   base[base]
+  platform[platform]
+  geo[geo]
+  i18n[i18n]
+  audit[audit]
+  im[im]
   contacts[contacts]
-  mail[mail]
   automation[automation]
-  sumeru_ai[sumeru_ai]
+  platform --> base
+  geo --> base
+  i18n --> base
+  audit --> base
+  audit --> platform
+  im --> base
   contacts --> base
-  mail --> base
   automation --> base
-  automation --> mail
-  sumeru_ai --> base
+  automation --> audit
+  automation --> im
 ```
 
-## Reference addon
+## Standard
 
-Use **[contacts/](contacts/)** as the gold standard for new modules:
-
-- Split views: `{model}_{type}_views.xml`
-- Window actions in `views/actions.xml` with `<action type="window">`
-- Security first in manifest, menus last
-- Model extend in `models/partner_extend.go`, view inherit in `views/*_inherit_views.xml`
-
-Full rules: [core/module/addon_template/MODULE_STANDARD.txt](../core/module/addon_template/MODULE_STANDARD.txt)
-
-## Scaffold
-
-```bash
-make bp NAME=my_module
-make generate
-go run ./cmd/sumeru -- -c sumeru.conf -i my_module
-```
+See [core/module/addon_template/MODULE_STANDARD.txt](../core/module/addon_template/MODULE_STANDARD.txt) and **contacts** for layout conventions.

@@ -25,6 +25,7 @@ type Config struct {
 	TemplatesPath      string   // HTML templates; default core/engine/templates
 	BrandCSS           string   // optional path to extra CSS (served as /static/brand.css)
 	LogoPath           string   // optional image path (served as /static/app-logo)
+	FilestorePath      string   // attachment blob directory; default data/filestore under INI dir
 	CompanyDisplayName string   // optional header label; else first core.company when module installed
 	UserDisplayName    string   // optional header label; else first core.user when module installed
 	LogFile            string   // optional log file path (absolutized in AbsPaths); see log_stdout / log_rolling
@@ -127,6 +128,8 @@ func LoadConfig(path string) error {
 			AppConfig.BrandCSS = val
 		case keyLogoPath:
 			AppConfig.LogoPath = val
+		case keyFilestorePath:
+			AppConfig.FilestorePath = val
 		case keyCompanyDisplayName:
 			AppConfig.CompanyDisplayName = val
 		case keyUserDisplayName:

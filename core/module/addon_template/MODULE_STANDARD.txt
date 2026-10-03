@@ -63,6 +63,13 @@ manifest.json data load order (recommended)
   6. views/*_inherit_views.xml
   7. views/menus.xml (always last)
 
+Translation catalogs (gettext PO)
+---------------------------------
+  Optional per-addon folder: i18n/*.po (e.g. i18n/fr_FR.po, i18n/es.po).
+  On module install or -u, the server imports these into sys.translation
+  (module = this addon's technical name). Use cmd/sumeru-i18n for manual
+  import-po / export-po. See addons/i18n/README.md.
+
 File and XML id naming
 ----------------------
   View files:     {model_underscores}_{type}_views.xml   e.g. core_partner_form_views.xml
@@ -224,7 +231,7 @@ After adding a new addon, restart the server and install the module from /web/ap
 
 Activity and mail logging (Go)
 ------------------------------
-XML data files cannot run Go code, so there is no Sumeru-style automatic `message_post` from static `<record>` rows alone. After a successful mutation in your own Go code (services, HTTP handlers, cron, and so on): use **`sumeru/addons/mail`** and **`mail.PostMessage(...)`** with **`mail.SubtypeComment`** for user-to-user chatter on a record, or **`mail.SubtypeNotification`** for record-level system notes (shown in the activity panel). **`mail.message`** is for that chatter and notifications only. For module install / uninstall / activate / update audit lines, call **`mail.LogModuleEvent(ctx, moduleName, verb, detail)`** (writes **`app.log`** via **`orm.AppendAppLog`**) or import **`sumeru/core/orm`** and **`orm.AppendAppLog`**. The stock server posts module events via **`mail.LogModuleEvent`**, record saves as notifications, and chatter posts as comments. Addons should follow the same pattern from their Go hooks rather than expecting XML to intercept ORM writes.
+XML data files cannot run Go code, so there is no automatic `message_post` from static `<record>` rows alone. After a successful mutation in your own Go code (services, HTTP handlers, cron, and so on): use **`sumeru/addons/im`** for internal user-to-user messages (`im.message`), or **`orm.AppendAppLog`** for application lifecycle / digest lines in **`app.log`**. Module install / uninstall / activate / update events are logged via **`orm.AppendAppLog`** from the module installer. Addons should follow the same pattern from Go hooks rather than expecting XML to intercept ORM writes.
 
 Server CLI
 ----------

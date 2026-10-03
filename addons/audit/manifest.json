@@ -1,0 +1,24 @@
+{
+  "name": "audit",
+  "display_name": "Audit & retention",
+  "version": "1.0.0",
+  "author": "Sumeru",
+  "description": "Audit trail, retention policy, exports, and archive downloads.",
+  "depends": ["base", "platform"],
+  "auto_install": true,
+  "application": false,
+  "data": [
+    "security/sys.access.csv",
+    "data/sys_audit_retention_policy_data.xml",
+    "views/actions.xml",
+    "views/sys_audit_list_views.xml",
+    "views/sys_audit_form_views.xml",
+    "views/sys_audit_search_views.xml",
+    "views/sys_audit_retention_policy_list_views.xml",
+    "views/sys_audit_retention_policy_form_views.xml",
+    "views/sys_audit_archive_list_views.xml",
+    "views/sys_audit_archive_form_views.xml",
+    "views/sys_audit_cleanup_form_views.xml",
+    "views/menus.xml"
+  ]
+}

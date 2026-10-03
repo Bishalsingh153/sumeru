@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <view id="view_sys.audit.archive_form" model="sys.audit.archive" type="form">
+            <sheet>
+                <group>
+                    <field name="name" string="Name"/>
+                    <field name="state" string="State"/>
+                    <field name="create_date" string="Created"/>
+                    <field name="attachment_id" string="Download"/>
+                    <field name="notes" string="Notes"/>
+                </group>
+                <group string="Batch">
+                    <field name="period_from" string="From"/>
+                    <field name="period_to" string="To"/>
+                    <field name="row_count" string="Rows"/>
+                    <field name="byte_size" string="Bytes"/>
+                    <field name="sha256" string="SHA-256"/>
+                    <field name="error_message" string="Error"/>
+                </group>
+            </sheet>
+        </view>
+    </data>
+</sumeru>

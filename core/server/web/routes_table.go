@@ -68,7 +68,6 @@ func registerWorkspaceRoutes() {
 	registerSession(http.MethodPost, pinnedAppsRoute, PinnedAppsSaveHandler)
 	registerSession(http.MethodGet, workspaceRoute, WebHandler)
 	registerSession(http.MethodPost, companySwitchRoute, SwitchCompanyPost)
-	registerSession(http.MethodPost, chatterPostRoute, ChatterPostHandler)
 	registerSession(http.MethodPost, importCSVRoute, ImportCSVHandler)
 }
 
@@ -89,6 +88,11 @@ func registerRecordRoutes() {
 	registerSession(http.MethodPost, bulkUploadRoute, BulkUploadHandler)
 	registerSession(http.MethodPost, bulkConfirmRoute, BulkConfirmHandler)
 	registerSession(http.MethodPost, bulkCancelRoute, BulkCancelHandler)
+	registerSession(http.MethodPost, bulkPreviewRoute, BulkPreviewHandler)
+	registerSession(http.MethodPost, bulkDryRunRoute, BulkDryRunHandler)
+	registerSession(http.MethodPost, bulkSaveTemplateRoute, BulkSaveImportTemplateHandler)
+	registerSession(http.MethodPost, exportAsyncRoute, ExportAsyncHandler)
+	registerSession(http.MethodGet, importWizardRoute, ImportWizardPageHandler)
 }
 
 func registerActionRoutes() {

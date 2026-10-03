@@ -26,3 +26,22 @@ func Translate(ctx context.Context, lang, src string) string {
 	}
 	return val.String
 }
+
+// TranslateFieldLabel resolves a field label for the user's language from sys.translation.
+func TranslateFieldLabel(ctx context.Context, modelName, fieldName, defaultLabel string) string {
+	lang := UserLang(ctx)
+	if lang == "" || lang == "en_US" {
+		return defaultLabel
+	}
+	key := modelName + "," + fieldName
+	if v := Translate(ctx, lang, key); v != key {
+		return v
+	}
+	return defaultLabel
+}
+
+// UserLang returns the active language code for ctx, defaulting to en_US.
+func UserLang(ctx context.Context) string {
+	_ = ctx
+	return "en_US"
+}

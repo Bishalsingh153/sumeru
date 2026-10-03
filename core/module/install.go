@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"sumeru/addons/mail"
 	"sumeru/core/applog"
 	"sumeru/core/metrics"
 	"sumeru/core/orm"
@@ -116,6 +115,9 @@ func reloadModuleData(ctx context.Context, moduleName string, mode moduleReloadM
 	if err := loadModuleXMLData(ctx, moduleName, mode, addon); err != nil {
 		return err
 	}
+	if err := SyncAddonTranslationPOFiles(ctx, addon.Path, moduleName); err != nil {
+		return recordSyncToDBResult(ctx, moduleName, err)
+	}
 	return finalizeModuleReload(ctx, moduleName, mode)
 }
 
@@ -158,12 +160,12 @@ func finalizeModuleReload(ctx context.Context, moduleName string, mode moduleRel
 			return err
 		}
 		orm.InvalidateRuleCache()
-		mail.LogModuleEvent(ctx, moduleName, "Installed", "")
+		logModuleEvent(ctx, moduleName, "Installed", "")
 	case moduleReloadUpdate:
 		if err := setModuleStateOnly(ctx, moduleName, "installed"); err != nil {
 			return err
 		}
-		mail.LogModuleEvent(ctx, moduleName, "Updated", "module data reloaded")
+		logModuleEvent(ctx, moduleName, "Updated", "module data reloaded")
 	}
 	return nil
 }
@@ -201,7 +203,7 @@ func UninstallModuleByName(ctx context.Context, moduleName string) error {
 		if err := setModuleState(systemContext, moduleName, "uninstalled", true); err != nil {
 			return err
 		}
-		mail.LogModuleEvent(systemContext, moduleName, "Uninstalled", "")
+		logModuleEvent(systemContext, moduleName, "Uninstalled", "")
 		return nil
 	})
 }
@@ -275,9 +277,9 @@ func SetModuleActive(ctx context.Context, moduleName string, active bool) error 
 			return err
 		}
 		if active {
-			mail.LogModuleEvent(systemContext, moduleName, "Activated", "")
+			logModuleEvent(systemContext, moduleName, "Activated", "")
 		} else {
-			mail.LogModuleEvent(systemContext, moduleName, "Deactivated", "")
+			logModuleEvent(systemContext, moduleName, "Deactivated", "")
 		}
 		return nil
 	})
@@ -381,4 +383,10 @@ func transitiveDependencies(moduleName string) []string {
 		}
 	}
 	return out
+}
+
+func logModuleEvent(ctx context.Context, moduleName, verb, detail string) {
+	if err := orm.AppendAppLog(ctx, moduleName, verb, detail); err != nil {
+		applog.L(ctx).Warn("applog.log_failed", "err", err)
+	}
 }

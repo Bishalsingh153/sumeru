@@ -13,6 +13,7 @@ const appsPageOutFile = join(__dirname, "../engine/assets/js/apps-page.js");
 mkdirSync(dirname(swcOutFile), { recursive: true });
 mkdirSync(dirname(passwordMatchOutFile), { recursive: true });
 mkdirSync(dirname(appsPageOutFile), { recursive: true });
+mkdirSync(join(__dirname, "../engine/assets/js"), { recursive: true });
 
 const compileSumXml = await loadCompileSumXml();
 
@@ -83,6 +84,17 @@ await esbuild.build({
   bundle: true,
   format: "iife",
   outfile: appsPageOutFile,
+  target: "es2022",
+  sourcemap: true,
+  minify: process.env.NODE_ENV === "production",
+});
+
+const importOutFile = join(__dirname, "../engine/assets/js/sumeru-import.js");
+await esbuild.build({
+  entryPoints: [join(__dirname, "src/import/import-entry.ts")],
+  bundle: true,
+  format: "iife",
+  outfile: importOutFile,
   target: "es2022",
   sourcemap: true,
   minify: process.env.NODE_ENV === "production",

@@ -23,6 +23,7 @@ const (
 	keyTemplatesPath      = "templates_path"
 	keyBrandCSS           = "brand_css"
 	keyLogoPath           = "logo_path"
+	keyFilestorePath      = "filestore_path"
 	keyCompanyDisplayName = "company_display_name"
 	keyUserDisplayName    = "user_display_name"
 	keyLogFile            = "log_file"

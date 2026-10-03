@@ -38,18 +38,22 @@ func CreateBatch(ctx context.Context, in CreateBatchInput) (batchID int, err err
 	fieldsJSON, _ := json.Marshal(in.SelectedFields)
 	headersJSON, _ := json.Marshal(headers)
 
-	attID, err := orm.Create(ctx, orm.Registry["sys.attachment"], map[string]interface{}{
-		"name":      fmt.Sprintf("bulk_%s.csv", time.Now().Format("20060102_150405")),
-		"model":     BulkModelName,
-		"mimetype":  "text/csv",
-		"file_size": len(in.CSVContent),
-		"datas":     base64.StdEncoding.EncodeToString(in.CSVContent),
+	attID, err := orm.CreateBinaryAttachment(ctx, orm.CreateBinaryAttachmentInput{
+		Name:     fmt.Sprintf("bulk_%s.csv", time.Now().Format("20060102_150405")),
+		ResModel: BulkModelName,
+		Data:     in.CSVContent,
+		Mimetype: "text/csv",
 	})
 	if err != nil {
 		return 0, fmt.Errorf("stage attachment: %w", err)
 	}
 
 	mapping := defaultColumnMapping(headers, in.SelectedFields)
+	if tpl := ApplyImportTemplateMapping(ctx, in.TargetModel, headers, in.UserID); len(tpl) > 0 {
+		for col, field := range tpl {
+			mapping[col] = field
+		}
+	}
 	mappingJSON, _ := json.Marshal(mapping)
 
 	batchID, err = orm.Create(ctx, orm.Registry[BulkModelName], map[string]interface{}{
@@ -63,7 +67,8 @@ func CreateBatch(ctx context.Context, in CreateBatchInput) (batchID int, err err
 		"next_url":         in.NextURL,
 		"user_id":          in.UserID,
 		"action_id":        in.ActionID,
-		"state":            "draft",
+		"state":            BulkStateDraft,
+		"direction":        DirectionImport,
 	})
 	if err != nil {
 		return 0, err
@@ -108,10 +113,18 @@ func loadBatchCSV(ctx context.Context, batchID int) (map[string]interface{}, []b
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("attachment not found")
 	}
-	raw := orm.AsString(att["datas"])
-	data, err := base64.StdEncoding.DecodeString(raw)
-	if err != nil {
-		data = []byte(raw)
+	var data []byte
+	if store := orm.AsString(att["store_fname"]); store != "" {
+		data, err = orm.ReadAttachment(ctx, store)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("read staged file: %w", err)
+		}
+	} else {
+		raw := orm.AsString(att["datas"])
+		data, err = base64.StdEncoding.DecodeString(raw)
+		if err != nil {
+			data = []byte(raw)
+		}
 	}
 	mapping := map[string]string{}
 	_ = json.Unmarshal([]byte(orm.AsString(batch["column_mapping"])), &mapping)

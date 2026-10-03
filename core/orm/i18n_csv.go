@@ -13,11 +13,6 @@ import (
 // TranslationCSVHeader is the column order for sys.translation import/export.
 var TranslationCSVHeader = []string{"lang", "src", "value", "module"}
 
-// TranslationTableName returns the quoted table name for sys.translation.
-func TranslationTableName() (string, error) {
-	return ModelToTableName("sys.translation")
-}
-
 // ParseTranslationCSV reads a translation CSV and validates required columns.
 func ParseTranslationCSV(r io.Reader) (header []string, rows [][]string, err error) {
 	reader := csv.NewReader(r)
@@ -29,10 +24,7 @@ func ParseTranslationCSV(r io.Reader) (header []string, rows [][]string, err err
 		return all[0], nil, nil
 	}
 	header = all[0]
-	col := map[string]int{}
-	for i, h := range header {
-		col[strings.ToLower(strings.TrimSpace(h))] = i
-	}
+	col := csvColumnIndex(header)
 	for _, req := range TranslationCSVHeader {
 		if _, ok := col[req]; !ok {
 			return header, nil, fmt.Errorf("missing column %q", req)
@@ -43,31 +35,22 @@ func ParseTranslationCSV(r io.Reader) (header []string, rows [][]string, err err
 
 // ImportTranslationsCSV inserts or updates rows from parsed CSV data.
 func ImportTranslationsCSV(ctx context.Context, db *sql.DB, header []string, rows [][]string) (int, error) {
-	tableName, err := TranslationTableName()
-	if err != nil {
-		return 0, err
+	if db == nil {
+		return 0, fmt.Errorf("db required")
 	}
-	col := map[string]int{}
-	for i, h := range header {
-		col[strings.ToLower(strings.TrimSpace(h))] = i
-	}
+	wrap := NewDBWrapper(db)
+	col := csvColumnIndex(header)
 	imported := 0
 	for _, row := range rows {
 		if len(row) < len(header) {
 			continue
 		}
-		lang := strings.TrimSpace(row[col["lang"]])
+		lang := NormalizeLangCode(strings.TrimSpace(row[col["lang"]]))
 		src := strings.TrimSpace(row[col["src"]])
-		val := row[col["value"]]
-		mod := strings.TrimSpace(row[col["module"]])
 		if lang == "" || src == "" {
 			continue
 		}
-		_, err := db.ExecContext(ctx, `
-			INSERT INTO "`+tableName+`" (lang, src, value, module)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (lang, src, module) DO UPDATE SET value = EXCLUDED.value`, lang, src, val, mod)
-		if err != nil {
+		if err := upsertTranslation(ctx, wrap, lang, src, row[col["value"]], strings.TrimSpace(row[col["module"]])); err != nil {
 			return imported, err
 		}
 		imported++
@@ -77,12 +60,9 @@ func ImportTranslationsCSV(ctx context.Context, db *sql.DB, header []string, row
 
 // ExportTranslationsCSV writes all sys.translation rows to outPath.
 func ExportTranslationsCSV(ctx context.Context, db *sql.DB, outPath string) (int, error) {
-	tableName, err := TranslationTableName()
-	if err != nil {
-		return 0, err
-	}
+	tbl := MustQuotedTableName("sys.translation")
 	rows, err := db.QueryContext(ctx,
-		`SELECT lang, src, value, module FROM "`+tableName+`" ORDER BY lang, module, src`)
+		`SELECT lang, src, value, module FROM `+tbl+` ORDER BY lang, module, src`)
 	if err != nil {
 		return 0, err
 	}
@@ -114,4 +94,28 @@ func ExportTranslationsCSV(ctx context.Context, db *sql.DB, outPath string) (int
 	}
 	w.Flush()
 	return count, w.Error()
+}
+
+func csvColumnIndex(header []string) map[string]int {
+	col := map[string]int{}
+	for i, h := range header {
+		col[strings.ToLower(strings.TrimSpace(h))] = i
+	}
+	return col
+}
+
+func upsertTranslation(ctx context.Context, db DBWrapper, lang, src, value, module string) error {
+	lang = strings.TrimSpace(lang)
+	src = strings.TrimSpace(src)
+	module = strings.TrimSpace(module)
+	if lang == "" || src == "" {
+		return fmt.Errorf("lang and src required")
+	}
+	tbl := MustQuotedTableName("sys.translation")
+	_, err := db.ExecContext(ctx,
+		`INSERT INTO `+tbl+` (lang, src, value, module)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (lang, src, module) DO UPDATE SET value = EXCLUDED.value`,
+		lang, src, value, module)
+	return err
 }

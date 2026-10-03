@@ -1,0 +1,29 @@
+{
+  "name": "platform",
+  "display_name": "Platform tools",
+  "version": "1.0.0",
+  "author": "Sumeru",
+  "description": "Attachments, sequences, system parameters, reports, and bulk import templates.",
+  "depends": ["base"],
+  "auto_install": true,
+  "application": false,
+  "data": [
+    "security/sys.access.csv",
+    "views/actions.xml",
+    "views/sys_bulk_import_actions.xml",
+    "views/sys_import_template_actions.xml",
+    "views/sys_report_action_actions.xml",
+    "views/sys_report_action_list_views.xml",
+    "views/sys_report_action_form_views.xml",
+    "views/sys_attachment_list_views.xml",
+    "views/sys_attachment_form_views.xml",
+    "views/sys_sequence_list_views.xml",
+    "views/sys_sequence_form_views.xml",
+    "views/sys_config_parameter_list_views.xml",
+    "views/sys_config_parameter_form_views.xml",
+    "views/sys_bulk_import_form_views.xml",
+    "views/sys_import_template_list_views.xml",
+    "views/sys_import_template_form_views.xml",
+    "views/menus.xml"
+  ]
+}

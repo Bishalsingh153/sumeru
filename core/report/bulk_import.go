@@ -45,7 +45,10 @@ func ExecuteBulkImport(ctx context.Context, in ExecuteBulkImportInput) (ImportRe
 			result.Skipped++
 			continue
 		}
-		errs := validateRowValues(modelInst, vals, allowed, mode)
+		coerced, coerceErrs := coerceImportValues(ctx, modelInst, vals)
+		vals = coerced
+		errs := append([]string{}, coerceErrs...)
+		errs = append(errs, validateRowValues(modelInst, vals, allowed, mode)...)
 		if len(errs) > 0 {
 			if in.SkipInvalid || in.ImportValidOnly {
 				result.Skipped++

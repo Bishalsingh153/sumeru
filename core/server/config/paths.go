@@ -51,7 +51,10 @@ func AbsPaths() error {
 
 func resolveConfigPathFields(sumeruRepo string) error {
 	var err error
-	for _, ptr := range []*string{&AppConfig.AssetsPath, &AppConfig.TemplatesPath, &AppConfig.BrandCSS, &AppConfig.LogoPath, &AppConfig.LogFile} {
+	if strings.TrimSpace(AppConfig.FilestorePath) == "" {
+		AppConfig.FilestorePath = "data/filestore"
+	}
+	for _, ptr := range []*string{&AppConfig.AssetsPath, &AppConfig.TemplatesPath, &AppConfig.BrandCSS, &AppConfig.LogoPath, &AppConfig.LogFile, &AppConfig.FilestorePath} {
 		if strings.TrimSpace(*ptr) == "" {
 			continue
 		}

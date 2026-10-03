@@ -50,6 +50,9 @@ func Run() {
 	if err := AbsPaths(); err != nil {
 		applog.BootstrapFatal("Resolve paths: %v", err)
 	}
+	if err := orm.InitFilestore(config.AppConfig.FilestorePath); err != nil {
+		applog.BootstrapFatal("Filestore: %v", err)
+	}
 
 	if err := applog.SetupFromConfig(&config.AppConfig); err != nil {
 		applog.BootstrapFatal("Logging: %v", err)

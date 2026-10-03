@@ -64,9 +64,6 @@
                     </page>
                 </notebook>
             </sheet>
-            <chatter>
-                <field name="internal_notes" string="Communication" widget="mail_thread"/>
-            </chatter>
         </view>
     </data>
 </sumeru>

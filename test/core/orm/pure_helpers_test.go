@@ -227,9 +227,8 @@ func TestTranslationCSVParse(t *testing.T) {
 	if _, _, err := orm.ParseTranslationCSV(strings.NewReader("lang,src\nen,Hi")); err == nil {
 		t.Fatal("expected missing column")
 	}
-	table, err := orm.TranslationTableName()
-	if err != nil || table != "sys_translation" {
-		t.Fatalf("table: %q err=%v", table, err)
+	if orm.MustQuotedTableName("sys.translation") != `"sys_translation"` {
+		t.Fatal("sys.translation table name")
 	}
 }
 

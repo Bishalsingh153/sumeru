@@ -5,6 +5,6 @@ package calendar
 import (
 	_ "sumeru/addons/base"
 	_ "sumeru/addons/contacts"
-	_ "sumeru/addons/mail"
+	_ "sumeru/addons/im"
 	_ "sumeru/addons/calendar/models"
 )
