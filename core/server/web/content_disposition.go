@@ -14,3 +14,12 @@ func safeContentDispositionFilename(name string) string {
 	}
 	return mime.FormatMediaType("attachment", map[string]string{"filename": name})
 }
+
+func safeContentDispositionInline(name string) string {
+	name = strings.TrimSpace(name)
+	name = strings.NewReplacer("\r", "", "\n", "", `"`, "", `\`, "").Replace(name)
+	if name == "" {
+		name = "preview"
+	}
+	return mime.FormatMediaType("inline", map[string]string{"filename": name})
+}

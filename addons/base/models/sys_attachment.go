@@ -10,6 +10,7 @@ type SysAttachment struct {
 	Name       sdk.String                `sumeru:"required,string=Name"`
 	ResModel   sdk.String                `sumeru:"index,column=model,string=Model"`
 	ResID      sdk.Integer               `sumeru:"index,string=Record"`
+	ResField   sdk.String                `sumeru:"index,string=Field"`
 	Mimetype   sdk.String                `sumeru:"string=MIME Type"`
 	FileSize   sdk.Integer               `sumeru:"string=Size"`
 	Datas      sdk.Text                  `sumeru:"string=Data"`
