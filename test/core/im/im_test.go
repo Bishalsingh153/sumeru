@@ -43,6 +43,13 @@ func TestPostDirectMessage_requiresBody(t *testing.T) {
 	}
 }
 
+func TestSearchInternalUsers_nilDB(t *testing.T) {
+	users, err := im.SearchInternalUsers(context.Background(), 1, "john doe", 0)
+	if err != nil || len(users) != 0 {
+		t.Fatalf("nil db: %v %v", users, err)
+	}
+}
+
 func TestDirectHelpers_nilDB(t *testing.T) {
 	ctx := context.Background()
 	users, err := im.SearchInternalUsers(ctx, 1, "a", 5)

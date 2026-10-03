@@ -23,8 +23,10 @@ type swcActivityLogItem struct {
 }
 
 type swcActivityLogPayload struct {
-	Items  []swcActivityLogItem `json:"items"`
-	HasLog bool                 `json:"hasLog"`
+	Items   []swcActivityLogItem `json:"items"`
+	HasLog  bool                 `json:"hasLog"`
+	HasMore bool                 `json:"hasMore,omitempty"`
+	Offset  int                  `json:"offset,omitempty"`
 }
 
 // SwcActivityLogHandler GET /web/swc/activity-log?model=&id= — sys.audit rows for the Log tab only (not mail.message).
@@ -45,24 +47,30 @@ func SwcActivityLogHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "access denied", http.StatusForbidden)
 		return
 	}
-	if err := orm.CheckModelAccess(ctx, uid, "sys.audit", "read"); err != nil {
-		http.Error(w, "access denied", http.StatusForbidden)
+	if !orm.RecordAuditLogAvailable(ctx) {
+		http.Error(w, "audit not available", http.StatusNotFound)
 		return
 	}
 	if _, err := orm.SearchOne(ctx, model, map[string]interface{}{"id": int(recordID)}); err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	domain := [][]interface{}{
-		{"model", "=", model},
-		{"res_id", "=", int(recordID)},
+	offset, _ := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("offset")))
+	if offset < 0 {
+		offset = 0
 	}
-	rows, err := orm.SearchPage(ctx, "sys.audit", domain, 40, 0, "create_date DESC")
+	const pageSize = 40
+	rows, err := orm.SearchRecordAuditLog(ctx, model, int(recordID), pageSize, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	out := swcActivityLogPayload{Items: make([]swcActivityLogItem, 0, len(rows))}
+	out := swcActivityLogPayload{
+		HasLog:  true,
+		Offset:  offset,
+		HasMore: len(rows) >= pageSize,
+		Items:   make([]swcActivityLogItem, 0, len(rows)),
+	}
 	for _, row := range rows {
 		action := strings.TrimSpace(orm.AsString(row["action"]))
 		detail := strings.TrimSpace(orm.AsString(row["detail"]))
@@ -94,7 +102,6 @@ func SwcActivityLogHandler(w http.ResponseWriter, r *http.Request) {
 			CreateDate: when,
 		})
 	}
-	out.HasLog = len(out.Items) > 0
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	_ = json.NewEncoder(w).Encode(out)
 }

@@ -8,6 +8,7 @@
   "auto_install": true,
   "application": false,
   "data": [
-    "security/sys.access.csv"
+    "security/sys.access.csv",
+    "views/core_company_form_inherit_views.xml"
   ]
 }

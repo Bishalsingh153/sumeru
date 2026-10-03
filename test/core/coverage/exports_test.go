@@ -399,12 +399,12 @@ func TestForTestExports_web(t *testing.T) {
 	}
 	payload := &swcmeta.WorkspacePayload{}
 	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "list", 0, "core.user")
-	if payload.RecordMessagesEligible || payload.RecordLogEligible {
-		t.Fatal("record id 0 should not enable activity flags")
+	if payload.RecordMessagesEligible {
+		t.Fatal("record messages flag should stay off")
 	}
 	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "form", 0, "core.user")
-	if payload.RecordMessagesEligible || payload.RecordLogEligible {
-		t.Fatal("unsaved form should not enable activity flags")
+	if payload.RecordMessagesEligible {
+		t.Fatal("record messages flag should stay off on unsaved form")
 	}
 	if d, err := audit.RetentionDaysFromRecordForTest(map[string]interface{}{"retention_preset": "7_days"}); err != nil || d != 7 {
 		t.Fatalf("retention 7d: %d %v", d, err)

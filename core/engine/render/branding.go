@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"strings"
 
-	"sumeru/addons/im"
 	"sumeru/core/orm"
 	"sumeru/core/server/config"
 )
@@ -110,7 +109,8 @@ func EnrichShellPageData(ctx context.Context, d *PageData) {
 	}
 	d.ShellUserInitials = UserInitialsFromName(d.ShellUser)
 
-	d.ActivityEnabled = im.IMEnabled(ctx)
+	// Activity dock (Messages + Log) stays visible for logged-in users; IM APIs gate chat separately.
+	d.ActivityEnabled = orm.SecurityUID(ctx) > 0
 	if len(d.ExtraScriptURLs) == 0 {
 		d.ExtraScriptURLs = ExtraScriptURLs
 	}

@@ -12,6 +12,11 @@ import (
 
 const MessageModel = "im.message"
 
+const (
+	directUserDirectoryLimit = 80
+	directUserSearchLimit    = 40
+)
+
 // SearchInternalUsers finds active internal users by name or login (excluding uid).
 func SearchInternalUsers(ctx context.Context, uid int, query string, limit int) ([]map[string]interface{}, error) {
 	if orm.DB == nil {
@@ -20,21 +25,43 @@ func SearchInternalUsers(ctx context.Context, uid int, query string, limit int) 
 	if err := orm.CheckModelAccess(ctx, uid, "core.user", "read"); err != nil {
 		return nil, err
 	}
-	if limit <= 0 || limit > 40 {
-		limit = 20
-	}
 	q := strings.TrimSpace(query)
+	if limit <= 0 {
+		if q == "" {
+			limit = directUserDirectoryLimit
+		} else {
+			limit = directUserSearchLimit
+		}
+	}
+	if q == "" && limit > directUserDirectoryLimit {
+		limit = directUserDirectoryLimit
+	}
+	if q != "" && limit > directUserSearchLimit {
+		limit = directUserSearchLimit
+	}
 	domain := [][]interface{}{
 		{"active", "=", true},
 		{"user_type", "=", "internal"},
 		{"id", "!=", uid},
 	}
-	if q != "" {
+	for _, tok := range strings.Fields(q) {
+		pattern := ilikePattern(tok)
 		domain = append(domain, []interface{}{"|"})
-		domain = append(domain, []interface{}{"name", "ilike", q})
-		domain = append(domain, []interface{}{"login", "ilike", q})
+		domain = append(domain, []interface{}{"name", "ilike", pattern})
+		domain = append(domain, []interface{}{"login", "ilike", pattern})
 	}
 	return orm.SearchPage(ctx, "core.user", domain, limit, 0, "name ASC")
+}
+
+func ilikePattern(token string) string {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return "%"
+	}
+	if !strings.Contains(token, "%") {
+		return "%" + token + "%"
+	}
+	return token
 }
 
 // ListDirectConversations returns recent peers for uid with last message preview.
@@ -94,6 +121,7 @@ func ListDirectConversations(ctx context.Context, uid int, limit int) ([]map[str
 			break
 		}
 	}
+	unreadByPeer := directUnreadBySender(ctx, uid)
 	out := make([]map[string]interface{}, 0, len(order))
 	for _, peerID := range order {
 		c := seen[peerID]
@@ -103,9 +131,29 @@ func ListDirectConversations(ctx context.Context, uid int, limit int) ([]map[str
 			"name":        name,
 			"preview":     c.preview,
 			"lastMessage": c.when,
+			"unreadCount": unreadByPeer[peerID],
 		})
 	}
 	return out, nil
+}
+
+func directUnreadBySender(ctx context.Context, uid int) map[int]int {
+	out := map[int]int{}
+	rows, err := orm.Search(ctx, MessageModel, [][]interface{}{
+		{"recipient_id", "=", uid},
+		{"is_read", "=", false},
+	})
+	if err != nil {
+		return out
+	}
+	for _, row := range rows {
+		sid, _ := orm.CoerceInt64(row["sender_id"])
+		if sid <= 0 {
+			continue
+		}
+		out[int(sid)]++
+	}
+	return out
 }
 
 // ListDirectThread returns messages between uid and peerID oldest first.
@@ -142,14 +190,18 @@ func ListDirectThread(ctx context.Context, uid, peerID int) ([]map[string]interf
 	for _, row := range rows {
 		msgID, _ := orm.CoerceInt64(row["id"])
 		sid, _ := orm.CoerceInt64(row["sender_id"])
+		resID, _ := orm.CoerceInt64(row["res_id"])
 		out = append(out, map[string]interface{}{
 			"id":          int(msgID),
 			"body":        strings.TrimSpace(orm.AsString(row["body"])),
 			"createDate":  strings.TrimSpace(orm.AsString(row["create_date"])),
 			"outgoing":    int(sid) == uid,
+			"resModel":    strings.TrimSpace(orm.AsString(row["res_model"])),
+			"resId":       int(resID),
 			"attachments": listMessageAttachments(ctx, uid, int(msgID)),
 		})
 	}
+	_ = MarkDirectThreadRead(ctx, uid, peerID)
 	return out, nil
 }
 
@@ -181,6 +233,11 @@ func listMessageAttachments(ctx context.Context, uid, messageID int) []map[strin
 
 // PostDirectMessage sends an internal direct message from uid to recipientID.
 func PostDirectMessage(ctx context.Context, uid, recipientID int, body string) (int, error) {
+	return PostDirectMessageLinked(ctx, uid, recipientID, body, "", 0)
+}
+
+// PostDirectMessageLinked optionally attaches a related record (res_model / res_id).
+func PostDirectMessageLinked(ctx context.Context, uid, recipientID int, body, resModel string, resID int) (int, error) {
 	body = strings.TrimSpace(body)
 	if body == "" {
 		return 0, fmt.Errorf("message required")
@@ -195,12 +252,19 @@ func PostDirectMessage(ctx context.Context, uid, recipientID int, body string) (
 	if !ok {
 		return 0, fmt.Errorf("internal chat not available")
 	}
-	id, err := orm.Create(ctx, inst, map[string]interface{}{
+	vals := map[string]interface{}{
 		"sender_id":    uid,
 		"recipient_id": recipientID,
 		"body":         body,
 		"create_date":  time.Now().UTC(),
-	})
+		"is_read":      false,
+	}
+	resModel = strings.TrimSpace(resModel)
+	if resModel != "" && resID > 0 {
+		vals["res_model"] = resModel
+		vals["res_id"] = resID
+	}
+	id, err := orm.Create(ctx, inst, vals)
 	if err != nil {
 		return 0, err
 	}

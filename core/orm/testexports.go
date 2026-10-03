@@ -39,6 +39,14 @@ func FormatAuditLogBodyForTest(ctx context.Context, model, action, beforeJSON, a
 	return FormatAuditLogBody(ctx, model, action, beforeJSON, afterJSON, detail)
 }
 
+func RecordAuditLogAvailableForTest(ctx context.Context) bool {
+	return RecordAuditLogAvailable(ctx)
+}
+
+func SearchRecordAuditLogForTest(ctx context.Context, model string, resID int, limit, offset int) ([]map[string]interface{}, error) {
+	return SearchRecordAuditLog(ctx, model, resID, limit, offset)
+}
+
 func SplitDomainORPrefixForTest(domain [][]interface{}) (orCount int, leaves [][]interface{}, ok bool) {
 	return splitDomainORPrefix(domain)
 }

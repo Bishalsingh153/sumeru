@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sumeru>
+    <data>
+        <record id="view_core.company_form_im" model="sys.view">
+            <field name="inherit_id" ref="base.view_core.company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@string='Contact']" position="inside">
+                    <field name="im_enabled" string="Internal chat"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</sumeru>
