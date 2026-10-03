@@ -273,6 +273,12 @@ const (
 	bulkUploadRoute     = "/web/bulk/upload"
 	bulkConfirmRoute    = "/web/bulk/confirm"
 	bulkCancelRoute     = "/web/bulk/cancel"
+	bulkPreviewRoute    = "/web/bulk/preview"
+	bulkDryRunRoute       = "/web/bulk/dry-run"
+	bulkSaveTemplateRoute = "/web/bulk/save-template"
+	exportAsyncRoute    = "/web/export/async"
+	importWizardRoute   = "/web/import"
+	swcImportRoute      = "/web/swc/import"
 	maxImportBodyBytes  = 8 << 20
 	importModelField    = "model"
 	importFileField     = "file"

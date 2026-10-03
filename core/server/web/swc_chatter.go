@@ -22,11 +22,19 @@ type swcChatterMessage struct {
 	Subtype    string `json:"subtype"`
 }
 
+type swcChatterAttachment struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	URL      string `json:"url"`
+	Mimetype string `json:"mimetype,omitempty"`
+}
+
 type swcChatterPayload struct {
-	Model    string              `json:"model"`
-	RecordID int64               `json:"recordId"`
-	Messages []swcChatterMessage `json:"messages"`
-	Enabled  bool                `json:"enabled"`
+	Model       string                 `json:"model"`
+	RecordID    int64                  `json:"recordId"`
+	Messages    []swcChatterMessage    `json:"messages"`
+	Attachments []swcChatterAttachment `json:"attachments"`
+	Enabled     bool                   `json:"enabled"`
 }
 
 // SwcChatterHandler GET /web/swc/chatter?model=&id=
@@ -61,6 +69,15 @@ func SwcChatterHandler(w http.ResponseWriter, r *http.Request) {
 			Author:     row.Author,
 			CreateDate: row.CreateDate.UTC().Format("2006-01-02 15:04:05"),
 			Subtype:    row.Subtype,
+		})
+	}
+	attRows, _ := mail.ListAttachmentsForRecord(r.Context(), model, id, 80)
+	for _, a := range attRows {
+		out.Attachments = append(out.Attachments, swcChatterAttachment{
+			ID:       a.ID,
+			Name:     a.Name,
+			URL:      contentURL(int(a.ID), true),
+			Mimetype: a.Mimetype,
 		})
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

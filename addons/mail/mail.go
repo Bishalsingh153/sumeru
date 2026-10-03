@@ -205,6 +205,61 @@ func QueryActivityLog(ctx context.Context, limit int, ctxModel string, ctxID int
 	return rowsFromSearchResults(records), nil
 }
 
+// AttachmentRow is a record-linked file for chatter or document lists.
+type AttachmentRow struct {
+	ID       int64
+	Name     string
+	Mimetype string
+}
+
+// ListAttachmentsForRecord returns sys.attachment rows linked to a business record.
+func ListAttachmentsForRecord(ctx context.Context, model string, coreID int64, limit int) ([]AttachmentRow, error) {
+	model = strings.TrimSpace(model)
+	if model == "" || coreID <= 0 {
+		return nil, fmt.Errorf("model and id required")
+	}
+	if _, ok := orm.Registry[model]; !ok {
+		return nil, fmt.Errorf("unknown model %q", model)
+	}
+	uid := orm.SecurityUID(ctx)
+	if err := orm.CheckModelAccess(ctx, uid, model, "read"); err != nil {
+		return nil, err
+	}
+	if _, err := orm.SearchOne(ctx, model, map[string]interface{}{"id": int(coreID)}); err != nil {
+		return nil, fmt.Errorf("record not found or access denied")
+	}
+	if err := orm.CheckModelAccess(ctx, uid, "sys.attachment", "read"); err != nil {
+		return nil, err
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	domain := [][]interface{}{
+		{"model", "=", model},
+		{"res_id", "=", int(coreID)},
+	}
+	records, err := orm.SearchPage(ctx, "sys.attachment", domain, limit, 0, "create_date DESC")
+	if err != nil {
+		return nil, err
+	}
+	out := make([]AttachmentRow, 0, len(records))
+	for _, rec := range records {
+		id, _ := orm.CoerceInt64(rec["id"])
+		if id <= 0 {
+			continue
+		}
+		if err := orm.CanReadAttachmentContent(ctx, int(uid), rec); err != nil {
+			continue
+		}
+		out = append(out, AttachmentRow{
+			ID:       id,
+			Name:     rowString(rec, "name"),
+			Mimetype: rowString(rec, "mimetype"),
+		})
+	}
+	return out, nil
+}
+
 func rowsFromSearchResults(records []map[string]interface{}) []Row {
 	out := make([]Row, 0, len(records))
 	for _, rec := range records {

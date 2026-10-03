@@ -2,6 +2,7 @@ import { SwcComponent } from "../../runtime/component.js";
 import { html } from "../../template/html.js";
 import { RECORD_UPDATED, SWC_API_BASE } from "../../constants/routes.js";
 import { inputValueFromEvent } from "../../widgets/field-events.js";
+import { attachmentPreviewModal, type AttachmentPreviewTarget } from "../shared/AttachmentPreview.js";
 
 interface ChatterMessage {
   body: string;
@@ -38,6 +39,9 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
   private posting = false;
   private enabled = true;
   private tab: "messages" | "attachments" = "messages";
+  private uploadPct = 0;
+  private uploading = false;
+  private preview: AttachmentPreviewTarget | null = null;
   private unsubRecordUpdated: (() => void) | null = null;
 
   override setup(): void {
@@ -82,6 +86,32 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
     }
   }
 
+  private async uploadFile(file: File): Promise<void> {
+    if (this.props.recordId <= 0) return;
+    this.uploading = true;
+    this.uploadPct = 0;
+    this.rerender();
+    try {
+      const form = new FormData();
+      form.set("model", this.props.model);
+      form.set("res_id", String(this.props.recordId));
+      form.set("file", file);
+      const res = await this.env.services.http.postMultipart("/web/chatter/upload", form, (pct) => {
+        this.uploadPct = pct;
+        this.rerender();
+      });
+      if (!res.ok) {
+        return;
+      }
+      await this.load();
+      this.tab = "attachments";
+    } finally {
+      this.uploading = false;
+      this.uploadPct = 0;
+      this.rerender();
+    }
+  }
+
   private async post(): Promise<void> {
     const body = this.draft.trim();
     if (!body || this.props.recordId <= 0) return;
@@ -122,13 +152,39 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
           <button type="button" class="sum-chatter-tab${this.tab === "attachments" ? " sum-chatter-tab--active" : ""}" @click=${() => { this.tab = "attachments"; this.rerender(); }}>Attachments (${this.attachments.length})</button>
         </div>
         ${this.tab === "attachments"
-          ? html`<ul class="sum-chatter-attachments">
-              ${this.attachments.length === 0
-                ? html`<li class="sum-chatter-empty">No attachments.</li>`
-                : this.attachments.map(
-                    (a) => html`<li><a href=${a.url} target="_blank" rel="noopener">${a.name}</a></li>`,
-                  )}
-            </ul>`
+          ? html`<div class="sum-chatter-attachments-panel">
+              <label class="sum-chatter-upload">
+                <input
+                  type="file"
+                  hidden
+                  @change=${(event: Event) => {
+                    const input = event.target as HTMLInputElement;
+                    const file = input.files?.[0];
+                    input.value = "";
+                    if (file) void this.uploadFile(file);
+                  }}
+                />
+                <span class="sum-btn sum-btn--secondary">${this.uploading ? `Uploading ${this.uploadPct}%` : "Add file"}</span>
+              </label>
+              <ul class="sum-chatter-attachments">
+                ${this.attachments.length === 0
+                  ? html`<li class="sum-chatter-empty">No attachments.</li>`
+                  : this.attachments.map(
+                      (a) => html`<li>
+                        <button
+                          type="button"
+                          class="sum-chatter-attachment-link"
+                          @click=${() => {
+                            this.preview = { name: a.name, url: a.url, mimetype: a.mimetype };
+                            this.rerender();
+                          }}
+                        >
+                          ${a.name}
+                        </button>
+                      </li>`,
+                    )}
+              </ul>
+            </div>`
           : html`
         <div class="sum-chatter-composer">
           <textarea
@@ -160,6 +216,10 @@ export class ChatterPanel extends SwcComponent<ChatterPanelProps> {
                 </li>`,
               )}
         </ul>`}
+        ${attachmentPreviewModal(this.preview, () => {
+          this.preview = null;
+          this.rerender();
+        })}
       </aside>
     `;
   }

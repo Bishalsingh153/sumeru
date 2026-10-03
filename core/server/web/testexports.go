@@ -392,6 +392,53 @@ func ExportTemplatePDFHandlerForTest(w http.ResponseWriter, r *http.Request) {
 	ExportTemplatePDFHandler(w, r)
 }
 
+func ContentHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	ContentHandler(w, r)
+}
+
+func ParseContentPathForTest(path string) (field string, id int, ok bool) {
+	spec, ok := parseContentPath(contentRoutePrefix + path)
+	if !ok {
+		return "", 0, false
+	}
+	if spec.attachmentID > 0 {
+		return "attachment", spec.attachmentID, true
+	}
+	return spec.resField, spec.resID, true
+}
+
+func ContentInlineAllowedForTest(mime string) bool { return contentInlineAllowed(mime) }
+
+func SafeContentDispositionInlineForTest(name string) string { return safeContentDispositionInline(name) }
+
+func BulkPreviewHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	BulkPreviewHandler(w, r)
+}
+
+func BulkDryRunHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	BulkDryRunHandler(w, r)
+}
+
+func BulkSaveImportTemplateHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	BulkSaveImportTemplateHandler(w, r)
+}
+
+func SwcImportHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	SwcImportHandler(w, r)
+}
+
+func ImportWizardPageHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	ImportWizardPageHandler(w, r)
+}
+
+func ExportAsyncHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	ExportAsyncHandler(w, r)
+}
+
+func ChatterUploadHandlerForTest(w http.ResponseWriter, r *http.Request) {
+	ChatterUploadHandler(w, r)
+}
+
 // SetTestSessionUserIDForTest overrides SessionUserID for handler tests.
 func SetTestSessionUserIDForTest(userID int) { testSessionUserIDOverride = userID }
 
