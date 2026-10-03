@@ -38,7 +38,7 @@ func TestResolveInstallClosureCoreAddons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"base", "contacts", "mail"} {
+	for _, name := range []string{"base", "contacts", "im"} {
 		if _, ok := discovered[name]; !ok {
 			continue
 		}

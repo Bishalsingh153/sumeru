@@ -93,12 +93,6 @@ func TestWebHelperExportsCoverage(t *testing.T) {
 	if got := web.FormBaseQueryValues(1, "2", "list", "3"); got == "" {
 		t.Fatal("form base query")
 	}
-	if got := web.ChatterBodyTooLong(strings.Repeat("x", int(web.TestMaxChatterBodyRunes)+1)); !got {
-		t.Fatal("chatter too long")
-	}
-	if _, err := web.ParseChatterRecordID("12"); err != nil {
-		t.Fatal(err)
-	}
 	if got := web.CoerceCSVValue("42"); got != int64(42) && got != 42 {
 		t.Fatalf("csv value: %v", got)
 	}

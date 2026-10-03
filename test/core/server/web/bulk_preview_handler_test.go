@@ -33,18 +33,6 @@ func TestSwcImportHandlerRequiresBatch(t *testing.T) {
 	}
 }
 
-func TestChatterUploadRequiresMultipart(t *testing.T) {
-	web.ResetTestSessionUserIDForTest()
-	t.Cleanup(web.ResetTestSessionUserIDForTest)
-	web.SetTestSessionUserIDForTest(1)
-	req := httptest.NewRequest(http.MethodPost, "/web/chatter/upload", nil)
-	rec := httptest.NewRecorder()
-	web.ChatterUploadHandlerForTest(rec, req)
-	if rec.Code == http.StatusOK {
-		t.Fatal("expected failure")
-	}
-}
-
 func TestImportWizardPageRequiresBatch(t *testing.T) {
 	web.ResetTestSessionUserIDForTest()
 	t.Cleanup(web.ResetTestSessionUserIDForTest)

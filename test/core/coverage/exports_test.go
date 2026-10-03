@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"sumeru/addons/automation"
+	"sumeru/addons/audit"
+	"sumeru/addons/im"
 	"sumeru/core/applog"
 	"sumeru/core/engine/parser"
 	"sumeru/core/engine/render"
@@ -395,4 +397,36 @@ func TestForTestExports_web(t *testing.T) {
 	if !web.ContentInlineAllowedForTest("image/png") {
 		t.Fatal("ContentInlineAllowedForTest image")
 	}
+	payload := &swcmeta.WorkspacePayload{}
+	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "list", 0, "core.user")
+	if payload.RecordMessagesEligible || payload.RecordLogEligible {
+		t.Fatal("record id 0 should not enable activity flags")
+	}
+	web.ApplyActivityRecordFlagsForTest(context.Background(), payload, "form", 0, "core.user")
+	if payload.RecordMessagesEligible || payload.RecordLogEligible {
+		t.Fatal("unsaved form should not enable activity flags")
+	}
+	if d, err := audit.RetentionDaysFromRecordForTest(map[string]interface{}{"retention_preset": "7_days"}); err != nil || d != 7 {
+		t.Fatalf("retention 7d: %d %v", d, err)
+	}
+	opts := audit.RetentionOptionsFromPolicyForTest(map[string]interface{}{"hot_retention_days": 60}, true)
+	if opts.RetentionDays != 60 || !opts.DryRun {
+		t.Fatalf("retention opts: %+v", opts)
+	}
+	if err := audit.RunAuditRetentionCronForTest(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := audit.EncodeAuditJSONLForTest([]audit.AuditExportRowForTest{{ID: 1, Action: "read", Model: "x"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := audit.DecodeAuditJSONLForTest(raw); err != nil {
+		t.Fatal(err)
+	}
+	if name := im.UserDisplayNameForTest(context.Background(), 1); name == "" {
+		t.Fatal("UserDisplayNameForTest")
+	}
+	directRec := httptest.NewRecorder()
+	directReq := httptest.NewRequest(http.MethodGet, "/web/swc/direct/conversations", nil)
+	web.SwcDirectConversationsHandlerForTest(directRec, directReq)
 }

@@ -7,10 +7,10 @@ import (
 )
 
 
-func TestBuildSidebarMenus_localizationSection(t *testing.T) {
+func TestBuildSidebarMenus_regionalDataSection(t *testing.T) {
 	allMenus := []parser.MenuItem{
 		{ID: "100", Name: "Settings", Sequence: 5},
-		{ID: "160", Name: "Localization", ParentID: "100", Sequence: 60, AccessGroups: "base.group_system"},
+		{ID: "160", Name: "Regional data", ParentID: "100", Sequence: 60, AccessGroups: "base.group_system"},
 		{ID: "161", Name: "Countries", ParentID: "160", Sequence: 10, Action: "/web?action=10&menu_id=161", AccessGroups: "base.group_system"},
 		{ID: "162", Name: "States", ParentID: "160", Sequence: 20, Action: "/web?action=11&menu_id=162", AccessGroups: "base.group_system"},
 		{ID: "163", Name: "Cities", ParentID: "160", Sequence: 30, Action: "/web?action=12&menu_id=163", AccessGroups: "base.group_system"},
@@ -19,21 +19,21 @@ func TestBuildSidebarMenus_localizationSection(t *testing.T) {
 		return mi.AccessGroups == "base.group_system"
 	}
 	sections := render.BuildSidebarMenus(allMenus, "100", menuAllowed)
-	var localization *render.SidebarMenu
+	var regional *render.SidebarMenu
 	for i := range sections {
-		if sections[i].Name == "Localization" {
-			localization = &sections[i]
+		if sections[i].Name == "Regional data" {
+			regional = &sections[i]
 			break
 		}
 	}
-	if localization == nil {
-		t.Fatal("Localization section not found in Settings sidebar")
+	if regional == nil {
+		t.Fatal("Regional data section not found in Settings sidebar")
 	}
-	if len(localization.SubMenus) != 3 {
-		t.Fatalf("Localization submenus = %d; want 3", len(localization.SubMenus))
+	if len(regional.SubMenus) != 3 {
+		t.Fatalf("Regional data submenus = %d; want 3", len(regional.SubMenus))
 	}
 	names := map[string]bool{}
-	for _, sm := range localization.SubMenus {
+	for _, sm := range regional.SubMenus {
 		names[sm.Name] = true
 		if sm.Action == "" {
 			t.Fatalf("submenu %q has empty action URL", sm.Name)

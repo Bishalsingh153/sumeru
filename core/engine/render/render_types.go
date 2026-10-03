@@ -106,13 +106,10 @@ type PageData struct {
 	ToastMessages     []FlashMessage
 	ToastMessagesJSON template.JS
 
-	// Right activity panel: Log tab (audit); Messages tab HTML set in RenderView when chatter applies.
+	// Right activity panel (Messages + Log tabs filled by SWC when SWCEnabled).
 	ActivityEnabled         bool
-	ActivityLogItems        []ActivityItem
 	ActivityContextModel    string
 	ActivityContextRecordID int64
-	ActivityPanelChatter    bool
-	ActivityChatterHTML     template.HTML
 
 	// SWC bootstrap JSON injected as window.__SWC_BOOTSTRAP__
 	SWCBootstrapJSON    template.JS

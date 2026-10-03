@@ -3,7 +3,6 @@ package web
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -36,8 +35,6 @@ func userFacingRecordError(operation, model string, err error) (title, body, det
 		title = "Save failed"
 	case "record_delete":
 		title = "Delete failed"
-	case "record_chatter":
-		title = "Message not posted"
 	case "object_action":
 		title = "Action failed"
 	default:
@@ -123,53 +120,6 @@ func fieldLabel(modelName, fieldName string) string {
 		}
 	}
 	return fieldName
-}
-
-func redirectRecordError(w http.ResponseWriter, r *http.Request, nextURL, operation, model string, err error) {
-	ctx := r.Context()
-	title, body, details, fieldErrors := userFacingRecordError(operation, model, err)
-	WebLogEvent(ctx, WebLogInput{
-		Route: operationRoute(operation), Message: body,
-		Code:      orm.ClassifyLogCode(err),
-		Operation: operation, Status: logStatusFailure, Err: err,
-		ContextFields: map[string]interface{}{"model": model},
-	})
-	SetRecordErrorFlash(w, PageFlash{
-		Kind:        "error",
-		Title:       title,
-		Body:        body,
-		Details:     details,
-		FieldErrors: fieldErrors,
-	})
-	redirectURL := appendFieldErrorsToURL(SafeWebNext(nextURL, homeRoute), fieldErrors)
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
-}
-
-func appendFieldErrorsToURL(rawURL string, fieldErrors []string) string {
-	if len(fieldErrors) == 0 {
-		return rawURL
-	}
-	parsed, err := url.Parse(rawURL)
-	if err != nil {
-		return rawURL
-	}
-	query := parsed.Query()
-	query.Set(fieldErrorsParam, strings.Join(fieldErrors, ","))
-	parsed.RawQuery = query.Encode()
-	return parsed.String()
-}
-
-func operationRoute(operation string) string {
-	switch operation {
-	case "record_save", "record_delete":
-		return workspaceRoute
-	case "record_chatter":
-		return chatterPostRoute
-	case "object_action":
-		return apiRPCRoute
-	default:
-		return webLogUnknownRoute
-	}
 }
 
 func ensureFormEditRedirectURL(rawNext string, clearRecordID bool) string {

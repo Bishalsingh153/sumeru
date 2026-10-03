@@ -24,12 +24,12 @@ func TestResolveInstallClosureEngagementCookbook(t *testing.T) {
 	discovered := map[string]*module.Addon{
 		"base": {Manifest: module.Manifest{Name: "base", Depends: nil}},
 		"contacts": {Manifest: module.Manifest{Name: "contacts", Depends: []string{"base"}}},
-		"mail": {Manifest: module.Manifest{Name: "mail", Depends: []string{"base"}}},
+		"im": {Manifest: module.Manifest{Name: "im", Depends: []string{"base"}}},
 		"hr": {Manifest: module.Manifest{Name: "hr", Depends: []string{"base", "contacts"}}},
 		"engagement_cookbook": {
 			Manifest: module.Manifest{
 				Name:    "engagement_cookbook",
-				Depends: []string{"base", "contacts", "hr", "mail"},
+				Depends: []string{"base", "contacts", "hr", "im"},
 			},
 		},
 	}
@@ -37,7 +37,7 @@ func TestResolveInstallClosureEngagementCookbook(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"base", "contacts", "hr", "mail", "engagement_cookbook"}
+	want := []string{"base", "contacts", "hr", "im", "engagement_cookbook"}
 	if len(closure) != len(want) {
 		t.Fatalf("closure len = %d, want %d: %v", len(closure), len(want), closure)
 	}
