@@ -17,6 +17,7 @@
     "views/i18n_actions.xml",
     "views/apikey_actions.xml",
     "views/sys_bulk_import_actions.xml",
+    "views/sys_import_template_actions.xml",
     "views/sys_report_action_actions.xml",
     "views/sys_report_action_list_views.xml",
     "views/sys_report_action_form_views.xml",
@@ -61,6 +62,8 @@
     "views/sys_field_access_list_views.xml",
     "views/sys_field_access_form_views.xml",
     "views/sys_bulk_import_form_views.xml",
+    "views/sys_import_template_list_views.xml",
+    "views/sys_import_template_form_views.xml",
     "views/menus.xml"
   ]
 }
