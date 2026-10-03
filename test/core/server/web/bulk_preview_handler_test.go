@@ -45,6 +45,18 @@ func TestImportWizardPageRequiresBatch(t *testing.T) {
 	}
 }
 
+func TestBulkStatusHandlerRequiresID(t *testing.T) {
+	web.ResetTestSessionUserIDForTest()
+	t.Cleanup(web.ResetTestSessionUserIDForTest)
+	web.SetTestSessionUserIDForTest(1)
+	req := httptest.NewRequest(http.MethodGet, "/web/bulk/status", nil)
+	rec := httptest.NewRecorder()
+	web.BulkStatusHandlerForTest(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d", rec.Code)
+	}
+}
+
 func TestExportAsyncHandlerRequiresModel(t *testing.T) {
 	web.ResetTestSessionUserIDForTest()
 	t.Cleanup(web.ResetTestSessionUserIDForTest)

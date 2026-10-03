@@ -11,6 +11,17 @@ interface ImportBootstrap {
   nextUrl?: string;
 }
 
+interface ImportMessage {
+  type?: string;
+  message?: string;
+  row?: number;
+}
+
+interface DryRunResponse {
+  preview?: unknown;
+  messages?: ImportMessage[];
+}
+
 export function mountImportWizard(host: HTMLElement | null, batchId: string, csrf: string): void {
   if (!host || !batchId) return;
   void load(host, batchId, csrf);
@@ -29,6 +40,8 @@ async function load(host: HTMLElement, batchId: string, csrf: string): Promise<v
 function render(host: HTMLElement, data: ImportBootstrap, csrf: string): void {
   host.innerHTML = "";
   const mapping = { ...data.mapping };
+  let dryRunPassed = false;
+
   const form = document.createElement("div");
   form.className = "sum-import-wizard";
 
@@ -52,6 +65,8 @@ function render(host: HTMLElement, data: ImportBootstrap, csrf: string): void {
     select.value = mapping[col] ?? "-";
     select.addEventListener("change", () => {
       mapping[col] = select.value;
+      dryRunPassed = false;
+      updateImportButton();
     });
     tdField.appendChild(select);
     tr.append(tdCol, tdField);
@@ -60,18 +75,44 @@ function render(host: HTMLElement, data: ImportBootstrap, csrf: string): void {
   table.appendChild(tbody);
   form.appendChild(table);
 
-  const previewBox = document.createElement("pre");
-  previewBox.className = "sum-import-preview";
-  form.appendChild(previewBox);
+  const messageBox = document.createElement("div");
+  messageBox.className = "sum-import-preview";
+  form.appendChild(messageBox);
+
+  const details = document.createElement("pre");
+  details.className = "sum-import-preview-details";
+  details.hidden = true;
+  form.appendChild(details);
 
   const actions = document.createElement("div");
   actions.className = "sum-import-actions";
 
-  const previewBtn = button("Preview", () => void runPreview(previewBox, data.batchId, mapping, csrf));
-  const dryBtn = button("Dry run", () => void runDryRun(previewBox, data.batchId, mapping, csrf));
-  const saveTplBtn = button("Save template", () => void runSaveTemplate(previewBox, data.batchId, mapping, csrf));
-  const importBtn = button("Import", () => void runImport(data.batchId, mapping, csrf, data.nextUrl ?? "/web/home"));
-  actions.append(previewBtn, dryBtn, saveTplBtn, importBtn);
+  const importBtn = button("Import", () => {
+    if (!dryRunPassed) {
+      window.alert("Run a dry run with no errors before importing.");
+      return;
+    }
+    void runImport(data.batchId, mapping, csrf, data.nextUrl ?? "/web/home");
+  });
+  importBtn.className = "sum-btn sum-btn--primary";
+
+  const updateImportButton = (): void => {
+    importBtn.disabled = !dryRunPassed;
+    importBtn.title = dryRunPassed ? "" : "Run dry run with zero errors first";
+  };
+  updateImportButton();
+
+  actions.append(
+    button("Preview", () => void runPreview(messageBox, details, data.batchId, mapping, csrf)),
+    button("Dry run", () =>
+      void runDryRun(messageBox, details, data.batchId, mapping, csrf, (ok) => {
+        dryRunPassed = ok;
+        updateImportButton();
+      }),
+    ),
+    button("Save template", () => void runSaveTemplate(messageBox, data.batchId, mapping, csrf)),
+    importBtn,
+  );
   form.appendChild(actions);
 
   host.appendChild(form);
@@ -93,13 +134,49 @@ function button(label: string, onClick: () => void): HTMLButtonElement {
   return b;
 }
 
-async function runPreview(box: HTMLElement, batchId: number, mapping: Record<string, string>, csrf: string): Promise<void> {
-  box.textContent = "Previewing…";
-  const res = await postJSON("/web/bulk/preview", { batch_id: batchId, column_mapping: mapping }, csrf);
-  box.textContent = JSON.stringify(res, null, 2);
+function renderMessages(box: HTMLElement, messages: ImportMessage[]): void {
+  box.innerHTML = "";
+  const list = document.createElement("ul");
+  list.className = "sum-import-message-list";
+  for (const m of messages) {
+    const li = document.createElement("li");
+    li.className = `sum-import-message sum-import-message--${m.type ?? "info"}`;
+    const row = m.row && m.row > 0 ? `Row ${m.row}: ` : "";
+    li.textContent = `${row}${m.message ?? ""}`;
+    list.appendChild(li);
+  }
+  box.appendChild(list);
 }
 
-async function runSaveTemplate(box: HTMLElement, batchId: number, mapping: Record<string, string>, csrf: string): Promise<void> {
+function countErrors(messages: ImportMessage[]): number {
+  return messages.filter((m) => (m.type ?? "").toLowerCase() === "error").length;
+}
+
+async function runPreview(
+  box: HTMLElement,
+  details: HTMLElement,
+  batchId: number,
+  mapping: Record<string, string>,
+  csrf: string,
+): Promise<void> {
+  box.textContent = "Previewing…";
+  details.hidden = true;
+  try {
+    const res = await postJSON("/web/bulk/preview", { batch_id: batchId, column_mapping: mapping }, csrf);
+    details.textContent = JSON.stringify(res, null, 2);
+    details.hidden = false;
+    box.textContent = "Preview loaded (see details below).";
+  } catch (err) {
+    box.textContent = String(err);
+  }
+}
+
+async function runSaveTemplate(
+  box: HTMLElement,
+  batchId: number,
+  mapping: Record<string, string>,
+  csrf: string,
+): Promise<void> {
   const name = window.prompt("Template name");
   if (!name?.trim()) {
     return;
@@ -114,10 +191,34 @@ async function runSaveTemplate(box: HTMLElement, batchId: number, mapping: Recor
   box.textContent = `Saved template #${String((res as { template_id?: number }).template_id ?? "")}`;
 }
 
-async function runDryRun(box: HTMLElement, batchId: number, mapping: Record<string, string>, csrf: string): Promise<void> {
+async function runDryRun(
+  box: HTMLElement,
+  details: HTMLElement,
+  batchId: number,
+  mapping: Record<string, string>,
+  csrf: string,
+  onResult: (passed: boolean) => void,
+): Promise<void> {
   box.textContent = "Dry run…";
-  const res = await postJSON("/web/bulk/dry-run", { batch_id: batchId, column_mapping: mapping }, csrf);
-  box.textContent = JSON.stringify(res, null, 2);
+  details.hidden = true;
+  try {
+    const res = (await postJSON("/web/bulk/dry-run", { batch_id: batchId, column_mapping: mapping }, csrf)) as DryRunResponse;
+    const messages = res.messages ?? [];
+    renderMessages(box, messages);
+    details.textContent = JSON.stringify(res.preview ?? {}, null, 2);
+    details.hidden = false;
+    const errors = countErrors(messages);
+    onResult(errors === 0);
+    if (errors > 0) {
+      const note = document.createElement("p");
+      note.className = "sum-import-dry-run-fail";
+      note.textContent = `${errors} error(s) — fix mapping or data before importing.`;
+      box.appendChild(note);
+    }
+  } catch (err) {
+    box.textContent = String(err);
+    onResult(false);
+  }
 }
 
 async function runImport(batchId: number, mapping: Record<string, string>, csrf: string, nextUrl: string): Promise<void> {

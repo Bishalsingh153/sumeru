@@ -9,6 +9,10 @@ import { rankByFuzzy } from "../util/fuzzy.js";
 import { formatRelativeTime } from "../util/format-relative-time.js";
 import { clearImDraft, readImDraft, writeImDraft } from "../util/im-draft.js";
 import { userInitials } from "../util/user-initials.js";
+import {
+  attachmentPreviewModal,
+  type AttachmentPreviewTarget,
+} from "../views/shared/AttachmentPreview.js";
 
 interface DirectUser {
   id: number;
@@ -28,6 +32,7 @@ interface DirectAttachment {
   id: number;
   name: string;
   url: string;
+  mimetype?: string;
 }
 
 interface DirectMessage {
@@ -72,6 +77,9 @@ export class InternalMessagesPanel extends SwcComponent {
   private pickerOpen = false;
   private scrollThreadEnd = false;
   private focusComposerNext = false;
+  private uploadPct = 0;
+  private uploading = false;
+  private attachmentPreview: AttachmentPreviewTarget | null = null;
   private draftTimer: ReturnType<typeof setTimeout> | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private unsubActivity: (() => void) | null = null;
@@ -356,7 +364,18 @@ export class InternalMessagesPanel extends SwcComponent {
     const form = new FormData();
     form.set("message_id", String(messageId));
     form.set("file", file);
-    await this.env.services.http.postMultipart(`${this.apiBase()}/direct/upload`, form);
+    this.uploading = true;
+    this.uploadPct = 0;
+    this.rerender();
+    try {
+      await this.env.services.http.postMultipart(`${this.apiBase()}/direct/upload`, form, (pct) => {
+        this.uploadPct = pct;
+        this.rerender();
+      });
+    } finally {
+      this.uploading = false;
+      this.uploadPct = 0;
+    }
     await this.loadThread();
     await this.refreshConversations();
     this.scrollThreadEnd = true;
@@ -433,7 +452,7 @@ export class InternalMessagesPanel extends SwcComponent {
               if (file) void this.uploadFile(file);
             }}
           />
-          <span class="sum-btn sum-btn--secondary">Attach</span>
+          <span class="sum-btn sum-btn--secondary">${this.uploading ? `Uploading ${this.uploadPct}%` : "Attach"}</span>
         </label>
         <textarea
           class="sum-msg-input"
@@ -478,7 +497,22 @@ export class InternalMessagesPanel extends SwcComponent {
       ${(m.attachments ?? []).length > 0
         ? html`<ul class="sum-chatter-attachments--inline sum-msg-bubble-extra">
             ${(m.attachments ?? []).map(
-              (a) => html`<li><a class="sum-chatter-attachment-link" href=${a.url}>${a.name}</a></li>`,
+              (a) => html`<li>
+                <button
+                  type="button"
+                  class="sum-chatter-attachment-link"
+                  @click=${() => {
+                    this.attachmentPreview = {
+                      name: a.name,
+                      url: a.url,
+                      mimetype: a.mimetype,
+                    };
+                    this.rerender();
+                  }}
+                >
+                  ${a.name}
+                </button>
+              </li>`,
             )}
           </ul>`
         : ""}
@@ -502,6 +536,10 @@ export class InternalMessagesPanel extends SwcComponent {
             : html`<ul class="sum-msg-bubbles">${this.thread.map((m) => this.messageBubble(m))}</ul>`}
       </div>
       ${this.activeComposer()}
+      ${attachmentPreviewModal(this.attachmentPreview, () => {
+        this.attachmentPreview = null;
+        this.rerender();
+      })}
     </div>`;
   }
 

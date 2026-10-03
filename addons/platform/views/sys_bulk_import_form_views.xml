@@ -14,7 +14,7 @@
                     <field name="result_summary" string="Result"/>
                 </group>
                 <group>
-                    <field name="attachment_id" string="Staged file"/>
+                    <field name="attachment_id" string="Staged file or export download"/>
                     <field name="template_id" string="Template"/>
                     <field name="export_format" string="Export format"/>
                 </group>
